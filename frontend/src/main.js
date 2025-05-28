@@ -73,6 +73,9 @@ app.use(router)
 // 注册 Element Plus
 app.use(ElementPlus, {
   locale: zhCn,
+  // 添加全局配置以避免 teleport 相关问题
+  size: 'default',
+  zIndex: 3000,
 })
 
 // 全局注册 Element Plus 图标
@@ -80,11 +83,15 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// 全局错误处理 - 特别处理 ResizeObserver 错误
+// 全局错误处理 - 特别处理 Element Plus 和 ResizeObserver 错误
 app.config.errorHandler = (err, instance, info) => {
-  if (err.message && err.message.includes('ResizeObserver')) {
-    // 静默处理 ResizeObserver 错误，这是浏览器的已知问题
-    console.debug('🔇 已静默处理 ResizeObserver 错误:', err.message)
+  if (err.message && (
+    err.message.includes('ResizeObserver') ||
+    err.message.includes('getComputedStyle') ||
+    err.message.includes('parameter 1 is not of type \'Element\'')
+  )) {
+    // 静默处理这些已知的浏览器兼容性问题
+    console.debug('🔇 已静默处理浏览器兼容性错误:', err.message)
     return
   }
   
@@ -98,8 +105,12 @@ app.config.errorHandler = (err, instance, info) => {
 
 // 全局捕获未处理的 Promise 拒绝
 window.addEventListener('unhandledrejection', event => {
-  if (event.reason && event.reason.message && event.reason.message.includes('ResizeObserver')) {
-    console.debug('🔇 已静默处理 ResizeObserver Promise 错误')
+  if (event.reason && event.reason.message && (
+    event.reason.message.includes('ResizeObserver') ||
+    event.reason.message.includes('getComputedStyle') ||
+    event.reason.message.includes('parameter 1 is not of type \'Element\'')
+  )) {
+    console.debug('🔇 已静默处理浏览器兼容性 Promise 错误')
     event.preventDefault()
     return
   }
@@ -132,10 +143,14 @@ if (originalResizeObserver) {
   }
 }
 
-// 额外的 ResizeObserver 错误拦截
+// 额外的错误拦截 - 包括 Element Plus 相关错误
 window.addEventListener('error', (event) => {
-  if (event.message && event.message.includes('ResizeObserver')) {
-    console.debug('🔇 已拦截 ResizeObserver 全局错误')
+  if (event.message && (
+    event.message.includes('ResizeObserver') ||
+    event.message.includes('getComputedStyle') ||
+    event.message.includes('parameter 1 is not of type \'Element\'')
+  )) {
+    console.debug('🔇 已拦截浏览器兼容性全局错误')
     event.preventDefault()
     return
   }

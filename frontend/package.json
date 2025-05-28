@@ -1,6 +1,9 @@
 {
-  "name": "person-info",
-  "version": "0.1.0",
+  "name": "rural-talent-system-frontend",
+  "version": "2.1.0",
+  "description": "数字乡村人才信息系统前端应用",
+  "author": "数字乡村人才信息系统项目团队",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",

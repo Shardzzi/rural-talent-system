@@ -13,9 +13,8 @@
     "express",
     "sqlite",
     "api"
-  ],
-  "author": "",
-  "license": "ISC",
+  ],  "author": "数字乡村人才信息系统项目团队",
+  "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.2",

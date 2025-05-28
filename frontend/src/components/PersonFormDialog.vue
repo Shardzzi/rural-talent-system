@@ -33,7 +33,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="性别" prop="gender">
-            <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%">
+            <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%" :teleported="false">
               <el-option label="男" value="男" />
               <el-option label="女" value="女" />
             </el-select>
@@ -41,7 +41,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="学历" prop="education_level">
-            <el-select v-model="form.education_level" placeholder="请选择学历" style="width: 100%">
+            <el-select v-model="form.education_level" placeholder="请选择学历" style="width: 100%" :teleported="false">
               <el-option label="无" value="无" />
               <el-option label="小学" value="小学" />
               <el-option label="初中" value="初中" />
@@ -76,7 +76,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="就业状态" prop="employment_status">
-            <el-select v-model="form.employment_status" placeholder="请选择就业状态" style="width: 100%">
+            <el-select v-model="form.employment_status" placeholder="请选择就业状态" style="width: 100%" :teleported="false">
               <el-option label="在岗" value="在岗" />
               <el-option label="求职中" value="求职中" />
               <el-option label="已退休" value="已退休" />

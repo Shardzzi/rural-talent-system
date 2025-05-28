@@ -63,6 +63,7 @@
                 clearable
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
+                :teleported="false"
               >
                 <el-option label="18-25岁" value="18-25" />
                 <el-option label="26-35岁" value="26-35" />
@@ -78,6 +79,7 @@
                 clearable 
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
+                :teleported="false"
               >
                 <el-option label="高中及以下" value="高中及以下" />
                 <el-option label="专科" value="专科" />
@@ -92,6 +94,7 @@
                 clearable
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
+                :teleported="false"
               >
                 <el-option label="在岗" value="在岗" />
                 <el-option label="求职中" value="求职中" />
