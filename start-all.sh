@@ -46,6 +46,15 @@ else
     echo -e "${GREEN}✅ 后端依赖已安装${NC}"
 fi
 
+# 构建 TypeScript 项目
+echo -e "${YELLOW}🔨 构建 TypeScript 项目...${NC}"
+npm run build
+if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ TypeScript 构建失败${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ TypeScript 构建成功${NC}"
+
 # 安装前端依赖
 echo -e "${YELLOW}📦 检查前端依赖...${NC}"
 cd ../frontend
@@ -117,7 +126,7 @@ echo -e "   📊 API文档:  ${GREEN}http://localhost:8083/api/persons${NC}"
 echo ""
 echo -e "${YELLOW}💡 使用说明：${NC}"
 echo -e "   • 测试账号 - 管理员: admin / admin123"
-echo -e "   • 测试账号 - 用户: Shard / 123456"
+echo -e "   • 测试账号 - 用户: testuser / test123"
 echo -e "   • 日志文件: logs/backend.log, logs/frontend.log"
 echo -e "   • 停止服务: ./stop-all.sh"
 echo ""

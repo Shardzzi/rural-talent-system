@@ -1,10 +1,9 @@
 {
   "name": "rural-talent-system-frontend",
   "version": "2.1.0",
+  "private": true,
   "description": "数字乡村人才信息系统前端应用",
   "author": "数字乡村人才信息系统项目团队",
-  "license": "MIT",
-  "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -22,10 +21,18 @@
   "devDependencies": {
     "@babel/core": "^7.22.20",
     "@babel/eslint-parser": "^7.22.15",
+    "@types/node": "^22.15.24",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
     "@vue/cli-plugin-babel": "~5.0.8",
     "@vue/cli-plugin-eslint": "~5.0.8",
+    "@vue/cli-plugin-typescript": "~5.0.0",
     "@vue/cli-service": "~5.0.8",
+    "@vue/eslint-config-typescript": "^9.1.0",
+    "@vue/tsconfig": "^0.7.0",
     "eslint": "^8.49.0",
-    "eslint-plugin-vue": "^9.17.0"
-  }
+    "eslint-plugin-vue": "^9.17.0",
+    "typescript": "^5.8.3"
+  },
+  "license": "MIT"
 }

@@ -1,13 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-// 路由组件
-const LoginForm = () => import('@/components/LoginForm.vue')
-const AdminDashboard = () => import('@/views/AdminDashboard.vue')
-const UserDashboard = () => import('@/views/UserDashboard.vue')
-const GuestView = () => import('@/views/GuestView.vue')
+// 扩展路由元信息类型
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean;
+    requiresGuest?: boolean;
+    requiresAdmin?: boolean;
+    title?: string;
+  }
+}
 
-const routes = [
+// 路由组件
+const LoginForm = () => import('@/components/LoginForm.vue');
+const AdminDashboard = () => import('@/views/AdminDashboard.vue');
+const UserDashboard = () => import('@/views/UserDashboard.vue');
+const GuestView = () => import('@/views/GuestView.vue');
+
+const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'Home',

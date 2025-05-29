@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import axios from 'axios'
 import { createPinia } from 'pinia'
 import router from './router'
@@ -85,13 +85,14 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 // 全局错误处理 - 特别处理 Element Plus 和 ResizeObserver 错误
 app.config.errorHandler = (err, instance, info) => {
-  if (err.message && (
-    err.message.includes('ResizeObserver') ||
-    err.message.includes('getComputedStyle') ||
-    err.message.includes('parameter 1 is not of type \'Element\'')
+  const error = err as Error
+  if (error.message && (
+    error.message.includes('ResizeObserver') ||
+    error.message.includes('getComputedStyle') ||
+    error.message.includes('parameter 1 is not of type \'Element\'')
   )) {
     // 静默处理这些已知的浏览器兼容性问题
-    console.debug('🔇 已静默处理浏览器兼容性错误:', err.message)
+    console.debug('🔇 已静默处理浏览器兼容性错误:', error.message)
     return
   }
   
@@ -121,18 +122,19 @@ window.addEventListener('unhandledrejection', event => {
 const originalResizeObserver = window.ResizeObserver
 if (originalResizeObserver) {
   window.ResizeObserver = class extends originalResizeObserver {
-    constructor(callback) {
+    constructor(callback: ResizeObserverCallback) {
       super((entries, observer) => {
         // 使用 requestAnimationFrame 来避免循环
         window.requestAnimationFrame(() => {
           try {
             callback(entries, observer)
           } catch (error) {
-            if (error.message && (
-              error.message.includes('ResizeObserver loop limit exceeded') ||
-              error.message.includes('ResizeObserver loop completed with undelivered notifications')
+            const err = error as Error
+            if (err.message && (
+              err.message.includes('ResizeObserver loop limit exceeded') ||
+              err.message.includes('ResizeObserver loop completed with undelivered notifications')
             )) {
-              console.debug('🔇 已静默处理 ResizeObserver 错误:', error.message)
+              console.debug('🔇 已静默处理 ResizeObserver 错误:', err.message)
               return
             }
             throw error

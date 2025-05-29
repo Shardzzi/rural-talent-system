@@ -1,12 +1,31 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import axios from 'axios'
 import api from '@/api/persons'
+
+// 定义类型
+interface User {
+  id: number
+  username: string
+  role: string
+  person_id?: number  // 添加可选的person_id字段
+}
+
+interface AuthData {
+  token: string
+  user: User
+}
+
+interface LoginData {
+  username: string
+  password: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
   // 状态
-  const token = ref(localStorage.getItem('token') || null)
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
-  const isGuest = ref(false)
+  const token = ref<string | null>(localStorage.getItem('token') || null)
+  const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
+  const isGuest = ref<boolean>(false)
 
   // 计算属性
   const isAuthenticated = computed(() => !!token.value)
@@ -18,7 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   // 设置认证信息
-  const setAuth = (authData) => {
+  const setAuth = (authData: AuthData) => {
     token.value = authData.token
     user.value = authData.user
     isGuest.value = false
@@ -27,8 +46,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('user', JSON.stringify(authData.user))
     
     // 设置API默认请求头
-    if (api.defaults) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${authData.token}`
+    if (axios.defaults) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authData.token}`
     }
   }
 
@@ -42,8 +61,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user')
     
     // 清除API请求头
-    if (api.defaults) {
-      delete api.defaults.headers.common['Authorization']
+    if (axios.defaults) {
+      delete axios.defaults.headers.common['Authorization']
     }
   }
 
@@ -54,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // 登录
-  const login = async (credentials) => {
+  const login = async (credentials: LoginData) => {
     try {
       const response = await fetch('http://localhost:8083/api/auth/login', {
         method: 'POST',
@@ -70,15 +89,16 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(result.message || '登录失败')
       }
 
-      setAuth(result.data)
+            setAuth(result.data)
       return result.data
     } catch (error) {
-      throw new Error(error.message || '登录失败，请检查网络连接')
+      const err = error as Error
+      throw new Error(err.message || '登录失败，请检查网络连接')
     }
   }
 
   // 注册
-  const register = async (userData) => {
+  const register = async (userData: LoginData) => {
     try {
       const response = await fetch('http://localhost:8083/api/auth/register', {
         method: 'POST',
@@ -94,9 +114,10 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(result.message || '注册失败')
       }
 
-      return result.data
+            return result.data
     } catch (error) {
-      throw new Error(error.message || '注册失败，请检查网络连接')
+      const err = error as Error
+      throw new Error(err.message || '注册失败，请检查网络连接')
     }
   }
 
@@ -151,7 +172,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // 修改密码
-  const changePassword = async (passwordData) => {
+  const changePassword = async (passwordData: any) => {
     try {
       if (!token.value) {
         throw new Error('未登录')
@@ -172,14 +193,15 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(result.message || '密码修改失败')
       }
 
-      return result
+            return result
     } catch (error) {
-      throw new Error(error.message || '密码修改失败，请检查网络连接')
+      const err = error as Error
+      throw new Error(err.message || '密码修改失败，请检查网络连接')
     }
   }
 
   // 将person与用户关联
-  const linkPersonToUser = async (personId) => {
+  const linkPersonToUser = async (personId: any) => {
     try {
       // 修复：使用fetch或者axios.put而不是api.put
       const response = await fetch('http://localhost:8083/api/auth/link-person', {
@@ -217,8 +239,8 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         await getCurrentUser()
         // 设置API默认请求头
-        if (api.defaults) {
-          api.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+        if (axios.defaults) {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
         }
       } catch (error) {
         console.warn('Token validation failed:', error)
@@ -239,8 +261,8 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = JSON.parse(storedUser)
         
         // 设置API默认请求头
-        if (api.defaults) {
-          api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
+        if (axios.defaults) {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
         }
         
         console.log('✅ 认证状态已恢复:', user.value)

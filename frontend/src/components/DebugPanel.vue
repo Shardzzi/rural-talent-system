@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import personService from '../api/persons'
 import { useAuthStore } from '../stores/auth'
 

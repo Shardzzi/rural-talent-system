@@ -1,4 +1,4 @@
-  <template>
+<template>
   <div id="app">
     <el-container>
       <el-header>
@@ -12,7 +12,7 @@
               </el-tag>
             </span>
             <el-button @click="handleLogout" type="danger" size="small">
-              <el-icon><Switch /></el-icon>
+              <el-icon><SwitchIcon /></el-icon>
               退出登录
             </el-button>
           </div>
@@ -39,7 +39,7 @@
 <script>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Switch } from '@element-plus/icons-vue'
+import { Switch as SwitchIcon } from '@element-plus/icons-vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
 import DebugPanel from './components/DebugPanel.vue'
@@ -48,7 +48,7 @@ export default {
   name: 'App',
   components: {
     DebugPanel,
-    Switch
+    SwitchIcon
   },
   setup() {
     const showDebug = ref(false)
@@ -141,5 +141,126 @@ export default {
   .el-main {
     padding: 10px;
   }
+}
+
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Element Plus 组件自定义样式 */
+.el-button--primary {
+  background-color: #409eff;
+  border-color: #409eff;
+}
+
+.el-button--primary:hover {
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+}
+
+/* 错误提示容器 */
+#error-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  #error-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 通用工具类 */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mb-2 {
+  margin-bottom: 8px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.p-2 {
+  padding: 8px;
+}
+
+.p-4 {
+  padding: 16px;
 }
 </style>

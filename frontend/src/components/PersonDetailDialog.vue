@@ -348,9 +348,9 @@ export default {
       }
       
       loading.value = true
-      try {
+            try {
         // 导入API服务
-        const { default: personService } = await import('../api/persons.js')
+        const { default: personService } = await import('../api/persons')
         const response = await personService.getPersonDetails(props.person.id)
         console.log('获取到详细信息响应:', response)
         
