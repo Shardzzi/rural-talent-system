@@ -56,8 +56,18 @@ echo -e "${YELLOW}清理残留的Node.js进程...${NC}"
 pkill -f "npm.*serve" 2>/dev/null || true
 pkill -f "npm.*start" 2>/dev/null || true
 pkill -f "node.*app.js" 2>/dev/null || true
+pkill -f "vue-cli-service" 2>/dev/null || true
+pkill -f "webpack-dev-server" 2>/dev/null || true
+
+# 强制释放端口
+echo -e "${YELLOW}强制释放端口...${NC}"
+lsof -ti:8081 | xargs -r kill -9 2>/dev/null || true
+lsof -ti:8083 | xargs -r kill -9 2>/dev/null || true
 
 echo -e "${GREEN}🎉 所有服务已停止${NC}"
+
+# 等待端口完全释放
+sleep 1
 
 # 显示端口占用情况
 echo -e "${BLUE}📊 端口占用检查：${NC}"

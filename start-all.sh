@@ -69,6 +69,15 @@ else
     echo -e "${GREEN}✅ 前端依赖已安装${NC}"
 fi
 
+# 构建前端项目（生产模式）
+echo -e "${YELLOW}🔨 构建前端项目...${NC}"
+npm run build
+if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ 前端构建失败${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ 前端构建成功${NC}"
+
 cd ..
 
 # 创建日志目录
@@ -95,10 +104,10 @@ else
     exit 1
 fi
 
-# 启动前端服务器
+# 启动前端服务器（静态文件服务）
 echo -e "${YELLOW}启动前端服务器 (端口 8081)...${NC}"
 cd ../frontend
-npm run serve > ../logs/frontend.log 2>&1 &
+npm start > ../logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "前端进程 ID: $FRONTEND_PID"
 

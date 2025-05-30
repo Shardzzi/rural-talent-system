@@ -7,6 +7,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "start": "npx http-server dist -p 8081 -c-1 --cors",
+    "dev:watch": "vue-cli-service serve",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -28,11 +30,16 @@
     "@vue/cli-plugin-eslint": "~5.0.8",
     "@vue/cli-plugin-typescript": "~5.0.0",
     "@vue/cli-service": "~5.0.8",
-    "@vue/eslint-config-typescript": "^9.1.0",
+    "@vue/eslint-config-typescript": "^11.0.3",
     "@vue/tsconfig": "^0.7.0",
     "eslint": "^8.49.0",
     "eslint-plugin-vue": "^9.17.0",
+    "http-server": "^14.1.1",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "cross-spawn": "6.0.6",
+    "postcss": "8.4.32"
   },
   "license": "MIT"
 }
