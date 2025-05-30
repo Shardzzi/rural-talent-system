@@ -2,8 +2,8 @@ import winston from 'winston';
 import path from 'path';
 import fs from 'fs-extra';
 
-// 确保logs目录存在
-const logsDir = path.join(__dirname, '..', 'logs');
+// 确保logs目录存在 - 相对于backend根目录
+const logsDir = path.join(__dirname, '..', '..', 'logs');
 fs.ensureDirSync(logsDir);
 
 // 配置Winston日志记录器

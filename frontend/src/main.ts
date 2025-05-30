@@ -1,8 +1,38 @@
 import { createApp } from 'vue'
-import ElementPlus from 'element-plus'
+// Element Plus 按需导入
+import {
+  ElButton,
+  ElInput,
+  ElSelect,
+  ElOption,
+  ElForm,
+  ElFormItem,
+  ElDialog,
+  ElCard,
+  ElRow,
+  ElCol,
+  ElTable,
+  ElTableColumn,
+  ElTag,
+  ElIcon,
+  ElPageHeader,
+  ElContainer,
+  ElHeader,
+  ElMain,
+  ElMessage,
+  ElInputNumber,
+  ElAlert,
+  ElDivider,
+  ElPopconfirm,
+  ElPagination,
+  ElEmpty,
+  ElTimeline,
+  ElTimelineItem,
+  ElLoading,
+  ElConfigProvider
+} from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import axios from 'axios'
 import { createPinia } from 'pinia'
 import router from './router'
@@ -70,13 +100,46 @@ app.use(pinia)
 // 注册 Vue Router
 app.use(router)
 
-// 注册 Element Plus
-app.use(ElementPlus, {
-  locale: zhCn,
-  // 添加全局配置以避免 teleport 相关问题
-  size: 'default',
-  zIndex: 3000,
+// 注册 Element Plus 组件
+const components = [
+  ElButton,
+  ElInput,
+  ElSelect,
+  ElOption,
+  ElForm,
+  ElFormItem,
+  ElDialog,
+  ElCard,
+  ElRow,
+  ElCol,
+  ElTable,
+  ElTableColumn,
+  ElTag,
+  ElIcon,
+  ElPageHeader,
+  ElContainer,
+  ElHeader,
+  ElMain,
+  ElInputNumber,
+  ElAlert,
+  ElDivider,
+  ElPopconfirm,
+  ElPagination,
+  ElEmpty,
+  ElTimeline,
+  ElTimelineItem,
+  ElConfigProvider
+]
+
+components.forEach(component => {
+  app.use(component)
 })
+
+// 注册 v-loading 指令
+app.directive('loading', ElLoading.directive)
+
+// 全局挂载 ElMessage
+app.config.globalProperties.$message = ElMessage
 
 // 全局注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

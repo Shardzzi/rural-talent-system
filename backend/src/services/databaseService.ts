@@ -5,8 +5,8 @@ import logger from '../config/logger';
 import { DatabaseResult, User, Person, SearchParams } from '../types';
 
 const sqlite = sqlite3.verbose();
-// 使用绝对路径确保编译后和开发时都使用同一个数据库
-const dbPath = '/home/shardzzi/rural-talent-system/backend/data/persons.db';
+// 使用相对路径，相对于项目根目录的data文件夹
+const dbPath = path.join(__dirname, '..', '..', 'data', 'persons.db');
 
 // 确保数据目录存在
 const ensureDataDir = async () => {

@@ -1,44 +1,47 @@
 <template>
-  <div id="app">
-    <el-container>
-      <el-header>
-        <div class="header-content">
-          <h1>数字乡村人才信息系统</h1>
-          <div class="header-actions" v-if="authStore.isAuthenticated">
-            <span class="user-info">
-              欢迎，{{ authStore.user.username }}
-              <el-tag :type="authStore.user.role === 'admin' ? 'danger' : 'primary'" size="small">
-                {{ authStore.user.role === 'admin' ? '管理员' : '用户' }}
-              </el-tag>
-            </span>
-            <el-button @click="handleLogout" type="danger" size="small">
-              <el-icon><SwitchIcon /></el-icon>
-              退出登录
+  <el-config-provider :locale="locale">
+    <div id="app">
+      <el-container>
+        <el-header>
+          <div class="header-content">
+            <h1>数字乡村人才信息系统</h1>
+            <div class="header-actions" v-if="authStore.isAuthenticated">
+              <span class="user-info">
+                欢迎，{{ authStore.user.username }}
+                <el-tag :type="authStore.user.role === 'admin' ? 'danger' : 'primary'" size="small">
+                  {{ authStore.user.role === 'admin' ? '管理员' : '用户' }}
+                </el-tag>
+              </span>
+              <el-button @click="handleLogout" type="danger" size="small">
+                <el-icon><SwitchIcon /></el-icon>
+                退出登录
+              </el-button>
+            </div>
+          </div>
+        </el-header>
+        <el-main>
+          <!-- 调试面板切换按钮 -->
+          <div class="debug-toggle">
+            <el-button @click="showDebug = !showDebug" type="info" size="small">
+              {{ showDebug ? '隐藏调试面板' : '显示调试面板' }}
             </el-button>
           </div>
-        </div>
-      </el-header>
-      <el-main>
-        <!-- 调试面板切换按钮 -->
-        <div class="debug-toggle">
-          <el-button @click="showDebug = !showDebug" type="info" size="small">
-            {{ showDebug ? '隐藏调试面板' : '显示调试面板' }}
-          </el-button>
-        </div>
-        
-        <!-- 调试面板 -->
-        <DebugPanel v-if="showDebug" />
+          
+          <!-- 调试面板 -->
+          <DebugPanel v-if="showDebug" />
         
         <!-- 路由视图 -->
         <router-view v-if="!showDebug" />
       </el-main>
     </el-container>
   </div>
+  </el-config-provider>
 </template>
 
 <script>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { Switch as SwitchIcon } from '@element-plus/icons-vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
@@ -54,6 +57,7 @@ export default {
     const showDebug = ref(false)
     const authStore = useAuthStore()
     const router = useRouter()
+    const locale = zhCn
     
     // 初始化认证状态
     authStore.initializeAuth()
@@ -72,7 +76,8 @@ export default {
     return {
       showDebug,
       authStore,
-      handleLogout
+      handleLogout,
+      locale
     }
   }
 }

@@ -5,11 +5,13 @@
   "description": "数字乡村人才信息系统前端应用",
   "author": "数字乡村人才信息系统项目团队",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "start": "npx http-server dist -p 8081 -c-1 --cors",
-    "dev:watch": "vue-cli-service serve",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite preview --port 8081",
+    "dev:watch": "vite",
+    "lint": "eslint src --ext .vue,.js,.ts",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -21,21 +23,18 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.20",
-    "@babel/eslint-parser": "^7.22.15",
     "@types/node": "^22.15.24",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
-    "@vue/cli-plugin-babel": "~5.0.8",
-    "@vue/cli-plugin-eslint": "~5.0.8",
-    "@vue/cli-plugin-typescript": "~5.0.0",
-    "@vue/cli-service": "~5.0.8",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vitejs/plugin-vue-jsx": "^4.2.0",
     "@vue/eslint-config-typescript": "^11.0.3",
     "@vue/tsconfig": "^0.7.0",
     "eslint": "^8.49.0",
     "eslint-plugin-vue": "^9.17.0",
-    "http-server": "^14.1.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^2.2.10"
   },
   "overrides": {
     "cross-spawn": "6.0.6",

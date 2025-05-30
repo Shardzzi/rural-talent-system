@@ -45,7 +45,7 @@ sleep 3
 # 启动前端（后台运行）
 echo -e "${BLUE}启动前端服务器...${NC}"
 cd frontend
-npm run serve &
+npm run dev &
 FRONTEND_PID=$!
 cd ..
 
@@ -57,8 +57,9 @@ echo -e "   🌐 前端: http://localhost:8081"
 echo -e "   🔧 后端: http://localhost:8083"
 echo ""
 echo -e "${YELLOW}💡 开发提示：${NC}"
-echo -e "   • 前端支持热重载，修改代码会自动刷新"
+echo -e "   • 前端支持Vite热重载，修改代码会自动刷新"
 echo -e "   • 后端支持自动重启，修改 TypeScript 文件会自动重启服务"
+echo -e "   • 按 Ctrl+C 停止所有服务"
 echo -e "   • 按 Ctrl+C 停止所有服务"
 echo ""
 

@@ -105,8 +105,8 @@ else
 fi
 
 # 启动前端服务器（静态文件服务）
-echo -e "${YELLOW}启动前端服务器 (端口 8081)...${NC}"
 cd ../frontend
+echo -e "${YELLOW}启动前端服务器 (端口 8081)...${NC}"
 npm start > ../logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "前端进程 ID: $FRONTEND_PID"
