@@ -407,10 +407,22 @@ export default {
       }
     }
     
-    const editMyInfo = () => {
-      currentPerson.value = { ...userPerson.value }
-      isEdit.value = true
-      showAddDialog.value = true
+    const editMyInfo = async () => {
+      try {
+        // 获取完整的人员详细信息，包括扩展数据
+        const response = await axios.get(`/api/persons/${userPerson.value.id}/details`)
+        currentPerson.value = response.data.data
+        isEdit.value = true
+        showAddDialog.value = true
+        console.log('✅ 获取完整人员信息成功:', currentPerson.value)
+      } catch (error) {
+        console.error('❌ 获取人员详细信息失败:', error)
+        // 如果获取详细信息失败，降级使用基本信息
+        currentPerson.value = { ...userPerson.value }
+        isEdit.value = true
+        showAddDialog.value = true
+        ElMessage.warning('无法获取完整信息，将使用基本信息编辑')
+      }
     }
     
     // 防抖函数
@@ -447,7 +459,7 @@ export default {
       isEdit.value = false
       loadUserPerson()
       loadPersons()
-      ElMessage.success(isEdit.value ? '信息更新成功' : '信息添加成功')
+      // 移除重复的成功消息，因为PersonFormDialog组件内部已经显示了
     }
     
     const viewPersonDetail = (person) => {

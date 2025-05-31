@@ -49,7 +49,7 @@
               <h4>联系方式</h4>
               <div class="info-item">
                 <label>联系电话：</label>
-                <span v-if="!isGuestMode">{{ currentPerson.phone || '未设置' }}</span>
+                <span v-if="!isActualGuestMode">{{ currentPerson.phone || '未设置' }}</span>
                 <span v-else class="masked-info">
                   <el-icon><Lock /></el-icon>
                   需要登录查看
@@ -57,7 +57,7 @@
               </div>
               <div class="info-item">
                 <label>邮箱地址：</label>
-                <span v-if="!isGuestMode">{{ currentPerson.email || '未设置' }}</span>
+                <span v-if="!isActualGuestMode">{{ currentPerson.email || '未设置' }}</span>
                 <span v-else class="masked-info">
                   <el-icon><Lock /></el-icon>
                   需要登录查看
@@ -253,7 +253,7 @@
       </el-card>
 
       <!-- 游客模式提示 -->
-      <el-card class="guest-tip-card" v-if="isGuestMode">
+      <el-card class="guest-tip-card" v-if="isActualGuestMode">
         <div class="guest-tip">
           <el-icon class="tip-icon"><Lock /></el-icon>
           <div class="tip-content">
@@ -271,7 +271,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">关闭</el-button>
-        <el-button v-if="!isGuestMode" type="primary" @click="copyInfo">
+        <el-button v-if="!isActualGuestMode" type="primary" @click="copyInfo">
           <el-icon><CopyDocument /></el-icon>
           复制信息
         </el-button>
@@ -294,6 +294,7 @@ import {
   Connection
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'PersonDetailDialog',
@@ -324,6 +325,12 @@ export default {
   emits: ['update:modelValue'],
   setup(props, { emit }) {
     const router = useRouter()
+    const authStore = useAuthStore()
+    
+    // 计算实际的游客模式状态
+    const isActualGuestMode = computed(() => {
+      return !authStore.isAuthenticated
+    })
     
     // 添加详细信息状态
     const detailedPerson = ref(null)
@@ -486,6 +493,7 @@ export default {
       currentPerson,
       loading,
       skillsArray,
+      isActualGuestMode,
       handleClose,
       goToLogin,
       getStatusTagType,

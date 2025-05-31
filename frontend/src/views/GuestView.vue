@@ -211,8 +211,8 @@
         </div>
       </el-card>
 
-      <!-- 登录提示卡片 -->
-      <el-card class="login-prompt-card">
+      <!-- 登录提示卡片 - 只在游客模式下显示 -->
+      <el-card class="login-prompt-card" v-if="!authStore.isAuthenticated">
         <div class="login-prompt">
           <el-icon class="prompt-icon"><Lock /></el-icon>
           <div class="prompt-content">

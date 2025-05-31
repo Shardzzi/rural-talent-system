@@ -397,10 +397,22 @@ export default {
       showDetailDialog.value = true
     }
 
-    const editPerson = (person) => {
-      currentPerson.value = { ...person }
-      isEdit.value = true
-      showAddDialog.value = true
+    const editPerson = async (person) => {
+      try {
+        // 获取完整的人员详细信息，包括扩展数据
+        const response = await axios.get(`/api/persons/${person.id}/details`)
+        currentPerson.value = response.data.data
+        isEdit.value = true
+        showAddDialog.value = true
+        console.log('✅ 获取完整人员信息成功:', currentPerson.value)
+      } catch (error) {
+        console.error('❌ 获取人员详细信息失败:', error)
+        // 如果获取详细信息失败，降级使用基本信息
+        currentPerson.value = { ...person }
+        isEdit.value = true
+        showAddDialog.value = true
+        ElMessage.warning('无法获取完整信息，将使用基本信息编辑')
+      }
     }
     
     const deletePerson = async (id) => {

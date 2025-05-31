@@ -146,7 +146,11 @@ export default {
     const testLogout = async () => {
       try {
         await authStore.logout()
-        addLog('测试登出成功')
+        addLog('测试登出成功 - 即将刷新页面')
+        // 调试面板也刷新页面确保状态一致
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 1000) // 延迟1秒让用户看到日志消息
       } catch (error) {
         addLog('测试登出失败: ' + error.message)
       }

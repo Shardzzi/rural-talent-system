@@ -29,8 +29,14 @@ router.get('/persons/:id/details', optionalAuth, personController.getPersonDetai
 // 创建人员信息（需要登录）
 router.post('/persons', authenticateToken, validatePerson, handleValidationErrors, personController.createPerson);
 
+// 创建综合人员信息（需要登录）
+router.post('/persons/comprehensive', authenticateToken, personController.createComprehensivePerson);
+
 // 更新人员信息（需要登录，用户只能更新自己的信息）
 router.put('/persons/:id', authenticateToken, validatePerson, handleValidationErrors, personController.updatePerson);
+
+// 更新综合人员信息（需要登录，用户只能更新自己的信息）
+router.put('/persons/:id/comprehensive', authenticateToken, personController.updateComprehensivePerson);
 
 // 创建或更新农村特色信息（需要登录）
 router.post('/persons/:id/rural-profile', authenticateToken, personController.upsertRuralProfile);

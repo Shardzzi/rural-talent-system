@@ -1779,6 +1779,437 @@ const linkUserToPerson = async (userId, personId) => {
     });
 };
 
+// 创建综合人员信息（事务处理）
+const createComprehensivePerson = async (data: {
+    person: any,
+    ruralProfile: any,
+    cooperation: any,
+    skills: any[],
+    userId?: number
+}): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        
+        // 开始事务
+        db.serialize(() => {
+            db.run('BEGIN TRANSACTION');
+            
+            // 1. 创建基本人员信息
+            const personStmt = db.prepare(`INSERT INTO persons 
+                (name, age, gender, email, phone, address, education_level, political_status, employment_status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+            
+            personStmt.run([
+                data.person.name,
+                data.person.age,
+                data.person.gender,
+                data.person.email,
+                data.person.phone,
+                data.person.address,
+                data.person.education_level,
+                data.person.political_status,
+                data.person.employment_status
+            ], function(err) {
+                if (err) {
+                    db.run('ROLLBACK');
+                    db.close();
+                    logger.error('Error creating person', { error: err.message });
+                    reject(err);
+                    return;
+                }
+                
+                const personId = this.lastID;
+                logger.info('Person created', { personId, name: data.person.name });
+                
+                // 2. 创建农村特色信息
+                const ruralStmt = db.prepare(`INSERT INTO rural_talent_profile 
+                    (person_id, farming_years, planting_scale, main_crops, breeding_types, 
+                     cooperation_willingness, development_direction, available_time) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+                
+                ruralStmt.run([
+                    personId,
+                    data.ruralProfile.farming_years,
+                    data.ruralProfile.planting_scale,
+                    data.ruralProfile.main_crops,
+                    data.ruralProfile.breeding_types,
+                    data.ruralProfile.cooperation_willingness,
+                    data.ruralProfile.development_direction,
+                    data.ruralProfile.available_time
+                ], function(err) {
+                    if (err) {
+                        db.run('ROLLBACK');
+                        db.close();
+                        logger.error('Error creating rural profile', { error: err.message });
+                        reject(err);
+                        return;
+                    }
+                    
+                    logger.info('Rural profile created', { personId });
+                    
+                    // 3. 创建合作意向信息
+                    const cooperationStmt = db.prepare(`INSERT INTO cooperation_intentions 
+                        (person_id, cooperation_type, preferred_scale, investment_capacity, 
+                         time_availability, contact_preference) 
+                        VALUES (?, ?, ?, ?, ?, ?)`);
+                    
+                    cooperationStmt.run([
+                        personId,
+                        data.cooperation.cooperation_type,
+                        data.cooperation.preferred_scale,
+                        data.cooperation.investment_capacity,
+                        data.cooperation.time_availability,
+                        data.cooperation.contact_preference
+                    ], function(err) {
+                        if (err) {
+                            db.run('ROLLBACK');
+                            db.close();
+                            logger.error('Error creating cooperation intention', { error: err.message });
+                            reject(err);
+                            return;
+                        }
+                        
+                        logger.info('Cooperation intention created', { personId });
+                        
+                        // 4. 创建技能信息
+                        if (data.skills && data.skills.length > 0) {
+                            const skillStmt = db.prepare(`INSERT INTO talent_skills 
+                                (person_id, skill_category, skill_name, proficiency_level, experience_years) 
+                                VALUES (?, ?, ?, ?, ?)`);
+                            
+                            let skillsCreated = 0;
+                            const totalSkills = data.skills.length;
+                            
+                            data.skills.forEach(skill => {
+                                skillStmt.run([
+                                    personId,
+                                    skill.category,
+                                    skill.name,
+                                    skill.proficiency,
+                                    skill.experience_years
+                                ], function(err) {
+                                    if (err) {
+                                        db.run('ROLLBACK');
+                                        db.close();
+                                        logger.error('Error creating skill', { error: err.message });
+                                        reject(err);
+                                        return;
+                                    }
+                                    
+                                    skillsCreated++;
+                                    if (skillsCreated === totalSkills) {
+                                        finalizePerson();
+                                    }
+                                });
+                            });
+                            
+                            skillStmt.finalize();
+                        } else {
+                            finalizePerson();
+                        }
+                        
+                        function finalizePerson() {
+                            // 5. 如果有用户ID，关联用户
+                            if (data.userId) {
+                                db.run('UPDATE users SET person_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+                                    [personId, data.userId], function(err) {
+                                    if (err) {
+                                        logger.warn('Failed to link user to person', { 
+                                            error: err.message, 
+                                            userId: data.userId, 
+                                            personId 
+                                        });
+                                        // 不影响主流程，继续提交事务
+                                    }
+                                    
+                                    // 提交事务
+                                    db.run('COMMIT', (err) => {
+                                        if (err) {
+                                            db.close();
+                                            logger.error('Error committing transaction', { error: err.message });
+                                            reject(err);
+                                            return;
+                                        }
+                                        
+                                        // 获取创建的完整信息
+                                        getPersonWithDetails(personId).then(person => {
+                                            db.close();
+                                            resolve(person);
+                                        }).catch(err => {
+                                            db.close();
+                                            logger.error('Error getting created person details', { error: err.message });
+                                            resolve({ id: personId, name: data.person.name });
+                                        });
+                                    });
+                                });
+                            } else {
+                                // 提交事务
+                                db.run('COMMIT', (err) => {
+                                    if (err) {
+                                        db.close();
+                                        logger.error('Error committing transaction', { error: err.message });
+                                        reject(err);
+                                        return;
+                                    }
+                                    
+                                    // 获取创建的完整信息
+                                    getPersonWithDetails(personId).then(person => {
+                                        db.close();
+                                        resolve(person);
+                                    }).catch(err => {
+                                        db.close();
+                                        logger.error('Error getting created person details', { error: err.message });
+                                        resolve({ id: personId, name: data.person.name });
+                                    });
+                                });
+                            }
+                        }
+                    });
+                    
+                    cooperationStmt.finalize();
+                });
+                
+                personStmt.finalize();
+            });
+        });
+    });
+};
+
+// 更新综合人员信息（事务处理）
+const updateComprehensivePerson = async (personId: number, data: {
+    person: any,
+    ruralProfile: any,
+    cooperation: any,
+    skills: any[]
+}): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        
+        // 开始事务
+        db.serialize(() => {
+            db.run('BEGIN TRANSACTION');
+            
+            // 1. 更新基本人员信息
+            const personStmt = db.prepare(`UPDATE persons SET 
+                name = ?, age = ?, gender = ?, email = ?, phone = ?, address = ?, 
+                education_level = ?, political_status = ?, employment_status = ?, 
+                updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?`);
+            
+            personStmt.run([
+                data.person.name,
+                data.person.age,
+                data.person.gender,
+                data.person.email,
+                data.person.phone,
+                data.person.address,
+                data.person.education_level,
+                data.person.political_status,
+                data.person.employment_status,
+                personId
+            ], function(err) {
+                if (err) {
+                    db.run('ROLLBACK');
+                    db.close();
+                    logger.error('Error updating person', { error: err.message, personId });
+                    reject(err);
+                    return;
+                }
+                
+                logger.info('Person updated', { personId, name: data.person.name });
+                
+                // 2. 更新农村特色信息（UPSERT）
+                db.get('SELECT id FROM rural_talent_profile WHERE person_id = ?', [personId], (err, row) => {
+                    if (err) {
+                        db.run('ROLLBACK');
+                        db.close();
+                        reject(err);
+                        return;
+                    }
+                    
+                    let ruralQuery, ruralParams;
+                    if (row) {
+                        // 更新现有记录
+                        ruralQuery = `UPDATE rural_talent_profile SET 
+                            farming_years = ?, planting_scale = ?, main_crops = ?, breeding_types = ?, 
+                            cooperation_willingness = ?, development_direction = ?, available_time = ?, 
+                            updated_at = CURRENT_TIMESTAMP 
+                            WHERE person_id = ?`;
+                        ruralParams = [
+                            data.ruralProfile.farming_years,
+                            data.ruralProfile.planting_scale,
+                            data.ruralProfile.main_crops,
+                            data.ruralProfile.breeding_types,
+                            data.ruralProfile.cooperation_willingness,
+                            data.ruralProfile.development_direction,
+                            data.ruralProfile.available_time,
+                            personId
+                        ];
+                    } else {
+                        // 创建新记录
+                        ruralQuery = `INSERT INTO rural_talent_profile 
+                            (person_id, farming_years, planting_scale, main_crops, breeding_types, 
+                             cooperation_willingness, development_direction, available_time) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                        ruralParams = [
+                            personId,
+                            data.ruralProfile.farming_years,
+                            data.ruralProfile.planting_scale,
+                            data.ruralProfile.main_crops,
+                            data.ruralProfile.breeding_types,
+                            data.ruralProfile.cooperation_willingness,
+                            data.ruralProfile.development_direction,
+                            data.ruralProfile.available_time
+                        ];
+                    }
+                    
+                    const ruralStmt = db.prepare(ruralQuery);
+                    ruralStmt.run(ruralParams, function(err) {
+                        if (err) {
+                            db.run('ROLLBACK');
+                            db.close();
+                            logger.error('Error updating rural profile', { error: err.message, personId });
+                            reject(err);
+                            return;
+                        }
+                        
+                        logger.info('Rural profile updated', { personId });
+                        
+                        // 3. 更新合作意向信息（UPSERT）
+                        db.get('SELECT id FROM cooperation_intentions WHERE person_id = ?', [personId], (err, row) => {
+                            if (err) {
+                                db.run('ROLLBACK');
+                                db.close();
+                                reject(err);
+                                return;
+                            }
+                            
+                            let cooperationQuery, cooperationParams;
+                            if (row) {
+                                // 更新现有记录
+                                cooperationQuery = `UPDATE cooperation_intentions SET 
+                                    cooperation_type = ?, preferred_scale = ?, investment_capacity = ?, 
+                                    time_availability = ?, contact_preference = ? 
+                                    WHERE person_id = ?`;
+                                cooperationParams = [
+                                    data.cooperation.cooperation_type,
+                                    data.cooperation.preferred_scale,
+                                    data.cooperation.investment_capacity,
+                                    data.cooperation.time_availability,
+                                    data.cooperation.contact_preference,
+                                    personId
+                                ];
+                            } else {
+                                // 创建新记录
+                                cooperationQuery = `INSERT INTO cooperation_intentions 
+                                    (person_id, cooperation_type, preferred_scale, investment_capacity, 
+                                     time_availability, contact_preference) 
+                                    VALUES (?, ?, ?, ?, ?, ?)`;
+                                cooperationParams = [
+                                    personId,
+                                    data.cooperation.cooperation_type,
+                                    data.cooperation.preferred_scale,
+                                    data.cooperation.investment_capacity,
+                                    data.cooperation.time_availability,
+                                    data.cooperation.contact_preference
+                                ];
+                            }
+                            
+                            const cooperationStmt = db.prepare(cooperationQuery);
+                            cooperationStmt.run(cooperationParams, function(err) {
+                                if (err) {
+                                    db.run('ROLLBACK');
+                                    db.close();
+                                    logger.error('Error updating cooperation intention', { error: err.message, personId });
+                                    reject(err);
+                                    return;
+                                }
+                                
+                                logger.info('Cooperation intention updated', { personId });
+                                
+                                // 4. 更新技能信息（先删除旧的，再插入新的）
+                                db.run('DELETE FROM talent_skills WHERE person_id = ?', [personId], function(err) {
+                                    if (err) {
+                                        db.run('ROLLBACK');
+                                        db.close();
+                                        logger.error('Error deleting old skills', { error: err.message, personId });
+                                        reject(err);
+                                        return;
+                                    }
+                                    
+                                    if (data.skills && data.skills.length > 0) {
+                                        const skillStmt = db.prepare(`INSERT INTO talent_skills 
+                                            (person_id, skill_category, skill_name, proficiency_level, experience_years) 
+                                            VALUES (?, ?, ?, ?, ?)`);
+                                        
+                                        let skillsCreated = 0;
+                                        const totalSkills = data.skills.length;
+                                        
+                                        data.skills.forEach(skill => {
+                                            skillStmt.run([
+                                                personId,
+                                                skill.category,
+                                                skill.name,
+                                                skill.proficiency,
+                                                skill.experience_years
+                                            ], function(err) {
+                                                if (err) {
+                                                    db.run('ROLLBACK');
+                                                    db.close();
+                                                    logger.error('Error creating skill', { error: err.message, personId });
+                                                    reject(err);
+                                                    return;
+                                                }
+                                                
+                                                skillsCreated++;
+                                                if (skillsCreated === totalSkills) {
+                                                    finalizeUpdate();
+                                                }
+                                            });
+                                        });
+                                        
+                                        skillStmt.finalize();
+                                    } else {
+                                        finalizeUpdate();
+                                    }
+                                    
+                                    function finalizeUpdate() {
+                                        // 提交事务
+                                        db.run('COMMIT', (err) => {
+                                            if (err) {
+                                                db.close();
+                                                logger.error('Error committing transaction', { error: err.message, personId });
+                                                reject(err);
+                                                return;
+                                            }
+                                            
+                                            // 获取更新后的完整信息
+                                            getPersonWithDetails(personId).then(person => {
+                                                db.close();
+                                                resolve(person);
+                                            }).catch(err => {
+                                                db.close();
+                                                logger.error('Error getting updated person details', { error: err.message, personId });
+                                                resolve({ id: personId, name: data.person.name });
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+                            
+                            cooperationStmt.finalize();
+                        });
+                    });
+                    
+                    ruralStmt.finalize();
+                });
+            });
+            
+            personStmt.finalize();
+        });
+    });
+};
+
 export default {
     initDatabase,
     getAllPersons,
@@ -1814,5 +2245,9 @@ export default {
     getUserPersonInfo,
     getUserByPersonId,
     linkUserToPerson,
-    getAllPersonsWithDetails
+    getAllPersonsWithDetails,
+    
+    // 综合信息处理方法
+    createComprehensivePerson,
+    updateComprehensivePerson
 };

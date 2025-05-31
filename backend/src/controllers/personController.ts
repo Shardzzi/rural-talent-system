@@ -647,6 +647,147 @@ const getSkillsLibraryStats = async (req: AuthenticatedRequest, res: Response): 
     }
 };
 
+// 创建综合人员信息（包含基本信息、农村特色、技能、合作意向）
+const createComprehensivePerson = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        // 权限检查：只有登录用户可以创建人员信息
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                message: '请先登录后再创建人员信息'
+            });
+            return;
+        }
+
+        const { person, ruralProfile, cooperation, skills } = req.body;
+        
+        logger.info('Creating comprehensive person info', { 
+            name: person.name,
+            userId: req.user.userId,
+            userRole: req.user.role,
+            skillsCount: skills?.length || 0
+        });
+        
+        // 检查用户是否已经有关联的人员信息
+        if (req.user.role === 'user' && req.user.personId) {
+            res.status(400).json({
+                success: false,
+                message: '您已经有关联的人员信息，不能重复创建'
+            });
+            return;
+        }
+
+        // 开始数据库事务
+        const result = await databaseService.createComprehensivePerson({
+            person,
+            ruralProfile,
+            cooperation,
+            skills,
+            userId: req.user.role === 'user' ? req.user.userId : null
+        });
+        
+        logger.info('Comprehensive person created successfully', { 
+            personId: result.id,
+            name: person.name,
+            userId: req.user.userId
+        });
+        
+        res.status(201).json({
+            success: true,
+            data: result,
+            message: '人员信息创建成功'
+        });
+        
+    } catch (err) {
+        const error = err as Error;
+        logger.error('Error creating comprehensive person', { 
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.userId
+        });
+        res.status(500).json({
+            success: false,
+            message: '创建失败: ' + error.message
+        });
+    }
+};
+
+// 更新综合人员信息
+const updateComprehensivePerson = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                message: '请先登录'
+            });
+            return;
+        }
+
+        const id = parseInt(req.params.id);
+        const { person, ruralProfile, cooperation, skills } = req.body;
+        
+        logger.info('Updating comprehensive person info', { 
+            id,
+            name: person.name,
+            userId: req.user.userId,
+            userRole: req.user.role,
+            skillsCount: skills?.length || 0
+        });
+        
+        // 权限检查
+        if (req.user.role === 'user' && req.user.personId !== id) {
+            res.status(403).json({
+                success: false,
+                message: '您只能修改自己的信息'
+            });
+            return;
+        }
+
+        // 检查人员是否存在
+        const existingPerson = await databaseService.getPersonById(id);
+        if (!existingPerson) {
+            res.status(404).json({
+                success: false,
+                message: '人员信息不存在'
+            });
+            return;
+        }
+
+        // 更新综合信息
+        const result = await databaseService.updateComprehensivePerson(id, {
+            person,
+            ruralProfile,
+            cooperation,
+            skills
+        });
+        
+        logger.info('Comprehensive person updated successfully', { 
+            personId: id,
+            name: person.name,
+            userId: req.user.userId
+        });
+        
+        res.json({
+            success: true,
+            data: result,
+            message: '人员信息更新成功'
+        });
+        
+    } catch (err) {
+        const error = err as Error;
+        logger.error('Error updating comprehensive person', { 
+            id: req.params.id,
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.userId
+        });
+        res.status(500).json({
+            success: false,
+            message: '更新失败: ' + error.message
+        });
+    }
+};
+
 export {
     getAllPersons,
     getPersonById,
@@ -660,5 +801,7 @@ export {
     deleteSkill,
     searchTalents,
     getStatistics,
-    getSkillsLibraryStats
+    getSkillsLibraryStats,
+    createComprehensivePerson,
+    updateComprehensivePerson
 };

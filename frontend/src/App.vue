@@ -66,10 +66,13 @@ export default {
       try {
         await authStore.logout()
         ElMessage.success('退出登录成功')
-        router.push('/')
+        // 强制刷新页面确保游客状态正确显示
+        window.location.href = '/'
       } catch (error) {
         console.error('退出登录失败:', error)
         ElMessage.error('退出登录失败')
+        // 即使退出失败也刷新页面，确保清除可能的状态残留
+        window.location.href = '/'
       }
     }
     
