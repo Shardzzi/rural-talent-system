@@ -100,9 +100,7 @@ rural-talent-system/
 │   ├── simple-verification.js        # 系统健康检查
 │   ├── test_system_integration.js    # 系统集成测试
 │   └── test_dual_user_features.js    # 双用户权限测试
-│
-├── 📊 报告和文档                     # 项目报告和详细文档 (见 docs/ 目录)
-│
+││
 └── 📦 日志文件                       # 运行时日志
     ├── logs/backend.log              # 后端服务日志
     └── logs/frontend.log             # 前端服务日志
@@ -160,7 +158,7 @@ rural-talent-system/
 
 #### 生产模式 (推荐)
 ```bash
-chmod +x start-all.sh && ./start-all.sh
+./start-all.sh
 ```
 
 #### 开发模式
@@ -216,6 +214,7 @@ pnpm test
 pnpm --filter rural-talent-system-test test:all
 
 # 特定测试类型
+pnpm --filter rural-talent-system-test test:health        # 健康检查
 pnpm --filter rural-talent-system-test test:integration   # 集成测试
 pnpm --filter rural-talent-system-test test:permissions   # 权限测试
 ```
@@ -266,10 +265,8 @@ RESTful API设计，主要端点：
 ### 快速部署
 ```bash
 # 生产环境部署
-git clone <repository-url>
+git clone https://github.com/Shardzzi/rural-talent-system.git
 cd rural-talent-system
-pnpm install
-pnpm build
 ./start-all.sh
 ```
 
