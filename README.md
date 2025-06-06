@@ -100,7 +100,7 @@ rural-talent-system/
 │   ├── simple-verification.js        # 系统健康检查
 │   ├── test_system_integration.js    # 系统集成测试
 │   └── test_dual_user_features.js    # 双用户权限测试
-││
+│
 └── 📦 日志文件                       # 运行时日志
     ├── logs/backend.log              # 后端服务日志
     └── logs/frontend.log             # 前端服务日志
