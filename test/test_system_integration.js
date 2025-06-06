@@ -3,6 +3,15 @@ const axios = require('axios');
 const BASE_URL = 'http://localhost:8083/api';
 let token = '';
 let testPersonId = '';
+let testUserId = '';
+let cleanupData = {
+  personId: null,
+  userId: null,
+  token: null
+};
+
+// 添加延迟函数
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 辅助函数
 const makeRequest = async (method, url, data = null) => {
@@ -28,6 +37,42 @@ const makeRequest = async (method, url, data = null) => {
   }
 };
 
+// 清理测试数据
+async function cleanupTestData() {
+  console.log('\n🧹 清理测试数据...');
+  
+  try {
+    // 删除创建的人员信息（需要管理员权限）
+    if (cleanupData.personId) {
+      // 使用管理员账户登录
+      console.log('🔐 使用管理员权限清理数据...');
+      await sleep(300); // 添加延迟避免JWT token重复
+      const adminLogin = await makeRequest('POST', '/auth/login', {
+        username: 'admin',
+        password: 'admin123'
+      });
+      
+      // 设置管理员token
+      token = adminLogin.data.token;
+      
+      // 删除测试人员信息
+      await makeRequest('DELETE', `/persons/${cleanupData.personId}`);
+      console.log('✅ 已删除测试人员信息');
+    }
+    
+    // 注意：用户信息通常不会删除，因为可能涉及到数据完整性
+    // 在实际生产环境中，测试用户应该在专门的测试数据库中
+    console.log('ℹ️ 测试用户保留（符合数据保留策略）');
+    
+  } catch (error) {
+    if (error.response?.status === 404) {
+      console.log('ℹ️ 测试数据已不存在，无需清理');
+    } else {
+      console.error('⚠️ 清理数据时出现错误:', error.response?.data || error.message);
+    }
+  }
+}
+
 // 系统集成测试
 async function runIntegrationTest() {
   console.log('🚀 开始系统集成测试...\n');
@@ -48,11 +93,15 @@ async function runIntegrationTest() {
     
     // 2. 测试用户登录
     console.log('\n2. 测试用户登录...');
+    await sleep(200); // 添加延迟避免JWT token重复
     const loginResult = await makeRequest('POST', '/auth/login', {
       username: testUser.username,
       password: testUser.password
     });
     token = loginResult.data.token;
+    testUserId = loginResult.data.user.id;
+    cleanupData.token = token;
+    cleanupData.userId = testUserId;
     console.log('✅ 用户登录成功:', loginResult.message);
     console.log('   用户信息:', JSON.stringify(loginResult.data.user, null, 2));
     
@@ -76,6 +125,7 @@ async function runIntegrationTest() {
     
     const personResult = await makeRequest('POST', '/persons', testPerson);
     testPersonId = personResult.data.id;
+    cleanupData.personId = testPersonId;
     console.log('✅ 创建个人信息成功:', personResult.message);
     console.log('   个人信息ID:', testPersonId);
     
@@ -112,8 +162,13 @@ async function runIntegrationTest() {
     
   } catch (error) {
     console.error('\n❌ 系统集成测试失败:', error.response?.data || error.message);
+  } finally {
+    // 无论测试成功还是失败，都要清理数据
+    await cleanupTestData();
   }
 }
 
 // 运行测试
-runIntegrationTest();
+runIntegrationTest().catch(error => {
+  console.error('测试执行失败:', error);
+});

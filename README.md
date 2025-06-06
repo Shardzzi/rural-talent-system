@@ -14,28 +14,22 @@
 
 ## 🏗️ 系统架构
 
-### 技术栈
+现代化的前后端分离架构，具有轻量化、易部署、本地化的特点。
+
+### 🚀 技术栈概览
 ```
-前端: Vue 3 + Element Plus + Pinia + TypeScript
-后端: Node.js + Express + SQLite + TypeScript
-数据库: SQLite (轻量化部署)
-认证: JWT token认证
-构建: Vite 6.3.5 + 高级代码分割
-部署: 本地化部署，支持村、镇、县多级应用
+前端: Vue 3 + Element Plus + TypeScript + Vite
+后端: Node.js + Express + TypeScript + SQLite
+认证: JWT + bcrypt 密码加密
+构建: pnpm + 代码分割 + 按需加载
 ```
 
-### 性能特性 (v2.2.0 新增)
-- **超快加载**: 主包体积减少98%，首屏加载 < 1秒
-- **按需加载**: Element Plus 按需导入，组件包减少51%
-- **代码分割**: Vue、Element Plus、工具库独立打包
-- **国际化**: 完整的中文本地化支持
-- **TypeScript**: 全面的类型安全和开发体验
+### ⚡ 性能特性 (v2.2.0)
+- **超快加载**: 主包体积减少98%，首屏 < 1秒
+- **智能分包**: Vue、Element Plus、业务代码独立打包
+- **TypeScript**: 全栈类型安全和开发体验
 
-### 架构特点
-- **前后端分离**: Vue.js (前端) + Express.js (后端)
-- **数据存储**: SQLite数据库，轻量级部署
-- **认证机制**: JWT令牌认证，支持管理员和普通用户
-- **模块化设计**: 清晰的MVC架构，易于维护和扩展
+> 📖 **详细架构**: 查看 [技术架构文档](docs/TECHNICAL_ARCHITECTURE.md) 了解完整的架构设计、数据流、安全机制和性能优化
 
 ## 📁 项目结构
 
@@ -43,9 +37,16 @@
 rural-talent-system/
 ├── 📋 项目文档
 │   ├── README.md                      # 项目主要说明文档
-│   ├── PROJECT_DOCUMENTATION.md       # 完整项目文档 (本文件)
-│   ├── PROJECT_OVERVIEW.md           # 项目概览报告
-│   └── STARTUP_GUIDE.md              # 启动指南
+│   └── docs/                          # 详细文档目录
+│       ├── STARTUP_GUIDE.md           # 启动指南
+│       ├── CONTRIBUTING.md            # 贡献指南
+│       ├── AI_DISCLAIMER.md           # AI 代码免责声明
+│       ├── IMPLEMENTATION_PLAN.md     # 实现计划
+│       └── report/                    # 项目报告
+│           ├── PROJECT_COMPLETION_REPORT.md      # 项目完成报告
+│           ├── PROJECT_OPTIMIZATION_REPORT.md    # 性能优化报告
+│           ├── SYSTEM_INTEGRATION_TEST_REPORT.md # 系统集成测试报告
+│           └── FINAL_ACCEPTANCE_REPORT.md        # 最终验收报告
 │
 ├── 🛠️ 启动脚本
 │   ├── start-all.sh                  # 一键启动脚本
@@ -100,11 +101,7 @@ rural-talent-system/
 │   ├── test_system_integration.js    # 系统集成测试
 │   └── test_dual_user_features.js    # 双用户权限测试
 │
-├── 📊 report/                        # 项目报告和文档
-│   ├── PROJECT_COMPLETION_REPORT.md  # 项目完成报告
-│   ├── PROJECT_OPTIMIZATION_REPORT.md # 性能优化报告 (v2.2.0新增)
-│   ├── SYSTEM_INTEGRATION_TEST_REPORT.md # 系统集成测试报告
-│   └── FINAL_ACCEPTANCE_REPORT.md    # 最终验收报告
+├── 📊 报告和文档                     # 项目报告和详细文档 (见 docs/ 目录)
 │
 └── 📦 日志文件                       # 运行时日志
     ├── logs/backend.log              # 后端服务日志
@@ -142,10 +139,13 @@ rural-talent-system/
 
 ### 🔐 权限控制与数据安全
 - ✅ 三级权限控制：管理员、普通用户、访客
-- ✅ 数据脱敏功能：访客和普通用户看到脱敏后的信息
-- ✅ 敏感信息保护：手机号、身份证号等敏感信息权限控制
+- ✅ 数据脱敏功能：访客看到脱敏后的信息，登录用户看到完整信息
+- ✅ 操作权限控制：普通用户只能修改自己绑定的人员信息
+- ✅ 敏感信息保护：未登录用户无法查看敏感信息
 
 ## 🚀 快速启动
+
+> 💡 **详细启动指南**: 查看 [STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md) 获取完整的启动脚本说明和故障排除指南
 
 ### 📋 启动脚本
 
@@ -154,32 +154,21 @@ rural-talent-system/
 | `start-all.sh` | 一键启动前后端服务 | 生产环境/演示 |
 | `stop-all.sh` | 停止所有服务 | 停止服务 |
 | `restart-all.sh` | 重启所有服务 | 重新加载配置 |
-| `dev-start.sh` | 开发模式启动（带日志） | 开发调试 |
+| `dev-start.sh` | 开发模式启动（支持自动重启） | 开发调试 |
 
-### 🔧 使用方法
+### 🔧 快速使用
 
-#### 1. 生产/演示模式启动 (推荐)
+#### 生产模式 (推荐)
 ```bash
-# 给脚本执行权限
-chmod +x start-all.sh
-
-# 一键启动 (自动构建优化后的生产版本)
-./start-all.sh
-
-# 停止服务
-./stop-all.sh
-
-# 重启服务
-./restart-all.sh
+chmod +x start-all.sh && ./start-all.sh
 ```
 
-#### 2. 开发模式启动
+#### 开发模式
 ```bash
-# 开发模式（带实时日志输出和热重载）
-./dev-start.sh
-
-# 按 Ctrl+C 停止
+./dev-start.sh  # 支持自动重启和热重载
 ```
+
+> 📖 **更多使用方法**: 详细的脚本说明、故障排除和最佳实践请参考 [启动指南](docs/STARTUP_GUIDE.md)
 
 ### 📊 服务地址
 
@@ -193,55 +182,59 @@ chmod +x start-all.sh
 
 | 角色 | 用户名 | 密码 | 说明 |
 |-----|-------|------|------|
-| 管理员 | `admin` | `admin123` | 管理员权限，可查看完整信息 |
-| 普通用户 | `testuser` | `test123` | 普通用户权限，查看脱敏信息 |
+| 管理员 | `admin` | `admin123` | 管理员权限，可查看完整信息并管理系统 |
+| 普通用户 | `testuser` | `test123` | 普通用户权限，可查看完整信息但只能编辑自己的资料 |
+
+## 📦 依赖管理 (pnpm)
+
+本项目使用 pnpm 作为包管理器，提供极快的安装速度、严格的依赖管理和优秀的 Monorepo 支持。
+
+### 🚀 快速开始
+```bash
+# 安装所有依赖
+pnpm install
+
+# 启动开发环境
+pnpm dev
+
+# 运行测试
+pnpm test
+```
+
+> 📖 **详细指南**: 查看 [pnpm 使用指南](docs/PNPM_GUIDE.md) 了解完整的命令列表、工作区配置和最佳实践
 
 ## 🧪 测试系统
 
-### 测试覆盖
-本项目包含完整的测试套件，确保系统稳定性：
+本项目包含完整的测试套件，支持健康检查、系统集成测试和权限验证。
 
-#### 核心测试脚本
-1. **`simple-verification.js`** - 系统健康检查
-   - 检查服务端口状态
-   - 验证数据库连接和表结构
-   - 测试API端点可访问性
-
-2. **`test_system_integration.js`** - 系统集成测试
-   - 用户注册和登录流程
-   - 人员信息CRUD操作
-   - 权限控制验证
-
-3. **`test_dual_user_features.js`** - 双用户权限测试
-   - 管理员和普通用户的权限区别
-   - 数据脱敏功能验证
-
-### 运行测试
+### 🚀 快速测试
 ```bash
-# 进入测试目录
-cd test
+# 系统健康检查
+pnpm test
 
 # 运行所有测试
-./run-tests.sh all
+pnpm --filter rural-talent-system-test test:all
 
-# 运行特定测试
-./run-tests.sh health        # 系统健康检查
-./run-tests.sh integration   # 系统集成测试
-./run-tests.sh permissions   # 权限功能测试
+# 特定测试类型
+pnpm --filter rural-talent-system-test test:integration   # 集成测试
+pnpm --filter rural-talent-system-test test:permissions   # 权限测试
 ```
+
+> 📖 **详细指南**: 查看 [测试指南](docs/TESTING_GUIDE.md) 了解完整的测试分类、运行方式和故障排除
 
 ## 📊 项目状态
 
 ### ✅ 已完成功能
 - **用户认证系统**: 注册、登录、权限控制
 - **人员信息管理**: 完整的CRUD操作
-- **权限控制**: 三级权限体系
+- **权限控制**: 三级权限体系 (修复权限控制一致性问题)
 - **数据脱敏**: 敏感信息保护
 - **前端界面**: 响应式设计，三种角色界面
-- **测试系统**: 完整的自动化测试套件
+- **测试系统**: 完整的自动化测试套件 (v2.0优化)
 - **性能优化**: 代码分割、按需加载、构建优化 (v2.2.0)
 - **架构重构**: TypeScript化、模块化改进 (v2.2.0)
 - **国际化**: 完整的中文本地化支持 (v2.2.0)
+- **依赖管理**: 使用 pnpm 工作区管理，提升开发体验和性能
 
 ### 🔄 待优化功能
 - **文件上传**: 头像、证书等文件上传功能
@@ -266,37 +259,26 @@ RESTful API设计，主要端点：
 - `/api/persons/*` - 人员信息API
 - `/api/statistics` - 统计信息API
 
-### 前端架构
-- **Vue 3**: 渐进式JavaScript框架
-- **Element Plus**: UI组件库
-- **Pinia**: 状态管理
-- **Vue Router**: 路由管理
+> 📖 **详细架构**: 查看 [技术架构文档](docs/TECHNICAL_ARCHITECTURE.md) 了解完整的数据库设计、API规范和前端架构
 
-## 📈 部署建议
+## 🚀 部署指南
+
+### 快速部署
+```bash
+# 生产环境部署
+git clone <repository-url>
+cd rural-talent-system
+pnpm install
+pnpm build
+./start-all.sh
+```
 
 ### 环境要求
-- Node.js >= 20.0.0 (推荐 v20.19.2)
-- npm >= 8.0.0
-- SQLite3
+- **Node.js**: 20.x LTS (推荐)
+- **pnpm**: 8.15.0+
+- **系统**: Linux/macOS (推荐)
 
-### 部署步骤
-1. 克隆项目到服务器
-2. 安装依赖：`npm install`
-3. 配置环境变量
-4. 构建项目：`npm run build`
-5. 启动服务：`./start-all.sh`
-
-### 性能优化 (v2.2.0)
-- **构建优化**: 使用 Vite 代码分割，减少98%主包体积
-- **按需加载**: Element Plus 组件按需导入
-- **gzip压缩**: 静态资源压缩率提升52%
-- **缓存策略**: 长期缓存静态资源，短期缓存业务代码
-
-### 安全建议
-- 修改默认管理员密码
-- 配置HTTPS证书
-- 设置防火墙规则
-- 定期备份数据库
+> 📖 **完整部署**: 查看 [部署指南](docs/DEPLOYMENT_GUIDE.md) 了解详细的部署步骤、Docker配置、反向代理设置和生产环境优化
 
 ## 📞 支持与维护
 
@@ -317,7 +299,7 @@ RESTful API设计，主要端点：
 本项目采用 [MIT许可证](LICENSE) 开源，允许自由使用、修改和分发。
 
 ### AI生成代码声明
-本项目部分代码使用AI工具辅助生成，所有代码均经过人工审查和测试。请查看 [AI生成代码免责声明](AI_DISCLAIMER.md) 了解详细信息。
+本项目部分代码使用AI工具辅助生成，所有代码均经过人工审查和测试。请查看 [AI生成代码免责声明](docs/AI_DISCLAIMER.md) 了解详细信息。
 
 ### 重要提醒
 - ⚠️ 生产环境使用前请仔细阅读免责声明
@@ -327,8 +309,9 @@ RESTful API设计，主要端点：
 
 ---
 
-**项目状态**: ✅ 生产就绪 - 已完成全面性能优化  
-**文档更新**: 2025年5月30日  
+**项目状态**: ✅ 生产就绪 - 已完成全面性能优化和权限控制修复  
+**文档更新**: 2025年6月6日  
 **版本**: v2.2.0  
 **性能提升**: 主包体积减少98%，加载速度提升62%  
+**管理工具**: pnpm 工作区架构  
 **许可证**: MIT License

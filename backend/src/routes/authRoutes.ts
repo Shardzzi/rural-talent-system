@@ -1,8 +1,8 @@
-import express from 'express';
+import express, { Router } from 'express';
 import authController from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 // 用户注册
 router.post('/register', 

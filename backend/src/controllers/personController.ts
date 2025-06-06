@@ -111,32 +111,14 @@ const getPersonById = async (req: AuthenticatedRequest, res: Response): Promise<
         }
         
         if (req.user.role === 'user') {
-            // 普通用户只能看到自己的完整信息，其他人的部分信息
-            if (req.user.personId === id) {
-                // 自己的信息，可以看到完整信息
-                logger.info('User retrieved own person info', { id, name: person.name });
-                res.json({
-                    success: true,
-                    data: person
-                });
-                return;
-            } else {
-                // 其他人的信息，脱敏处理
-                const sanitizedInfo = {
-                    ...person,
-                    phone: person.phone ? person.phone.slice(0, 3) + '****' + person.phone.slice(-4) : '',
-                    email: person.email ? person.email.replace(/(.{2}).*(@.*)/, '$1***$2') : '',
-                    id_card: person.id_number ? person.id_number.slice(0, 6) + '********' + person.id_number.slice(-4) : '',
-                    current_address: person.address ? '***' : ''
-                };
-                
-                logger.info('User retrieved sanitized person info', { id, name: person.name });
-                res.json({
-                    success: true,
-                    data: sanitizedInfo
-                });
-                return;
-            }
+            // 普通用户可以看到完整信息（因为可能是求职者也可能是招聘者）
+            // 但只能修改自己绑定的人员信息（修改权限在 updatePerson 中控制）
+            logger.info('User retrieved person info', { id, name: person.name, isOwnInfo: req.user.personId === id });
+            res.json({
+                success: true,
+                data: person
+            });
+            return;
         }
         
         // 默认拒绝访问

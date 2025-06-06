@@ -30,12 +30,12 @@ function checkDatabase() {
     console.log('=====================================');
     
     // 检查数据库文件是否存在
-    const dbPath = '/home/shardzzi/person-info-nodejs/backend/data/persons.db';
+    const dbPath = '../backend/data/persons.db';
     execSync(`test -f ${dbPath}`);
     console.log('✅ 数据库文件存在');
     
     // 检查主要表结构
-    const tables = execSync(`cd /home/shardzzi/person-info-nodejs/backend && sqlite3 data/persons.db ".tables"`, 
+    const tables = execSync(`cd ../backend && sqlite3 data/persons.db ".tables"`, 
       { encoding: 'utf8' }).trim().split(/\s+/);
     
     const expectedTables = ['persons', 'users', 'rural_talent_profile', 'cooperation_intentions', 'talent_skills'];
@@ -49,11 +49,11 @@ function checkDatabase() {
     }
     
     // 检查数据记录数量
-    const personCount = execSync(`cd /home/shardzzi/person-info-nodejs/backend && sqlite3 data/persons.db "SELECT COUNT(*) FROM persons;"`, 
+    const personCount = execSync(`cd ../backend && sqlite3 data/persons.db "SELECT COUNT(*) FROM persons;"`, 
       { encoding: 'utf8' }).trim();
-    const userCount = execSync(`cd /home/shardzzi/person-info-nodejs/backend && sqlite3 data/persons.db "SELECT COUNT(*) FROM users;"`, 
+    const userCount = execSync(`cd ../backend && sqlite3 data/persons.db "SELECT COUNT(*) FROM users;"`, 
       { encoding: 'utf8' }).trim();
-    const ruralCount = execSync(`cd /home/shardzzi/person-info-nodejs/backend && sqlite3 data/persons.db "SELECT COUNT(*) FROM rural_talent_profile;"`, 
+    const ruralCount = execSync(`cd ../backend && sqlite3 data/persons.db "SELECT COUNT(*) FROM rural_talent_profile;"`, 
       { encoding: 'utf8' }).trim();
     
     console.log(`✅ 数据统计:`);
@@ -76,7 +76,7 @@ async function checkAPIEndpoints() {
   const baseURL = 'http://localhost:8083/api';
   const endpoints = [
     { path: '/persons', method: 'GET', name: '人员列表API' },
-    { path: '/auth/health', method: 'GET', name: '认证健康检查' }
+    { path: '/health', method: 'GET', name: '系统健康检查' }
   ];
   
   let allGood = true;
@@ -146,7 +146,7 @@ async function runHealthCheck() {
   }
   
   console.log('\n💡 提示:');
-  console.log('   - 如果服务未启动，请运行: npm run dev (在相应目录)');
+  console.log('   - 如果服务未启动，请运行: pnpm run dev (在相应目录)');
   console.log('   - 如果API无响应，请检查后端服务状态');
   console.log('   - 如果数据库有问题，请检查 backend/data/persons.db 文件');
 }

@@ -1,0 +1,50 @@
+{
+  "name": "rural-talent-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "数字乡村人才信息系统 - Monorepo",
+  "author": "数字乡村人才信息系统项目团队",
+  "license": "MIT",
+  "keywords": [
+    "nodejs",
+    "vue",
+    "express",
+    "sqlite",
+    "rural-talent",
+    "digital-countryside",
+    "talent-management"
+  ],
+  "scripts": {
+    "install:all": "pnpm install",
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel -r dev",
+    "start": "pnpm -r start",
+    "test": "pnpm --filter rural-talent-system-test test",
+    "clean": "pnpm -r clean && rm -rf node_modules .pnpm-store",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check",
+    "backend:dev": "pnpm --filter rural-talent-system-backend dev",
+    "backend:watch": "pnpm --filter rural-talent-system-backend dev:watch",
+    "frontend:dev": "pnpm --filter rural-talent-system-frontend dev",
+    "backend:build": "pnpm --filter rural-talent-system-backend build",
+    "frontend:build": "pnpm --filter rural-talent-system-frontend build",
+    "backend:start": "pnpm --filter rural-talent-system-backend start",
+    "frontend:start": "pnpm --filter rural-talent-system-frontend start",
+    "deps:check": "pnpm -r outdated",
+    "deps:update": "pnpm -r update",
+    "deps:why": "pnpm -r why",
+    "deps:audit": "pnpm audit --fix",
+    "deps:prune": "pnpm prune",
+    "deps:dedupe": "pnpm dedupe",
+    "deps:graph": "pnpm -r list --depth=1",
+    "deps:size": "du -sh node_modules backend/node_modules frontend/node_modules",
+    "deps:clean-cache": "pnpm store prune",
+    "workspace:graph": "pnpm -r list --depth=0",
+    "security:check": "pnpm audit --audit-level moderate"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

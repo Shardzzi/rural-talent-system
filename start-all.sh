@@ -24,61 +24,32 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# 检查npm
-if ! command -v npm &> /dev/null; then
-    echo -e "${RED}❌ npm 未安装，请先安装 npm${NC}"
+# 检查pnpm
+if ! command -v pnpm &> /dev/null; then
+    echo -e "${RED}❌ pnpm 未安装，请先安装 pnpm${NC}"
+    echo -e "${YELLOW}💡 安装方式: npm install -g pnpm${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✅ Node.js 和 npm 已安装${NC}"
+echo -e "${GREEN}✅ Node.js 和 pnpm 已安装${NC}"
 
-# 安装后端依赖
-echo -e "${YELLOW}📦 检查后端依赖...${NC}"
-cd backend
-if [ ! -d "node_modules" ]; then
-    echo -e "${YELLOW}正在安装后端依赖...${NC}"
-    npm install
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 后端依赖安装失败${NC}"
-        exit 1
-    fi
-else
-    echo -e "${GREEN}✅ 后端依赖已安装${NC}"
-fi
-
-# 构建 TypeScript 项目
-echo -e "${YELLOW}🔨 构建 TypeScript 项目...${NC}"
-npm run build
+# 安装所有依赖
+echo -e "${YELLOW}📦 安装项目依赖...${NC}"
+pnpm install
 if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ TypeScript 构建失败${NC}"
+    echo -e "${RED}❌ 依赖安装失败${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ TypeScript 构建成功${NC}"
+echo -e "${GREEN}✅ 所有依赖安装完成${NC}"
 
-# 安装前端依赖
-echo -e "${YELLOW}📦 检查前端依赖...${NC}"
-cd ../frontend
-if [ ! -d "node_modules" ]; then
-    echo -e "${YELLOW}正在安装前端依赖...${NC}"
-    npm install
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 前端依赖安装失败${NC}"
-        exit 1
-    fi
-else
-    echo -e "${GREEN}✅ 前端依赖已安装${NC}"
-fi
-
-# 构建前端项目（生产模式）
-echo -e "${YELLOW}🔨 构建前端项目...${NC}"
-npm run build
+# 构建所有项目
+echo -e "${YELLOW}🔨 构建项目...${NC}"
+pnpm build
 if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ 前端构建失败${NC}"
+    echo -e "${RED}❌ 项目构建失败${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ 前端构建成功${NC}"
-
-cd ..
+echo -e "${GREEN}✅ 项目构建成功${NC}"
 
 # 创建日志目录
 mkdir -p logs
@@ -87,8 +58,7 @@ echo -e "${BLUE}🔥 启动服务器...${NC}"
 
 # 启动后端服务器
 echo -e "${YELLOW}启动后端服务器 (端口 8083)...${NC}"
-cd backend
-npm start > ../logs/backend.log 2>&1 &
+pnpm backend:start > logs/backend.log 2>&1 &
 BACKEND_PID=$!
 echo "后端进程 ID: $BACKEND_PID"
 
@@ -105,9 +75,8 @@ else
 fi
 
 # 启动前端服务器（静态文件服务）
-cd ../frontend
 echo -e "${YELLOW}启动前端服务器 (端口 8081)...${NC}"
-npm start > ../logs/frontend.log 2>&1 &
+pnpm frontend:start > logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "前端进程 ID: $FRONTEND_PID"
 
@@ -120,8 +89,6 @@ if curl -s http://localhost:8081 > /dev/null; then
 else
     echo -e "${YELLOW}⚠️  前端服务器可能仍在启动中...${NC}"
 fi
-
-cd ..
 
 # 保存进程ID到文件
 echo "$BACKEND_PID" > .backend.pid

@@ -1,0 +1,18 @@
+{
+  "name": "rural-talent-system-test",
+  "version": "2.0.0",
+  "description": "数字乡村人才信息系统 - 测试套件",
+  "scripts": {
+    "test": "./run-tests.sh all",
+    "test:health": "./run-tests.sh health",
+    "test:integration": "./run-tests.sh integration",
+    "test:permissions": "./run-tests.sh permissions",
+    "test:all": "./run-tests.sh all"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "keywords": ["test", "rural-talent", "automation"],
+  "author": "Rural Talent System Team",
+  "license": "MIT"
+}

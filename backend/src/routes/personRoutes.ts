@@ -1,9 +1,9 @@
-import express from 'express';
+import express, { Router } from 'express';
 import { validatePerson, handleValidationErrors } from '../middleware/validation';
 import { authenticateToken, requireAdmin, requireUser, optionalAuth } from '../middleware/auth';
 import * as personController from '../controllers/personController';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 // 健康检查（无需认证）
 router.get('/health', personController.healthCheck);
