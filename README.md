@@ -62,7 +62,7 @@ cd rural-talent-system
 | `stop-all.sh` | 停止所有服务 | 停止服务 |
 | `restart-all.sh` | 重启所有服务 | 重新加载配置 |
 
-> 💡 **详细启动指南**: 查看 [STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md) 获取完整的启动脚本说明和故障排除指南
+> 💡 **详细启动指南**: 查看 [启动指南](docs/STARTUP_GUIDE.md) 获取完整的启动脚本说明和故障排除指南
 
 ## 🏗️ 系统架构
 
