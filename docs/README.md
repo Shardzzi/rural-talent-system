@@ -67,7 +67,7 @@
 - **[最终验收报告](report/FINAL_ACCEPTANCE_REPORT.md)** - ✅ 验收标准和测试结果
 
 ### ⚡ 技术报告
-- **[性能优化报告](report/PROJECT_OPTIMIZATION_REPORT.md)** - 🚀 系统性能优化 (v2.2.0)
+- **[性能优化报告](report/PROJECT_OPTIMIZATION_REPORT.md)** - 🚀 系统性能优化 (v2.2.1)
 - **[系统集成测试报告](report/SYSTEM_INTEGRATION_TEST_REPORT.md)** - 🧪 集成测试详细结果
 - **[数据库优化报告](report/DATABASE_OPTIMIZATION_REPORT.md)** - 🗄️ 数据库性能优化
 
