@@ -7,11 +7,30 @@ import {
     validateLinkPerson,
     handleValidationErrors
 } from '../middleware/validation';
+import { RequestHandler } from 'express';
+
+const rateLimiters = (req: express.Request): Record<string, RequestHandler> | undefined => {
+    return req.app.get('authRateLimiters') as Record<string, RequestHandler> | undefined;
+};
+
+const withAuthRateLimiter = (type: 'login' | 'register'): RequestHandler => {
+    return (req, res, next) => {
+        const limiter = rateLimiters(req)?.[type];
+
+        if (!limiter) {
+            next();
+            return;
+        }
+
+        limiter(req, res, next);
+    };
+};
 
 const router: Router = express.Router();
 
 // 用户注册
 router.post('/register', 
+    withAuthRateLimiter('register'),
     validateRegister, 
     handleValidationErrors,
     authController.registerValidation, 
@@ -20,6 +39,7 @@ router.post('/register',
 
 // 用户登录
 router.post('/login', 
+    withAuthRateLimiter('login'),
     authController.loginValidation, 
     authController.login
 );

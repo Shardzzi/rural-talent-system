@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import { Response } from 'express';
+import { randomUUID } from 'crypto';
 import { getDbService } from '../services/dbServiceFactory';
 import logger from '../config/logger';
 import { AuthenticatedRequest, User, JWTPayload, ApiResponse, UserPersonInfo } from '../types/index';
@@ -144,7 +145,10 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
             personId: user.person_id
         };
 
-        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { 
+            expiresIn: JWT_EXPIRES_IN,
+            jwtid: randomUUID()
+        });
 
         // 计算过期时间
         const expiresAt = new Date();
