@@ -14,16 +14,15 @@ This is a full-stack rural talent management system (数字乡村人才信息系
 pnpm install
 
 # Development mode (recommended for development)
-./dev-start.sh
+pnpm dev
 
 # Production mode
-./start-all.sh
+pnpm start
 
-# Stop all services
-./stop-all.sh
-
-# Restart all services
-./restart-all.sh
+# Docker deployment
+./docker-quick-start.sh
+./deploy.sh dev    # Development with MySQL
+./deploy.sh prod   # Production deployment
 ```
 
 ### Package Management (pnpm workspace)
@@ -100,7 +99,7 @@ SQLite database with tables for users, persons, rural_talent_profile, talent_ski
 ### Logging
 - Backend logs: `logs/backend.log`
 - Frontend logs: `logs/frontend.log`
-- Use `./clean-logs.sh` to clean log files
+- Logs directory is automatically created and managed by the application
 
 ## Code Patterns
 

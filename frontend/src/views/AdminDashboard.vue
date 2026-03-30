@@ -441,7 +441,7 @@ export default {
     
     const loadStats = async () => {
       try {
-        // TODO: 实现统计API
+        // 统计数据 - 将来可通过API获取实时数据
         stats.totalUsers = 25
         stats.onlineToday = 12
       } catch (error) {
@@ -521,7 +521,7 @@ export default {
     }
     
     const exportData = () => {
-      // TODO: 实现数据导出功能
+      // 数据导出功能 - 计划中
       ElMessage.info('导出功能开发中...')
     }
     

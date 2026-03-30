@@ -161,7 +161,7 @@ rural-talent-system/
 │   ├── Dockerfile                    # 容器构建配置
 │   ├── nginx.conf                    # 容器内 Nginx 配置
 │   └── package.json                  # 依赖配置
-
+│
 ├── 🧪 测试套件 (test/)
 │   ├── simple-verification.js        # 健康检查测试
 │   ├── test_system_integration.js    # 系统集成测试
