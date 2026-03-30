@@ -270,7 +270,7 @@
           <div v-for="(skill, index) in skillsList" :key="index" class="skill-item">
             <el-row :gutter="10">
               <el-col :span="6">
-                <el-form-item :prop="`skills.${index}.category`" label-width="0">
+                <el-form-item :prop="`skills.${index}.category`" :rules="[{ required: true, message: '请选择分类', trigger: 'change' }]" label-width="0">
                   <el-select 
                     v-model="skill.category" 
                     placeholder="请选择技能分类"
@@ -289,7 +289,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item :prop="`skills.${index}.name`" label-width="0">
+                <el-form-item :prop="`skills.${index}.name`" :rules="[{ required: true, message: '请输入名称', trigger: 'blur' }]" label-width="0">
                   <el-input 
                     v-model="skill.name" 
                     placeholder="如：玉米种植、养鸡技术"
@@ -519,6 +519,7 @@ export default {
       education_level: '',
       phone: '',
       email: '',
+      id_number: '',
       address: '',
       employment_status: '',
       political_status: '',
@@ -540,44 +541,91 @@ export default {
       contact_preference: '',
       
       // 其他信息
-      experience: ''
+      experience: '',
+      
+      // 技能专长(为了让el-form能验证动态数组)
+      skills: skillsList
     })
     
     // 表单验证规则
     const rules = {
       name: [
         { required: true, message: '请输入姓名', trigger: 'blur' },
-        { min: 2, max: 10, message: '姓名长度应在2-10个字符', trigger: 'blur' }
+        { min: 2, max: 50, message: '姓名长度应在2-50个字符', trigger: 'blur' }
       ],
       age: [
         { required: true, message: '请输入年龄', trigger: 'blur' },
-        { type: 'number', min: 16, max: 100, message: '年龄应在16-100岁之间', trigger: 'blur' }
+        { type: 'number', min: 1, max: 150, message: '年龄应在1-150岁之间', trigger: 'blur' }
       ],
       gender: [
         { required: true, message: '请选择性别', trigger: 'change' }
       ],
       education_level: [
-        { required: true, message: '请选择学历', trigger: 'change' }
+        { required: false, message: '请选择学历', trigger: 'change' }
       ],
       phone: [
-        { required: true, message: '请输入联系电话', trigger: 'blur' },
-        { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+        { required: false, pattern: /^(1[3-9]\d{9}|0\d{2,3}-\d{7,8})$/, message: '请输入正确的手机或固话号码', trigger: 'blur' }
       ],
       email: [
-        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+        { required: false, type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+      ],
+      id_number: [
+        { required: false, pattern: /^\d{17}[\dXx]$/, message: '请输入18位有效身份证号', trigger: 'blur' }
       ],
       address: [
-        { required: true, message: '请输入所在地区', trigger: 'blur' }
+        { required: false, message: '请输入所在地区', trigger: 'blur' }
       ],
       employment_status: [
-        { required: true, message: '请选择就业状态', trigger: 'change' }
+        { required: false, message: '请选择就业状态', trigger: 'change' }
       ],
       political_status: [
-        { required: true, message: '请选择政治面貌', trigger: 'change' }
+        { required: false, message: '请选择政治面貌', trigger: 'change' }
       ],
       experience: [
         { max: 500, message: '工作经验描述不超过500字符', trigger: 'blur' }
+      ],
+      farming_years: [
+        { type: 'number', min: 0, max: 100, message: '从事农业年限应在0-100年之间', trigger: 'blur' }
+      ],
+      planting_scale: [
+        { type: 'number', min: 0, message: '种植规模必须为正数', trigger: 'blur' }
+      ],
+      main_crops: [
+        {
+          validator: (rule, value, callback) => {
+            const hasRuralInfo = form.farming_years !== null || 
+                                 form.planting_scale !== null || 
+                                 (form.breeding_types && form.breeding_types.length > 0) ||
+                                 (form.cooperation_willingness && form.cooperation_willingness.length > 0) ||
+                                 (form.development_direction && form.development_direction.length > 0) ||
+                                 (form.available_time && form.available_time.length > 0);
+            if (hasRuralInfo && (!value || value.length === 0)) {
+              callback(new Error('填写了农村特色信息时，主要作物不能为空'));
+            } else {
+              callback();
+            }
+          },
+          trigger: 'change'
+        }
+      ],
+      cooperation_type: [
+        {
+          validator: (rule, value, callback) => {
+            const hasCooperationInfo = form.preferred_scale || 
+                                       form.investment_capacity !== null || 
+                                       form.time_availability || 
+                                       form.contact_preference;
+            if (hasCooperationInfo && !value) {
+              callback(new Error('填写了合作意向时，合作类型不能为空'));
+            } else {
+              callback();
+            }
+          },
+          trigger: 'change'
+        }
+      ],
+      investment_capacity: [
+        { type: 'number', min: 0, message: '投资能力必须为正数', trigger: 'blur' }
       ]
     }
     
@@ -871,7 +919,6 @@ export default {
           }
           
           response = await axios.post('/api/persons/comprehensive', createData)
-          ElMessage.success('信息添加成功')
           console.log('✅ 添加人员综合信息成功:', response.data)
           
           // 如果是用户模式，需要关联到用户账号
@@ -880,10 +927,18 @@ export default {
               await authStore.linkPersonToUser(response.data.data.id)
               console.log('✅ 用户关联人员信息成功')
             } catch (error) {
-              console.error('❌ 用户关联人员信息失败:', error)
-              // 不影响主流程，只是关联失败
+              console.error('❌ 用户关联人员信息失败，回滚人员创建:', error)
+              // 失败时回滚：删除刚刚创建的人员信息，保证状态一致性
+              try {
+                await axios.delete(`/api/persons/${response.data.data.id}`)
+              } catch (rollbackError) {
+                console.error('❌ 回滚人员创建失败:', rollbackError)
+              }
+              throw new Error('关联用户账号失败，已取消人员创建')
             }
           }
+          
+          ElMessage.success('信息添加成功')
         }
         
         emit('saved')
