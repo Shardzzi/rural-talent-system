@@ -1,0 +1,12 @@
+# 开发环境 Docker Compose 配置 (兼容性文件)
+# 数字乡村人才信息系统项目团队
+# 版本: v2.2.1
+#
+# 注意: 这是一个兼容性文件，实际配置位于 docker/ 目录中
+# 使用方式: docker-compose -f docker/docker-compose.yml up
+
+version: '3.8'
+
+# 此文件用于向后兼容
+# 请使用以下命令启动开发环境:
+# docker-compose -f docker/docker-compose.yml up -d

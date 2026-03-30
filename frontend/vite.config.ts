@@ -1,10 +1,23 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import viteCompression from 'vite-plugin-compression'
 import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    viteCompression({
+      algorithm: 'gzip',
+      threshold: 1024,
+      deleteOriginFile: false
+    }),
+    viteCompression({
+      algorithm: 'brotliCompress',
+      threshold: 1024,
+      deleteOriginFile: false
+    })
+  ],
   
   // 开发服务器配置
   server: {
@@ -52,6 +65,7 @@ export default defineConfig({
   
   // TypeScript配置
   esbuild: {
-    target: 'es2015'
+    target: 'es2015',
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
   }
 })

@@ -12,7 +12,7 @@
     <div class="dashboard-content">
       <!-- 统计卡片 -->
       <el-row :gutter="20" class="stats-row">
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8">
           <el-card class="stats-card">
             <div class="stats-item">
               <div class="stats-number">{{ totalPersons }}</div>
@@ -20,7 +20,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8">
           <el-card class="stats-card">
             <div class="stats-item">
               <div class="stats-number">{{ totalUsers }}</div>
@@ -28,7 +28,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8">
           <el-card class="stats-card">
             <div class="stats-item">
               <div class="stats-number">{{ onlineToday }}</div>
@@ -41,8 +41,9 @@
       <!-- 搜索和筛选 -->
       <el-card class="search-card">
         <div class="search-form">
-          <el-row :gutter="20" align="middle">
-            <el-col :span="6">
+          <!-- 第一行：搜索框 -->
+          <el-row :gutter="20" class="search-row">
+            <el-col :xs="24" :sm="18" :md="12" :lg="8">
               <el-input
                 v-model="searchKeyword"
                 placeholder="搜索姓名、技能、地区"
@@ -50,20 +51,35 @@
                 @clear="debouncedSearch"
                 @input="debouncedSearch"
                 @keyup.enter="handleSearch"
+                size="default"
               >
                 <template #prefix>
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
             </el-col>
-            <el-col :span="4">
-              <el-select 
-                v-model="filterAge" 
-                placeholder="年龄范围" 
+            <el-col :xs="24" :sm="6" :md="12" :lg="16" class="action-col">
+              <el-button type="primary" @click="handleSearch" :loading="loading" size="default">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button @click="resetFilters" size="default" v-if="hasActiveFilters">
+                重置
+              </el-button>
+            </el-col>
+          </el-row>
+
+          <!-- 第二行：筛选条件 -->
+          <el-row :gutter="20" class="filter-row" v-show="showAdvancedFilters || hasActiveFilters">
+            <el-col :xs="24" :sm="12" :md="6" :lg="4">
+              <el-select
+                v-model="filterAge"
+                placeholder="年龄范围"
                 clearable
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
                 :teleported="false"
+                size="default"
               >
                 <el-option label="18-25岁" value="18-25" />
                 <el-option label="26-35岁" value="26-35" />
@@ -72,14 +88,15 @@
                 <el-option label="55岁以上" value="55+" />
               </el-select>
             </el-col>
-            <el-col :span="4">
-              <el-select 
-                v-model="filterEducation" 
-                placeholder="学历" 
-                clearable 
+            <el-col :xs="24" :sm="12" :md="6" :lg="4">
+              <el-select
+                v-model="filterEducation"
+                placeholder="学历"
+                clearable
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
                 :teleported="false"
+                size="default"
               >
                 <el-option label="高中及以下" value="高中及以下" />
                 <el-option label="专科" value="专科" />
@@ -87,29 +104,41 @@
                 <el-option label="硕士及以上" value="硕士及以上" />
               </el-select>
             </el-col>
-            <el-col :span="4">
-              <el-select 
-                v-model="filterStatus" 
-                placeholder="状态" 
+            <el-col :xs="24" :sm="12" :md="6" :lg="4">
+              <el-select
+                v-model="filterStatus"
+                placeholder="状态"
                 clearable
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
                 :teleported="false"
+                size="default"
               >
                 <el-option label="在岗" value="在岗" />
                 <el-option label="求职中" value="求职中" />
                 <el-option label="已退休" value="已退休" />
               </el-select>
             </el-col>
-            <el-col :span="6">
-              <el-button type="primary" @click="handleSearch">
-                <el-icon><Search /></el-icon>
-                搜索
-              </el-button>
-              <el-button @click="resetFilters">重置</el-button>
-              <el-button type="success" @click="exportData">
+            <el-col :xs="24" :sm="24" :md="6" :lg="8" class="filter-action-col">
+              <el-button
+                type="success"
+                @click="exportData"
+                size="default"
+                class="export-btn"
+              >
                 <el-icon><Download /></el-icon>
-                导出
+                导出数据
+              </el-button>
+              <el-button
+                type="text"
+                @click="showAdvancedFilters = !showAdvancedFilters"
+                size="default"
+                class="toggle-filters-btn"
+              >
+                {{ showAdvancedFilters ? '收起筛选' : '展开筛选' }}
+                <el-icon>
+                  <component :is="showAdvancedFilters ? 'ArrowUp' : 'ArrowDown'" />
+                </el-icon>
               </el-button>
             </el-col>
           </el-row>
@@ -134,43 +163,94 @@
           element-loading-text="正在加载..."
           style="width: 100%"
           :row-class-name="tableRowClassName"
+          :default-sort="{ prop: 'created_at', order: 'descending' }"
         >
-          <el-table-column type="index" label="序号" width="60" />
-          <el-table-column prop="name" label="姓名" width="100" />
-          <el-table-column prop="age" label="年龄" width="80" />
-          <el-table-column prop="gender" label="性别" width="80" />
-          <el-table-column prop="education_level" label="学历" width="120" />
-          <el-table-column prop="skills" label="技能专长" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="address" label="所在地区" width="120" />
-          <el-table-column prop="phone" label="联系电话" width="130" />
-          <el-table-column prop="email" label="邮箱" width="180" show-overflow-tooltip />
-          <el-table-column prop="employment_status" label="就业状态" width="100" />
-          <el-table-column prop="created_at" label="创建时间" width="160">
+          <el-table-column type="expand">
+            <template #default="{ row }">
+              <div class="expand-content">
+                <div class="expand-row">
+                  <span class="expand-label">邮箱:</span>
+                  <span class="expand-value">{{ row.email || '未填写' }}</span>
+                </div>
+                <div class="expand-row">
+                  <span class="expand-label">电话:</span>
+                  <span class="expand-value">{{ row.phone || '未填写' }}</span>
+                </div>
+                <div class="expand-row">
+                  <span class="expand-label">技能专长:</span>
+                  <span class="expand-value">{{ row.skills || '未填写' }}</span>
+                </div>
+                <div class="expand-row">
+                  <span class="expand-label">创建时间:</span>
+                  <span class="expand-value">{{ formatDate(row.created_at) }}</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column type="index" label="序号" :width="60" />
+          <el-table-column prop="name" label="姓名" min-width="80" :width="100" />
+          <el-table-column prop="age" label="年龄" :width="60" />
+          <el-table-column prop="gender" label="性别" :width="60" />
+          <el-table-column prop="education_level" label="学历" :width="100" class-name="hidden-xs-only" />
+          <el-table-column prop="skills" label="技能专长" min-width="120" show-overflow-tooltip class-name="hidden-sm-and-down" />
+          <el-table-column prop="address" label="所在地区" min-width="100" show-overflow-tooltip class-name="hidden-sm-only" />
+          <el-table-column prop="phone" label="联系电话" min-width="110" show-overflow-tooltip class-name="hidden-md-only" />
+          <el-table-column prop="email" label="邮箱" min-width="150" show-overflow-tooltip class-name="hidden-lg-only" />
+          <el-table-column prop="employment_status" label="就业状态" :width="90" class-name="hidden-xs-only" />
+          <el-table-column prop="created_at" label="创建时间" :width="160" class-name="hidden-md-and-down">
             <template #default="scope">
               {{ formatDate(scope.row.created_at) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="240" fixed="right">
+          <el-table-column label="操作" :width="isMobile ? 120 : 240" fixed="right">
             <template #default="scope">
-              <div class="action-buttons">              <el-button type="info" size="small" @click="viewPerson(scope.row)">
-                <el-icon><ViewIcon /></el-icon>
-                详情
-              </el-button>
-                <el-button type="primary" size="small" @click="editPerson(scope.row)">
-                  <el-icon><Edit /></el-icon>
-                  编辑
-                </el-button>
-                <el-popconfirm
-                  title="确定删除这条记录吗？"
-                  @confirm="deletePerson(scope.row.id)"
-                >
-                  <template #reference>
-                    <el-button type="danger" size="small">
-                      <el-icon><Delete /></el-icon>
-                      删除
+              <div class="action-buttons">
+                <!-- 移动端显示图标按钮 -->
+                <template v-if="isMobile">
+                  <el-dropdown trigger="click">
+                    <el-button type="primary" size="small">
+                      <el-icon><MoreFilled /></el-icon>
                     </el-button>
-                  </template>
-                </el-popconfirm>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="viewPerson(scope.row)">
+                          <el-icon><ViewIcon /></el-icon>
+                          详情
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="editPerson(scope.row)">
+                          <el-icon><Edit /></el-icon>
+                          编辑
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="confirmDelete(scope.row)" class="danger-item">
+                          <el-icon><Delete /></el-icon>
+                          删除
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </template>
+                <!-- 桌面端显示完整按钮 -->
+                <template v-else>
+                  <el-button type="info" size="small" @click="viewPerson(scope.row)">
+                    <el-icon><ViewIcon /></el-icon>
+                    详情
+                  </el-button>
+                  <el-button type="primary" size="small" @click="editPerson(scope.row)">
+                    <el-icon><Edit /></el-icon>
+                    编辑
+                  </el-button>
+                  <el-popconfirm
+                    title="确定删除这条记录吗？"
+                    @confirm="deletePerson(scope.row.id)"
+                  >
+                    <template #reference>
+                      <el-button type="danger" size="small">
+                        <el-icon><Delete /></el-icon>
+                        删除
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </template>
               </div>
             </template>
           </el-table-column>
@@ -225,8 +305,8 @@
 
 <script>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Plus, Search, Download, Refresh, Edit, Delete, View as ViewIcon, DocumentRemove } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Search, Download, Refresh, Edit, Delete, View as ViewIcon, DocumentRemove, MoreFilled } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import PersonFormDialog from '../components/PersonFormDialog.vue'
@@ -244,7 +324,8 @@ export default {
     Edit,
     Delete,
     ViewIcon,
-    DocumentRemove
+    DocumentRemove,
+    MoreFilled
   },
   setup() {
     const router = useRouter()
@@ -263,6 +344,7 @@ export default {
     const filterEducation = ref('')
     const filterStatus = ref('')
     const searchTrigger = ref(0) // 用于手动触发搜索
+    const showAdvancedFilters = ref(false) // 是否显示高级筛选
     
     // 分页
     const currentPage = ref(1)
@@ -274,6 +356,11 @@ export default {
       totalPersons: 0,
       totalUsers: 0,
       onlineToday: 0
+    })
+
+    // 响应式计算
+    const isMobile = computed(() => {
+      return window.innerWidth < 768
     })
     
     // 计算属性
@@ -455,6 +542,18 @@ export default {
       if (!dateString) return ''
       return new Date(dateString).toLocaleString('zh-CN')
     }
+
+    const confirmDelete = (person) => {
+      ElMessageBox.confirm(`确定要删除人员 "${person.name}" 吗？`, '确认删除', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deletePerson(person.id)
+      }).catch(() => {
+        // 用户取消删除
+      })
+    }
     
     // 生命周期
     onMounted(() => {
@@ -475,9 +574,11 @@ export default {
       filterAge,
       filterEducation,
       filterStatus,
+      showAdvancedFilters,
       currentPage,
       pageSize,
       totalCount,
+      isMobile,
       totalPersons: computed(() => stats.totalPersons),
       totalUsers: computed(() => stats.totalUsers),
       onlineToday: computed(() => stats.onlineToday),
@@ -489,6 +590,7 @@ export default {
       viewPerson,
       editPerson,
       deletePerson,
+      confirmDelete,
       handlePersonSaved,
       exportData,
       handleSizeChange,
@@ -509,6 +611,13 @@ export default {
   padding: 20px;
 }
 
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 10px;
+  }
+}
+
 .dashboard-content {
   width: 100%;
   margin-top: 20px;
@@ -520,6 +629,11 @@ export default {
 
 .stats-card {
   text-align: center;
+  transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
 }
 
 .stats-item {
@@ -531,6 +645,7 @@ export default {
   font-weight: bold;
   color: #409EFF;
   margin-bottom: 8px;
+  line-height: 1;
 }
 
 .stats-label {
@@ -546,6 +661,72 @@ export default {
   padding: 10px 0;
 }
 
+.search-row {
+  margin-bottom: 10px;
+}
+
+.filter-row {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.action-col {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.filter-action-col {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.export-btn {
+  margin-left: auto;
+}
+
+.toggle-filters-btn {
+  color: #909399;
+}
+
+/* 响应式统计卡片 */
+@media (max-width: 576px) {
+  .stats-number {
+    font-size: 24px;
+  }
+
+  .stats-label {
+    font-size: 12px;
+  }
+
+  .stats-item {
+    padding: 15px 10px;
+  }
+}
+
+/* 搜索表单响应式 */
+@media (max-width: 768px) {
+  .action-col,
+  .filter-action-col {
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .search-row {
+    margin-bottom: 15px;
+  }
+
+  .export-btn {
+    margin-left: 0;
+  }
+}
+
 .table-card {
   margin-bottom: 20px;
 }
@@ -554,6 +735,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .pagination-wrapper {
@@ -561,6 +744,7 @@ export default {
   text-align: right;
 }
 
+/* 表格行样式 */
 :deep(.even-row) {
   background-color: #fafafa;
 }
@@ -569,6 +753,7 @@ export default {
   background-color: #ffffff;
 }
 
+/* 操作按钮样式 */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -579,6 +764,79 @@ export default {
 
 .action-buttons .el-button {
   margin: 0;
+  min-width: auto;
+}
+
+/* 移动端表格样式 */
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .action-buttons {
+    justify-content: center;
+    gap: 5px;
+  }
+
+  :deep(.el-table) {
+    font-size: 14px;
+  }
+
+  :deep(.el-table .cell) {
+    padding: 8px 5px;
+  }
+
+  :deep(.el-table th) {
+    padding: 8px 5px;
+  }
+}
+
+/* 表格展开行样式 */
+.expand-content {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin: 10px;
+}
+
+.expand-row {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.expand-row:last-child {
+  margin-bottom: 0;
+}
+
+.expand-label {
+  font-weight: bold;
+  color: #606266;
+  min-width: 80px;
+  margin-right: 10px;
+}
+
+.expand-value {
+  color: #303133;
+  flex: 1;
+}
+
+/* 分页响应式 */
+@media (max-width: 768px) {
+  .pagination-wrapper {
+    text-align: center;
+  }
+
+  :deep(.el-pagination) {
+    justify-content: center;
+  }
+
+  :deep(.el-pagination .el-pagination__sizes),
+  :deep(.el-pagination .el-pagination__jump) {
+    display: none;
+  }
 }
 
 /* 无结果提示样式 */

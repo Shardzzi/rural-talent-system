@@ -2,8 +2,8 @@
 
 [![Version](https://img.shields.io/badge/version-v2.2.1-blue.svg)](https://github.com/Shardzzi/rural-talent-system)
 [![Status](https://img.shields.io/badge/status-production--ready-green.svg)](https://github.com/Shardzzi/rural-talent-system)
-[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
-[![Performance](https://img.shields.io/badge/performance-98%25_optimized-brightgreen.svg)](docs/PROJECT_OPTIMIZATION_REPORT.md)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](docs/LICENSE)
+[![Performance](https://img.shields.io/badge/performance-98%25_optimized-brightgreen.svg)](docs/PROJECT_SUMMARY.md)
 
 > 🌾 **助力乡村振兴的智能人才信息管理平台**  
 > 现代化全栈架构 • 生产就绪 • 98%性能优化 • TypeScript全栈
@@ -31,14 +31,32 @@
 
 ## 🚀 快速开始
 
-### ⚡ 一键启动
+### ⚡ 一键启动 (推荐)
 ```bash
 # 克隆项目
 git clone https://github.com/Shardzzi/rural-talent-system.git
 cd rural-talent-system
 
-# 一键启动（推荐）
-./start-all.sh
+# 安装依赖
+pnpm install
+
+# 启动开发环境（推荐）
+pnpm dev
+```
+
+### 🐳 Docker 部署方式
+```bash
+# 🚀 Docker 快速启动（推荐）
+./docker-quick-start.sh
+
+# 手动简化版 Docker 开发环境
+docker-compose -f docker-compose.dev.yml up --build
+
+# 完整版 Docker 开发环境（包含 MySQL + phpMyAdmin）
+./deploy.sh dev
+
+# Docker 生产环境部署（需要 .env 配置文件）
+./deploy.sh prod
 ```
 
 ### 📊 访问地址
@@ -54,25 +72,30 @@ cd rural-talent-system
 | 管理员 | `admin` | `admin123` | 管理员权限，可查看完整信息并管理系统 |
 | 普通用户 | `testuser` | `test123` | 普通用户权限，可查看完整信息但只能编辑自己的资料 |
 
-### 📋 启动脚本说明
-| 脚本名称 | 功能描述 | 使用场景 |
-|---------|---------|---------|
-| `start-all.sh` | 一键启动前后端服务 | 生产环境/演示 |
-| `dev-start.sh` | 开发模式启动（支持自动重启） | 开发调试 |
-| `stop-all.sh` | 停止所有服务 | 停止服务 |
-| `restart-all.sh` | 重启所有服务 | 重新加载配置 |
+### 📋 部署命令说明
+| 命令 | 功能描述 | 使用场景 |
+|-----|---------|---------|
+| `pnpm dev` | 本地开发环境 | 推荐/开发调试 |
+| `./docker-quick-start.sh` | Docker 快速启动 | 轻量级容器化开发 |
+| `docker-compose -f docker-compose.dev.yml up` | 手动Docker开发 | 自定义配置 |
+| `./deploy.sh dev` | 完整Docker开发环境 | 包含MySQL+phpMyAdmin |
+| `./deploy.sh prod` | Docker生产环境 | 生产级容器化部署 |
+| `./deploy.sh stop` | 停止Docker服务 | 停止所有容器 |
+| `./deploy.sh status` | 查看服务状态 | 容器健康检查 |
+| `./deploy.sh logs` | 查看服务日志 | 问题排查和调试 |
 
-> 💡 **详细启动指南**: 查看 [启动指南](docs/STARTUP_GUIDE.md) 获取完整的启动脚本说明和故障排除指南
+> 💡 **详细部署指南**: 查看 [Docker部署文档](docs/DOCKER_DEPLOYMENT_GUIDE.md) 获取完整的部署说明和故障排除指南
 
 ## 🏗️ 系统架构
 
 ### 💻 技术栈概览
 ```
 前端: Vue 3 + Element Plus + TypeScript + Vite
-后端: Node.js + Express + TypeScript + SQLite
+后端: Node.js + Express + TypeScript + MySQL
 认证: JWT + bcrypt 密码加密
+容器化: Docker + Docker Compose
 构建: pnpm + 代码分割 + 按需加载
-部署: 一键脚本部署
+部署: 一键Docker部署
 ```
 
 ### ⚡ 性能特性 (v2.2.1)
@@ -81,80 +104,82 @@ cd rural-talent-system
 - **🔧 TypeScript**: 全栈类型安全和开发体验
 - **💻 PC端优化**: 专为桌面环境设计，流畅体验
 
-> 📖 **详细架构**: 查看 [技术架构文档](docs/TECHNICAL_ARCHITECTURE.md) 了解完整的架构设计、数据流、安全机制和性能优化
+> 📖 **详细架构**: 查看 [项目结构文档](docs/PROJECT_STRUCTURE.md) 了解完整的架构设计、技术栈和项目组织
+
+## 📁 项目结构
 
 ```
 rural-talent-system/
-├── 📋 项目文档
-│   ├── README.md                      # 项目主要说明文档
+├── 📄 核心文档
+│   ├── README.md                      # 项目说明文档
+│   ├── CLAUDE.md                      # Claude AI 开发指南
 │   └── docs/                          # 详细文档目录
-│       ├── STARTUP_GUIDE.md           # 启动指南
-│       ├── CONTRIBUTING.md            # 贡献指南
+│       ├── PROJECT_SUMMARY.md         # 项目总结和成果展示
+│       ├── PROJECT_STRUCTURE.md       # 项目结构说明
+│       ├── DOCKER_README.md           # Docker 部署指南
 │       ├── AI_DISCLAIMER.md           # AI 代码免责声明
-│       ├── IMPLEMENTATION_PLAN.md     # 实现计划
-│       └── report/                    # 项目报告
-│           ├── PROJECT_COMPLETION_REPORT.md      # 项目完成报告
-│           ├── PROJECT_OPTIMIZATION_REPORT.md    # 性能优化报告
-│           ├── SYSTEM_INTEGRATION_TEST_REPORT.md # 系统集成测试报告
-│           └── FINAL_ACCEPTANCE_REPORT.md        # 最终验收报告
+│       └── LICENSE                    # 开源协议
 │
-├── 🛠️ 启动脚本
-│   ├── start-all.sh                  # 一键启动脚本
-│   ├── stop-all.sh                   # 停止服务脚本
-│   ├── restart-all.sh                # 重启服务脚本
-│   ├── dev-start.sh                  # 开发模式启动
-│   └── clean-logs.sh                 # 清理日志脚本
+├── 🚀 部署管理
+│   ├── deploy.sh                      # 统一部署入口脚本
+│   ├── docker/                        # Docker 配置目录
+│   │   ├── docker-compose.yml         # 开发环境配置
+│   │   └── docker-compose.prod.yml    # 生产环境配置
+│   └── scripts/                       # 部署管理脚本
+│       ├── docker-deploy.sh           # Docker 部署脚本
+│       └── quick-docker-start.sh      # 快速启动脚本
 │
-├── 🖥️ backend/                       # Node.js + Express + TypeScript 后端
-│   ├── src/                           # TypeScript 源代码目录 (v2.2.1重构)
-│   │   ├── app.ts                     # 主应用入口文件
-│   │   ├── config/                    # 配置文件
-│   │   │   └── logger.ts                  # 日志配置
-│   │   ├── controllers/                   # 控制器层
-│   │   │   ├── authController.ts          # 认证控制器
-│   │   │   └── personController.ts        # 人员信息控制器
-│   │   ├── middleware/                    # 中间件
-│   │   │   ├── auth.ts                    # 认证中间件
-│   │   │   ├── errorHandler.ts            # 错误处理中间件
-│   │   │   └── validation.ts              # 数据验证中间件
-│   │   ├── routes/                        # 路由定义
-│   │   │   ├── authRoutes.ts              # 认证路由
-│   │   │   └── personRoutes.ts            # 人员信息路由
-│   │   ├── services/                      # 服务层
-│   │   │   └── databaseService.ts         # 数据库服务
-│   │   └── types/                         # TypeScript 类型定义
-│   │       └── index.ts                   # 通用类型定义
-│   ├── data/                          # 数据文件
-│   │   └── persons.db                 # SQLite数据库文件
+├── 🗄️ 数据库配置
+│   └── database/                      # 数据库相关配置
+│       ├── init.sql                   # MySQL 初始化脚本
+│       ├── my.cnf                     # MySQL 配置文件
+│       ├── migrate-data.js            # 数据迁移工具
+│       └── test.env                   # 测试环境配置
 │
-├── 🎨 frontend/                       # Vue 3 + TypeScript 前端界面
-│   ├── vite.config.ts                 # Vite 构建配置 (v2.2.1优化)
-│   ├── src/                          # 源代码
-│   │   ├── components/               # 可复用组件
-│   │   │   ├── LoginForm.vue         # 登录表单
-│   │   │   ├── PersonDetailDialog.vue # 人员详情对话框
-│   │   │   ├── PersonFormDialog.vue  # 人员表单对话框
-│   │   │   └── RuralTalentManager.vue # 农村人才管理器
+├── 🌐 Web 服务器
+│   └── nginx/                         # Nginx 配置
+│       ├── nginx.conf                 # 主配置文件
+│       └── conf.d/
+│           └── default.conf           # 默认站点配置
+│
+├── 🖥️ 后端应用 (backend/)
+│   ├── src/                           # TypeScript 源代码
+│   │   ├── controllers/               # 控制器层
+│   │   ├── services/                  # 服务层
+│   │   ├── middleware/                # 中间件
+│   │   ├── routes/                    # 路由定义
+│   │   └── types/                     # 类型定义
+│   ├── Dockerfile                     # 容器构建配置
+│   └── package.json                   # 依赖配置
+│
+├── 🎨 前端应用 (frontend/)
+│   ├── src/                          # Vue 3 源代码
 │   │   ├── views/                    # 页面视图
-│   │   │   ├── AdminDashboard.vue    # 管理员仪表板
-│   │   │   ├── UserDashboard.vue     # 用户仪表板
-│   │   │   └── GuestView.vue         # 访客视图
-│   │   ├── stores/                   # 状态管理
-│   │   │   └── auth.js               # 认证状态管理
-│   │   └── api/                      # API接口
-│   │       └── persons.js            # 人员信息API
-│   └── public/                       # 静态资源
-│
-├── 🧪 test/                          # 测试脚本和工具
-│   ├── run-tests.sh                  # 自动化测试脚本
-│   ├── simple-verification.js        # 系统健康检查
+│   │   ├── components/               # 可复用组件
+│   │   ├── stores/                   # Pinia 状态管理
+│   │   └── api/                      # API 服务层
+│   ├── Dockerfile                    # 容器构建配置
+│   ├── nginx.conf                    # 容器内 Nginx 配置
+│   └── package.json                  # 依赖配置
+
+├── 🧪 测试套件 (test/)
+│   ├── simple-verification.js        # 健康检查测试
 │   ├── test_system_integration.js    # 系统集成测试
 │   └── test_dual_user_features.js    # 双用户权限测试
-│
-└── 📦 日志文件                       # 运行时日志
-    ├── logs/backend.log              # 后端服务日志
-    └── logs/frontend.log             # 前端服务日志
+
+├── ⚙️ 项目配置
+│   ├── package.json                  # 根项目配置
+│   ├── pnpm-workspace.yaml          # pnpm 工作空间配置
+│   └── .env.example                 # 环境变量模板
+
+├── 📁 运行时目录 (Git 忽略)
+│   ├── data/                        # 数据目录
+│   ├── logs/                        # 日志目录
+│   ├── ssl/                         # SSL 证书目录
+│   └── backups/                     # 备份目录
 ```
+
+> 💡 **完整项目结构**: 查看 [详细项目结构文档](docs/PROJECT_STRUCTURE.md) 了解所有目录和文件的详细说明
 
 ## 🚀 核心功能特性
 

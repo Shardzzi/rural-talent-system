@@ -1,0 +1,135 @@
+
+services:
+  # MySQL 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: rural-talent-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_2024
+      MYSQL_DATABASE: rural_talent_system
+      MYSQL_USER: rural_app
+      MYSQL_PASSWORD: rural_password_2024
+      TZ: 'Asia/Shanghai'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - mysql_logs:/var/log/mysql
+      - ./database/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - rural-talent-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 40s
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: rural-talent-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 8083
+      DB_TYPE: mysql
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: rural_app
+      MYSQL_PASSWORD: rural_password_2024
+      MYSQL_DATABASE: rural_talent_system
+      JWT_SECRET: rural_talent_system_secret_key_2025
+      TZ: 'Asia/Shanghai'
+    ports:
+      - "8083:8083"
+    volumes:
+      - backend_logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - rural-talent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/api/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 60s
+
+  # 前端 Web 服务
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    container_name: rural-talent-frontend
+    restart: unless-stopped
+    environment:
+      TZ: 'Asia/Shanghai'
+    ports:
+      - "8081:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - rural-talent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+
+  # 数据库管理工具（可选）
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: rural-talent-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: rural_app
+      PMA_PASSWORD: rural_password_2024
+      MYSQL_ROOT_PASSWORD: root_password_2024
+      TZ: 'Asia/Shanghai'
+    ports:
+      - "8080:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - rural-talent-network
+
+# 网络配置
+networks:
+  rural-talent-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+# 数据卷配置
+volumes:
+  mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/mysql
+  mysql_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs/mysql
+  backend_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs/backend

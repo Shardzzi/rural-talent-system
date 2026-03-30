@@ -1,0 +1,18 @@
+# 忽略不需要的文件
+node_modules/
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+dist/
+build/
+*.log
+.DS_Store
+Thumbs.db
+
+# 保留需要的文件
+!backend/
+!frontend/
+!pnpm-lock.yaml
+!frontend/nginx.conf

@@ -1,10 +1,12 @@
 import { Response, NextFunction } from 'express';
 import logger from '../config/logger';
-import databaseService from '../services/databaseService';
+import { getDbService } from '../services/dbServiceFactory';
 import { AuthenticatedRequest, Person, ApiResponse } from '../types/index';
 
 // 获取所有人员信息
 const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    // 获取数据库服务
+    
     try {
         logger.info('Getting all persons', { 
             user: req.user ? { id: req.user.userId, role: req.user.role } : 'anonymous'
@@ -15,7 +17,7 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         // 权限控制：游客只能看到脱敏的基本信息，用户和管理员可以看到完整信息
         if (!req.user) {
             // 未登录用户只能看到基本的公开信息
-            persons = await databaseService.getAllPersons() as Person[];
+            persons = await getDbService(req).getAllPersons() as Person[];
             // 过滤敏感信息
             const sanitizedPersons = persons.map(person => ({
                 id: person.id,
@@ -36,7 +38,7 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         } else {
             // 登录用户（包括普通用户和管理员）可以看到所有详细信息
             // 这是因为用户既可能是求职者也可能是招聘者，需要看到完整的人才信息
-            persons = await databaseService.getAllPersonsWithDetails() as Person[];
+            persons = await getDbService(req).getAllPersonsWithDetails() as Person[];
         }
         
         logger.info('Retrieved all persons successfully', { 
@@ -70,7 +72,7 @@ const getPersonById = async (req: AuthenticatedRequest, res: Response): Promise<
             user: req.user ? { id: req.user.userId, role: req.user.role, personId: req.user.personId } : 'anonymous'
         });
         
-        const person = await databaseService.getPersonById(id) as Person | null;
+        const person = await getDbService(req).getPersonById(id) as Person | null;
         
         if (!person) {
             logger.warn('Person not found', { id });
@@ -169,7 +171,7 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
             return;
         }
         
-        const newPerson = await databaseService.createPerson({
+        const newPerson = await getDbService(req).createPerson({
             name,
             age: parseInt(age),
             gender,
@@ -183,7 +185,7 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         // 如果是普通用户创建，需要将person_id关联到用户账号
         if (req.user.role === 'user') {
             try {
-                await databaseService.updateUserPersonId(req.user.userId, newPerson.id);
+                await getDbService(req).updateUserPersonId(req.user.userId, newPerson.id);
                 logger.info('User account linked to person successfully', {
                     userId: req.user.userId,
                     personId: newPerson.id
@@ -266,7 +268,7 @@ const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
             userRole: req.user.role
         });
         
-        const updatedPerson = await databaseService.updatePerson(id, {
+        const updatedPerson = await getDbService(req).updatePerson(id, {
             name,
             age: parseInt(age),
             gender,
@@ -350,7 +352,7 @@ const deletePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
             userRole: req.user.role
         });
         
-        await databaseService.deletePerson(id);
+        await getDbService(req).deletePerson(id);
         
         logger.info('Person deleted successfully', { 
             id,
@@ -400,7 +402,7 @@ const getPersonDetails = async (req: AuthenticatedRequest, res: Response): Promi
         const id = parseInt(req.params.id);
         logger.info('Getting person details', { id });
         
-        const personDetails = await databaseService.getPersonWithDetails(id) as any;
+        const personDetails = await getDbService(req).getPersonWithDetails(id) as any;
         
         if (!personDetails) {
             logger.warn('Person not found', { id });
@@ -438,7 +440,7 @@ const upsertRuralProfile = async (req: AuthenticatedRequest, res: Response): Pro
         
         logger.info('Upserting rural profile', { personId, ruralData });
         
-        await databaseService.upsertRuralProfile(personId, ruralData);
+        await getDbService(req).upsertRuralProfile(personId, ruralData);
         
         logger.info('Rural profile upserted successfully', { personId });
         res.json({
@@ -468,7 +470,7 @@ const addSkill = async (req: AuthenticatedRequest, res: Response): Promise<void>
         
         logger.info('Adding skill', { personId, skillData });
         
-        const newSkill = await databaseService.addSkill(personId, skillData) as any;
+        const newSkill = await getDbService(req).addSkill(personId, skillData) as any;
         
         logger.info('Skill added successfully', { personId, skillId: newSkill.id });
         res.json({
@@ -498,7 +500,7 @@ const deleteSkill = async (req: AuthenticatedRequest, res: Response): Promise<vo
         
         logger.info('Deleting skill', { skillId });
         
-        await databaseService.deleteSkill(skillId);
+        await getDbService(req).deleteSkill(skillId);
         
         logger.info('Skill deleted successfully', { skillId });
         res.json({
@@ -526,7 +528,7 @@ const searchTalents = async (req: AuthenticatedRequest, res: Response): Promise<
         
         logger.info('Searching talents', { searchCriteria });
         
-        const results = await databaseService.searchTalents(searchCriteria) as any[];
+        const results = await getDbService(req).searchTalents(searchCriteria) as any[];
         
         logger.info('Talent search completed', { resultCount: results.length });
         res.json({
@@ -554,14 +556,14 @@ const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<
         logger.info('Getting talent statistics');
         
         // 获取基础统计
-        const totalTalents = await databaseService.getTotalPersonsCount() as number;
-        const avgAge = await databaseService.getAverageAge() as number;
-        const totalSkills = await databaseService.getTotalSkillsCount() as number;
-        const cooperationStats = await databaseService.getCooperationStats() as any;
-        const skillsCategoryStats = await databaseService.getSkillsCategoryStats() as any[];
-        const agricultureStats = await databaseService.getAgricultureStats() as any;
-        const educationStats = await databaseService.getEducationStats() as any[];
-        const ageDistribution = await databaseService.getAgeDistribution() as any[];
+        const totalTalents = await getDbService(req).getTotalPersonsCount() as number;
+        const avgAge = await getDbService(req).getAverageAge() as number;
+        const totalSkills = await getDbService(req).getTotalSkillsCount() as number;
+        const cooperationStats = await getDbService(req).getCooperationStats() as any;
+        const skillsCategoryStats = await getDbService(req).getSkillsCategoryStats() as any[];
+        const agricultureStats = await getDbService(req).getAgricultureStats() as any;
+        const educationStats = await getDbService(req).getEducationStats() as any[];
+        const ageDistribution = await getDbService(req).getAgeDistribution() as any[];
 
         const statistics = {
             // 基础统计
@@ -616,7 +618,7 @@ const getSkillsLibraryStats = async (req: AuthenticatedRequest, res: Response): 
     try {
         logger.info('Getting skills library statistics');
         
-        const skillsLibrary = await databaseService.getSkillsLibraryStats() as any;
+        const skillsLibrary = await getDbService(req).getSkillsLibraryStats() as any;
         
         res.json(skillsLibrary);
     } catch (error) {
@@ -660,7 +662,7 @@ const createComprehensivePerson = async (req: AuthenticatedRequest, res: Respons
         }
 
         // 开始数据库事务
-        const result = await databaseService.createComprehensivePerson({
+        const result = await getDbService(req).createComprehensivePerson({
             person,
             ruralProfile,
             cooperation,
@@ -726,7 +728,7 @@ const updateComprehensivePerson = async (req: AuthenticatedRequest, res: Respons
         }
 
         // 检查人员是否存在
-        const existingPerson = await databaseService.getPersonById(id);
+        const existingPerson = await getDbService(req).getPersonById(id);
         if (!existingPerson) {
             res.status(404).json({
                 success: false,
@@ -736,7 +738,7 @@ const updateComprehensivePerson = async (req: AuthenticatedRequest, res: Respons
         }
 
         // 更新综合信息
-        const result = await databaseService.updateComprehensivePerson(id, {
+        const result = await getDbService(req).updateComprehensivePerson(id, {
             person,
             ruralProfile,
             cooperation,

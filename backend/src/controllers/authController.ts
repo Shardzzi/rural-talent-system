@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import { Response } from 'express';
-import databaseService from '../services/databaseService';
+import { getDbService } from '../services/dbServiceFactory';
 import logger from '../config/logger';
 import { AuthenticatedRequest, User, JWTPayload, ApiResponse, UserPersonInfo } from '../types/index';
 
@@ -13,6 +13,8 @@ const JWT_EXPIRES_IN = '24h'; // token过期时间
 // 用户注册
 export const register = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+        // 获取数据库服务
+        
         // 验证输入
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -36,7 +38,7 @@ export const register = async (req: AuthenticatedRequest, res: Response): Promis
         }
 
         // 检查用户名是否已存在
-        const existingUserByUsername = await databaseService.getUserByUsername(username);
+        const existingUserByUsername = await getDbService(req).getUserByUsername(username);
         if (existingUserByUsername) {
             res.status(400).json({
                 success: false,
@@ -46,7 +48,7 @@ export const register = async (req: AuthenticatedRequest, res: Response): Promis
         }
 
         // 检查邮箱是否已存在
-        const existingUserByEmail = await databaseService.getUserByEmail(email);
+        const existingUserByEmail = await getDbService(req).getUserByEmail(email);
         if (existingUserByEmail) {
             res.status(400).json({
                 success: false,
@@ -59,7 +61,7 @@ export const register = async (req: AuthenticatedRequest, res: Response): Promis
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // 创建用户
-        const newUser = await databaseService.createUser({
+        const newUser = await getDbService(req).createUser({
             username,
             password: hashedPassword,
             email,
@@ -98,6 +100,9 @@ export const register = async (req: AuthenticatedRequest, res: Response): Promis
 // 用户登录
 export const login = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+        // 获取数据库服务
+        
+    
         // 验证输入
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -112,7 +117,7 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
         const { username, password } = req.body;
 
         // 查找用户
-        const user = await databaseService.getUserByUsername(username) as User | null;
+        const user = await getDbService(req).getUserByUsername(username) as User | null;
         if (!user) {
             res.status(401).json({
                 success: false,
@@ -146,7 +151,7 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
         expiresAt.setHours(expiresAt.getHours() + 24);
 
         // 保存会话
-        await databaseService.createUserSession(user.id, token, expiresAt.toISOString());
+        await getDbService(req).createUserSession(user.id, token, expiresAt);
 
         logger.info('User logged in successfully', { 
             userId: user.id, 
@@ -190,7 +195,7 @@ export const logout = async (req: AuthenticatedRequest, res: Response): Promise<
         const token = req.headers.authorization?.replace('Bearer ', '');
         
         if (token) {
-            await databaseService.deleteUserSession(token);
+            await getDbService(req).deleteUserSession(token);
         }
 
         logger.info('User logged out successfully', { userId: req.user?.userId });
@@ -218,7 +223,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
         const userId = req.user!.userId;
         
         // 获取用户详细信息（包括关联的人员信息）
-        const userInfo = await databaseService.getUserPersonInfo(userId);
+        const userInfo = await getDbService(req).getUserPersonInfo(userId);
         
         if (!userInfo) {
             res.status(404).json({
@@ -306,7 +311,7 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
         }
 
         // 获取当前用户信息
-        const user = await databaseService.getUserById(userId) as User | null;
+        const user = await getDbService(req).getUserById(userId) as User | null;
         if (!user) {
             res.status(404).json({
                 success: false,
@@ -329,7 +334,7 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
         // 更新密码
-        const updated = await databaseService.updateUserPassword(userId, hashedNewPassword);
+        const updated = await getDbService(req).updateUserPassword(userId, hashedNewPassword);
 
         if (updated) {
             logger.info('User password changed successfully', { userId });
@@ -373,7 +378,7 @@ export const linkPersonToUser = async (req: AuthenticatedRequest, res: Response)
         }
 
         // 检查person是否存在
-        const person = await databaseService.getPersonById(personId);
+        const person = await getDbService(req).getPersonById(personId);
         if (!person) {
             res.status(404).json({
                 success: false,
@@ -383,7 +388,7 @@ export const linkPersonToUser = async (req: AuthenticatedRequest, res: Response)
         }
 
         // 检查person是否已经被其他用户关联
-        const existingUser = await databaseService.getUserByPersonId(personId) as User | null;
+        const existingUser = await getDbService(req).getUserByPersonId(personId) as User | null;
         if (existingUser && existingUser.id !== userId) {
             res.status(400).json({
                 success: false,
@@ -393,11 +398,11 @@ export const linkPersonToUser = async (req: AuthenticatedRequest, res: Response)
         }
 
         // 关联用户和个人信息
-        const updated = await databaseService.linkUserToPerson(userId, personId);
+        const updated = await getDbService(req).linkUserToPerson(userId, personId);
 
         if (updated) {
             // 获取更新后的用户信息
-            const updatedUser = await databaseService.getUserById(userId) as User | null;
+            const updatedUser = await getDbService(req).getUserById(userId) as User | null;
             
             logger.info('User linked to person successfully', { userId, personId });
             

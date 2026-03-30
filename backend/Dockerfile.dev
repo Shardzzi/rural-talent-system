@@ -1,0 +1,32 @@
+# 开发环境 Dockerfile - 使用预编译的 JavaScript
+FROM node:20
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+# 复制 package.json 和 pnpm-lock.yaml
+COPY backend/package*.json ./
+COPY pnpm-lock.yaml ./
+
+# 创建数据目录
+RUN mkdir -p /app/data
+
+# 安装依赖（仅生产依赖）
+RUN pnpm install --prefer-frozen-lockfile --prod
+
+# 复制预编译的源代码和dist
+COPY backend/src ./src
+COPY backend/dist ./dist
+
+# 暴露端口
+EXPOSE 8083
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8083/api/health || exit 1
+
+# 使用 node 直接运行编译后的 JavaScript
+CMD ["node", "dist/app.js"]

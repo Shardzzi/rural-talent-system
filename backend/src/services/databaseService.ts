@@ -410,11 +410,11 @@ const initDatabase = async (): Promise<void> => {
                 });
             });
         });
-    } catch (err) {
+    } catch (err: any) {
         logger.error('Error initializing database', { 
             error: err.message, 
             stack: err.stack,
-            dbPath 
+            dbPath
         });
         throw err;
     }
@@ -451,8 +451,31 @@ const getAllPersonsWithDetails = async () => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
-        // 首先获取所有基础人员信息
-        db.all("SELECT * FROM persons ORDER BY id", async (err, persons: any[]) => {
+        // 优化：使用单个 JOIN 查询获取所有人员及其关联信息
+        const query = `
+            SELECT 
+                p.*,
+                rtp.id as rtp_id,
+                rtp.planting_years as rtp_planting_years,
+                rtp.planting_scale as rtp_planting_scale,
+                rtp.main_crops as rtp_main_crops,
+                rtp.has_agricultural_machinery as rtp_has_agricultural_machinery,
+                rtp.agricultural_machinery_details as rtp_agricultural_machinery_details,
+                rtp.storage_facilities as rtp_storage_facilities,
+                ci.id as ci_id,
+                ci.cooperation_type as ci_cooperation_type,
+                ci.investment_capacity as ci_investment_capacity,
+                ci.preferred_scale as ci_preferred_scale,
+                ci.expected_cooperation_mode as ci_expected_cooperation_mode,
+                ci.cooperation_purpose as ci_cooperation_purpose,
+                ci.cooperation_details as ci_cooperation_details
+            FROM persons p
+            LEFT JOIN rural_talent_profile rtp ON rtp.person_id = p.id
+            LEFT JOIN cooperation_intentions ci ON ci.person_id = p.id
+            ORDER BY p.id
+        `;
+        
+        db.all(query, async (err: any, rows: any[]) => {
             if (err) {
                 logger.error('Error getting all persons with details', { 
                     error: err.message, 
@@ -463,7 +486,7 @@ const getAllPersonsWithDetails = async () => {
                 return;
             }
             
-            if (!persons || persons.length === 0) {
+            if (!rows || rows.length === 0) {
                 logger.debug('No persons found');
                 db.close();
                 resolve([]);
@@ -471,58 +494,77 @@ const getAllPersonsWithDetails = async () => {
             }
             
             try {
-                // 使用 Promise.all 并行获取所有人员的详细信息
-                const detailedPersons = await Promise.all(
-                    persons.map((person: any) => {
-                        return new Promise((resolveDetail, rejectDetail) => {
-                            // 获取农村特色信息
-                            db.get("SELECT * FROM rural_talent_profile WHERE person_id = ?", [person.id], (err, ruralProfile: any) => {
-                                if (err) {
-                                    logger.error('Error getting rural profile', { 
-                                        personId: person.id,
-                                        error: err.message 
-                                    });
-                                    // 不要因为一个错误就停止整个过程
-                                    ruralProfile = null;
-                                }
-                                
-                                // 获取合作意向
-                                db.get("SELECT * FROM cooperation_intentions WHERE person_id = ?", [person.id], (err, cooperation) => {
-                                    if (err) {
-                                        logger.error('Error getting cooperation intentions', { 
-                                            personId: person.id,
-                                            error: err.message 
-                                        });
-                                        cooperation = null;
-                                    }
-                                    
-                                    // 获取技能信息
-                                    db.all("SELECT * FROM talent_skills WHERE person_id = ?", [person.id], (err, skills) => {
-                                        if (err) {
-                                            logger.error('Error getting talent skills', { 
-                                                personId: person.id,
-                                                error: err.message 
-                                            });
-                                            skills = [];
-                                        }
-                                                         // 组合所有信息
-                        const personWithDetails = {
-                            ...(person as any),
-                            rural_profile: ruralProfile || null,
-                            cooperation_intentions: cooperation || null,
-                            talent_skills: skills || []
-                        };
-                                        
-                                        resolveDetail(personWithDetails);
-                                    });
-                                });
-                            });
-                        });
-                    })
-                );
+                // 批量获取所有技能信息
+                const skillsQuery = 'SELECT * FROM talent_skills';
+                const allSkills: any[] = await new Promise((resolveSkills, rejectSkills) => {
+                    db.all(skillsQuery, [], (err: any, skills: any[]) => {
+                        if (err) {
+                            logger.error('Error getting all skills', { error: err.message });
+                            resolveSkills([]);
+                        } else {
+                            resolveSkills(skills || []);
+                        }
+                    });
+                });
                 
-                // 按ID排序
-                detailedPersons.sort((a: any, b: any) => a.id - b.id);
+                // 将技能按 person_id 分组
+                const skillsByPerson = allSkills.reduce((acc: any, skill: any) => {
+                    if (!acc[skill.person_id]) {
+                        acc[skill.person_id] = [];
+                    }
+                    acc[skill.person_id].push(skill);
+                    return acc;
+                }, {});
+                
+                // 处理查询结果，将扁平数据转换为嵌套结构
+                const personMap = new Map();
+                
+                rows.forEach((row: any) => {
+                    const personId = row.id;
+                    
+                    if (!personMap.has(personId)) {
+                        // 提取人员基础信息
+                        const person: any = {};
+                        Object.keys(row).forEach(key => {
+                            if (!key.startsWith('rtp_') && !key.startsWith('ci_')) {
+                                person[key] = row[key];
+                            }
+                        });
+                        
+                        // 构建农村特色信息
+                        person.rural_profile = row.rtp_id ? {
+                            id: row.rtp_id,
+                            planting_years: row.rtp_planting_years,
+                            planting_scale: row.rtp_planting_scale,
+                            main_crops: row.rtp_main_crops,
+                            has_agricultural_machinery: row.rtp_has_agricultural_machinery,
+                            agricultural_machinery_details: row.rtp_agricultural_machinery_details,
+                            storage_facilities: row.rtp_storage_facilities,
+                            person_id: personId
+                        } : null;
+                        
+                        // 构建合作意向信息
+                        person.cooperation_intentions = row.ci_id ? {
+                            id: row.ci_id,
+                            cooperation_type: row.ci_cooperation_type,
+                            investment_capacity: row.ci_investment_capacity,
+                            preferred_scale: row.ci_preferred_scale,
+                            expected_cooperation_mode: row.ci_expected_cooperation_mode,
+                            cooperation_purpose: row.ci_cooperation_purpose,
+                            cooperation_details: row.ci_cooperation_details,
+                            person_id: personId
+                        } : null;
+                        
+                        // 关联技能信息
+                        person.talent_skills = skillsByPerson[personId] || [];
+                        
+                        personMap.set(personId, person);
+                    }
+                });
+                
+                // 转换为数组并按ID排序
+                const detailedPersons = Array.from(personMap.values())
+                    .sort((a: any, b: any) => a.id - b.id);
                 
                 logger.debug('Retrieved all persons with details successfully', { 
                     count: detailedPersons.length,
@@ -533,7 +575,7 @@ const getAllPersonsWithDetails = async () => {
                 
                 db.close();
                 resolve(detailedPersons);
-            } catch (error) {
+            } catch (error: any) {
                 logger.error('Error processing detailed persons', { error: error.message });
                 db.close();
                 reject(error);

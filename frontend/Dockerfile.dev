@@ -1,0 +1,28 @@
+# 前端开发环境 Dockerfile - 简化版
+FROM node:20-alpine
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+# 复制 package.json 和 pnpm-lock.yaml
+COPY frontend/package*.json ./
+COPY pnpm-lock.yaml ./
+
+# 安装依赖
+RUN pnpm install --prefer-frozen-lockfile
+
+# 复制源代码
+COPY frontend/ ./
+
+# 暴露端口 (Vite 默认端口)
+EXPOSE 3000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+
+# 启动 Vite 开发服务器，监听所有接口
+CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "3000"]

@@ -1,0 +1,57 @@
+services:
+  # 后端 API 服务 - 开发简化版
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    container_name: rural-talent-backend-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 8083
+      DB_TYPE: sqlite
+      DATABASE_PATH: /app/data/persons.db
+      JWT_SECRET: rural_talent_system_secret_key_2025
+      TZ: 'Asia/Shanghai'
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/src:/app/src
+      - ./backend/package.json:/app/package.json
+      - ./backend/tsconfig.json:/app/tsconfig.json
+    networks:
+      - rural-talent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/api/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+
+  # 前端 Web 服务 - 开发简化版
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    container_name: rural-talent-frontend-dev
+    restart: unless-stopped
+    environment:
+      TZ: 'Asia/Shanghai'
+    ports:
+      - "8081:3000"
+    depends_on:
+      - backend
+    networks:
+      - rural-talent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+
+# 网络配置
+networks:
+  rural-talent-network:
+    driver: bridge

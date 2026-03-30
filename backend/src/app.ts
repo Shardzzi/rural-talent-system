@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import logger from './config/logger';
 import databaseService from './services/databaseService';
+import mysqlService from './services/mysqlService';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import personRoutes from './routes/personRoutes';
 import authRoutes from './routes/authRoutes';
@@ -35,21 +36,34 @@ app.use('*', notFoundHandler);
 // 初始化并启动服务器
 const startServer = async (): Promise<void> => {
     try {
-        await databaseService.initDatabase();
-        
+        // 根据环境变量选择数据库类型
+        const dbType = process.env.DB_TYPE || 'sqlite';
+
+        if (dbType === 'mysql') {
+            logger.info('Using MySQL database');
+            await mysqlService.initDatabase();
+            // 更新路由使用MySQL服务
+            app.set('dbService', mysqlService);
+        } else {
+            logger.info('Using SQLite database');
+            await databaseService.initDatabase();
+            // 使用默认的SQLite服务
+            app.set('dbService', databaseService);
+        }
+
         app.listen(PORT, () => {
-            logger.info('Server started successfully', { 
-                port: PORT, 
+            logger.info('Server started successfully', {
+                port: PORT,
                 url: `http://localhost:${PORT}`,
-                environment: process.env.NODE_ENV || 'development' 
+                environment: process.env.NODE_ENV || 'development',
+                database: dbType
             });
-            console.log(`Server is running on http://localhost:${PORT}`);
         });
     } catch (error) {
         const err = error as Error;
-        logger.error('Failed to initialize database', { 
-            error: err.message, 
-            stack: err.stack 
+        logger.error('Failed to initialize database', {
+            error: err.message,
+            stack: err.stack
         });
         process.exit(1);
     }
@@ -61,13 +75,11 @@ startServer().catch((err: Error) => {
         error: err.message, 
         stack: err.stack 
     });
-    console.error('Failed to start server:', err);
     process.exit(1);
 });
 
 // 优雅关闭
 process.on('SIGINT', () => {
     logger.info('Shutting down gracefully...');
-    console.log('\nShutting down gracefully...');
     process.exit(0);
 });
