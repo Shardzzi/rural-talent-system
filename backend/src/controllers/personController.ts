@@ -674,6 +674,108 @@ const searchTalents = async (req: AuthenticatedRequest, res: Response): Promise<
     }
 };
 
+const escapeCsvField = (value: unknown): string => {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    const str = String(value);
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+};
+
+const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        logger.info('Exporting persons as CSV', {
+            user: req.user ? { id: req.user.userId, role: req.user.role } : 'anonymous'
+        });
+
+        let persons: any[];
+        try {
+            persons = await getDbService(req).getAllPersonsWithDetails();
+        } catch {
+            persons = await getDbService(req).getAllPersons();
+        }
+        const validatedPersons = Array.isArray(persons) ? persons : [];
+
+        const columns = [
+            { key: 'id', header: 'ID' },
+            { key: 'name', header: '姓名' },
+            { key: 'age', header: '年龄' },
+            { key: 'gender', header: '性别' },
+            { key: 'phone', header: '电话' },
+            { key: 'email', header: '邮箱' },
+            { key: 'address', header: '地址' },
+            { key: 'education_level', header: '学历' },
+            { key: 'political_status', header: '政治面貌' },
+            { key: 'skills', header: '技能' },
+            { key: 'rural_profile.farming_years', header: '种植年限' },
+            { key: 'rural_profile.planting_scale', header: '种植规模' },
+            { key: 'rural_profile.main_crops', header: '主要作物' },
+            { key: 'rural_profile.breeding_types', header: '养殖类型' },
+            { key: 'rural_profile.cooperation_willingness', header: '合作意愿' },
+            { key: 'rural_profile.development_direction', header: '发展方向' },
+            { key: 'cooperation_intentions.cooperation_type', header: '合作类型' },
+            { key: 'cooperation_intentions.investment_capacity', header: '投资能力' },
+            { key: 'cooperation_intentions.preferred_scale', header: '偏好规模' },
+            { key: 'cooperation_intentions.time_availability', header: '可用时间' },
+            { key: 'cooperation_intentions.contact_preference', header: '联系偏好' },
+            { key: '_skills_list', header: '技能特长列表' },
+            { key: 'created_at', header: '创建时间' },
+            { key: 'updated_at', header: '更新时间' }
+        ];
+
+        const getNestedValue = (obj: any, path: string): unknown => {
+            if (path === '_skills_list') {
+                if (obj.talent_skills && Array.isArray(obj.talent_skills)) {
+                    return obj.talent_skills
+                        .map((s: any) => s.skill_name || s.name || '')
+                        .filter(Boolean)
+                        .join('、');
+                }
+                return '';
+            }
+            const parts = path.split('.');
+            let current: any = obj;
+            for (const part of parts) {
+                if (current === null || current === undefined) return '';
+                current = current[part];
+            }
+            return current;
+        };
+
+        const BOM = '\uFEFF';
+        const headerRow = columns.map(col => escapeCsvField(col.header)).join(',');
+        const dataRows = validatedPersons.map(person =>
+            columns.map(col => escapeCsvField(getNestedValue(person, col.key))).join(',')
+        );
+        const csvContent = BOM + headerRow + '\n' + dataRows.join('\n');
+
+        const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const filename = `人才信息导出_${timestamp}.csv`;
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.send(csvContent);
+
+        logger.info('CSV export completed', {
+            count: validatedPersons.length,
+            filename
+        });
+    } catch (err) {
+        const error = err as Error;
+        logger.error('Error exporting persons as CSV', {
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 // 获取数据统计分析
 const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
@@ -688,6 +790,9 @@ const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<
         const agricultureStats = (await getDbService(req).getAgricultureStats()) as { avgFarmingYears?: number; totalCrops?: number; popularCrops?: unknown[]; breedingTypes?: unknown[] };
         const educationStats = (await getDbService(req).getEducationStats()) as Record<string, unknown>[];
         const ageDistribution = (await getDbService(req).getAgeDistribution()) as Record<string, unknown>[];
+        const genderDistribution = (await getDbService(req).getGenderDistribution()) as Record<string, unknown>[];
+        const topSkills = (await getDbService(req).getTopSkills()) as Record<string, unknown>[];
+        const recentRegistrations = (await getDbService(req).getRecentRegistrations()) as { last_7_days?: number; last_30_days?: number; total?: number };
 
         const statistics = {
             // 基础统计
@@ -706,6 +811,9 @@ const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<
             // 技能分类统计
             skillsCategory: skillsCategoryStats,
             
+            // Top 10 技能
+            topSkills,
+            
             // 农业统计
             agriculture: {
                 avgFarmingYears: Math.round(agricultureStats.avgFarmingYears || 0),
@@ -718,7 +826,17 @@ const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<
             education: educationStats,
             
             // 年龄分布
-            ageDistribution
+            ageDistribution,
+            
+            // 性别分布
+            genderDistribution,
+            
+            // 最近注册统计
+            recentRegistrations: {
+                last7Days: recentRegistrations.last_7_days || 0,
+                last30Days: recentRegistrations.last_30_days || 0,
+                total: recentRegistrations.total || 0
+            }
         };
 
         logger.info('Statistics retrieved successfully', { 
@@ -920,5 +1038,6 @@ export {
     getStatistics,
     getSkillsLibraryStats,
     createComprehensivePerson,
-    updateComprehensivePerson
+    updateComprehensivePerson,
+    exportPersons
 };

@@ -621,6 +621,259 @@ const getAverageAge = async () => {
     }
 };
 
+// 获取总技能数
+const getTotalSkillsCount = async () => {
+    try {
+        const sql = 'SELECT COUNT(*) as count FROM talent_skills';
+        const rows = await executeQuery(sql);
+        return rows[0].count || 0;
+    } catch (error: any) {
+        logger.error('Error getting total skills count', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取合作意愿统计
+const getCooperationStats = async () => {
+    try {
+        const sql = `
+            SELECT 
+                cooperation_willingness,
+                COUNT(*) as count 
+            FROM rural_talent_profile 
+            WHERE cooperation_willingness IS NOT NULL 
+            GROUP BY cooperation_willingness
+        `;
+        const rows: any[] = await executeQuery(sql);
+        
+        const stats = {
+            strong: 0,
+            moderate: 0,
+            weak: 0,
+            total: 0
+        };
+        
+        rows.forEach((row: any) => {
+            const willingness = row.cooperation_willingness.toLowerCase();
+            if (willingness.includes('强') || willingness.includes('high') || willingness.includes('积极')) {
+                stats.strong += row.count;
+            } else if (willingness.includes('中') || willingness.includes('medium') || willingness.includes('一般')) {
+                stats.moderate += row.count;
+            } else if (willingness.includes('弱') || willingness.includes('low') || willingness.includes('不太')) {
+                stats.weak += row.count;
+            }
+            stats.total += row.count;
+        });
+        
+        return stats;
+    } catch (error: any) {
+        logger.error('Error getting cooperation stats', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取技能分类统计
+const getSkillsCategoryStats = async () => {
+    try {
+        const sql = `
+            SELECT 
+                skill_category,
+                COUNT(*) as count 
+            FROM talent_skills 
+            WHERE skill_category IS NOT NULL 
+            GROUP BY skill_category 
+            ORDER BY count DESC
+        `;
+        const rows = await executeQuery(sql);
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error getting skills category stats', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取农业统计
+const getAgricultureStats = async () => {
+    try {
+        const avgSql = 'SELECT AVG(farming_years) as avgFarmingYears FROM rural_talent_profile WHERE farming_years IS NOT NULL';
+        const avgRows = await executeQuery(avgSql);
+        const avgFarmingYears = avgRows[0]?.avgFarmingYears || 0;
+        
+        const cropsSql = `
+            SELECT 
+                main_crops,
+                COUNT(*) as count 
+            FROM rural_talent_profile 
+            WHERE main_crops IS NOT NULL AND main_crops != ''
+            GROUP BY main_crops 
+            ORDER BY count DESC 
+            LIMIT 10
+        `;
+        const cropsRows = await executeQuery(cropsSql);
+        
+        const breedingSql = `
+            SELECT 
+                breeding_types,
+                COUNT(*) as count 
+            FROM rural_talent_profile 
+            WHERE breeding_types IS NOT NULL AND breeding_types != ''
+            GROUP BY breeding_types 
+            ORDER BY count DESC 
+            LIMIT 10
+        `;
+        const breedingRows = await executeQuery(breedingSql);
+        
+        return {
+            avgFarmingYears,
+            totalCrops: cropsRows.length,
+            popularCrops: cropsRows,
+            breedingTypes: breedingRows
+        };
+    } catch (error: any) {
+        logger.error('Error getting agriculture stats', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取教育水平统计
+const getEducationStats = async () => {
+    try {
+        const sql = `
+            SELECT 
+                education_level,
+                COUNT(*) as count 
+            FROM persons 
+            WHERE education_level IS NOT NULL 
+            GROUP BY education_level 
+            ORDER BY count DESC
+        `;
+        const rows = await executeQuery(sql);
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error getting education stats', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取年龄分布
+const getAgeDistribution = async () => {
+    try {
+        const sql = `
+            SELECT 
+                CASE 
+                    WHEN age < 25 THEN '25岁以下'
+                    WHEN age >= 25 AND age < 35 THEN '25-34岁'
+                    WHEN age >= 35 AND age < 45 THEN '35-44岁'
+                    WHEN age >= 45 AND age < 55 THEN '45-54岁'
+                    WHEN age >= 55 THEN '55岁以上'
+                    ELSE '未知'
+                END as age_group,
+                COUNT(*) as count
+            FROM persons 
+            GROUP BY age_group 
+            ORDER BY age_group
+        `;
+        const rows = await executeQuery(sql);
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error getting age distribution', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取技能特长库统计
+const getSkillsLibraryStats = async () => {
+    try {
+        const sql = `
+            SELECT 
+                skill_category,
+                skill_name,
+                COUNT(*) as person_count,
+                AVG(proficiency_level) as avg_proficiency,
+                AVG(experience_years) as avg_experience
+            FROM talent_skills 
+            WHERE skill_category IS NOT NULL 
+            GROUP BY skill_category, skill_name 
+            ORDER BY person_count DESC, avg_proficiency DESC
+        `;
+        const rows: any[] = await executeQuery(sql);
+        
+        const skillsLibrary: any = {};
+        rows.forEach((row: any) => {
+            if (!skillsLibrary[row.skill_category]) {
+                skillsLibrary[row.skill_category] = [];
+            }
+            skillsLibrary[row.skill_category].push({
+                skillName: row.skill_name,
+                personCount: row.person_count,
+                avgProficiency: Math.round(row.avg_proficiency * 10) / 10,
+                avgExperience: Math.round(row.avg_experience * 10) / 10
+            });
+        });
+        
+        return skillsLibrary;
+    } catch (error: any) {
+        logger.error('Error getting skills library stats', { error: error.message });
+        throw error;
+    }
+};
+
+const getGenderDistribution = async () => {
+    try {
+        const sql = `
+            SELECT 
+                COALESCE(gender, '未知') as gender,
+                COUNT(*) as count 
+            FROM persons 
+            GROUP BY gender 
+            ORDER BY count DESC
+        `;
+        const rows = await executeQuery(sql);
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error getting gender distribution', { error: error.message });
+        throw error;
+    }
+};
+
+const getTopSkills = async () => {
+    try {
+        const sql = `
+            SELECT 
+                skill_name,
+                skill_category,
+                COUNT(*) as person_count
+            FROM talent_skills 
+            WHERE skill_name IS NOT NULL 
+            GROUP BY skill_name, skill_category
+            ORDER BY person_count DESC 
+            LIMIT 10
+        `;
+        const rows = await executeQuery(sql);
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error getting top skills', { error: error.message });
+        throw error;
+    }
+};
+
+const getRecentRegistrations = async () => {
+    try {
+        const sql = `
+            SELECT 
+                SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as last_7_days,
+                SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as last_30_days,
+                COUNT(*) as total
+            FROM persons
+        `;
+        const rows = await executeQuery(sql);
+        return rows?.[0] || { last_7_days: 0, last_30_days: 0, total: 0 };
+    } catch (error: any) {
+        logger.error('Error getting recent registrations', { error: error.message });
+        throw error;
+    }
+};
+
 // 关闭连接池
 const closePool = async () => {
     try {
@@ -628,6 +881,67 @@ const closePool = async () => {
         logger.info('MySQL connection pool closed');
     } catch (error: any) {
         logger.error('Error closing MySQL connection pool', { error: error.message });
+    }
+};
+
+// 搜索人才（高级筛选）
+const searchTalents = async (searchCriteria: any): Promise<any[]> => {
+    try {
+        const conditions: string[] = [];
+        const params: any[] = [];
+
+        if (searchCriteria.name) {
+            conditions.push('p.name LIKE ?');
+            params.push('%' + searchCriteria.name + '%');
+        }
+        if (searchCriteria.skill) {
+            conditions.push('(ts.skill_name LIKE ? OR ts.skill_category LIKE ?)');
+            params.push('%' + searchCriteria.skill + '%', '%' + searchCriteria.skill + '%');
+        }
+        if (searchCriteria.crop) {
+            conditions.push('rtp.main_crops LIKE ?');
+            params.push('%' + searchCriteria.crop + '%');
+        }
+        if (searchCriteria.minAge) {
+            conditions.push('p.age >= ?');
+            params.push(parseInt(searchCriteria.minAge));
+        }
+        if (searchCriteria.maxAge) {
+            conditions.push('p.age <= ?');
+            params.push(parseInt(searchCriteria.maxAge));
+        }
+        if (searchCriteria.gender) {
+            conditions.push('p.gender = ?');
+            params.push(searchCriteria.gender);
+        }
+        if (searchCriteria.education_level) {
+            conditions.push('p.education_level = ?');
+            params.push(searchCriteria.education_level);
+        }
+
+        const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+        const sql = `
+            SELECT DISTINCT p.*,
+                   rtp.main_crops,
+                   rtp.farming_years,
+                   rtp.cooperation_willingness,
+                   GROUP_CONCAT(DISTINCT ts.skill_name) as skills
+            FROM persons p
+            LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
+            LEFT JOIN talent_skills ts ON p.id = ts.person_id
+            ${whereClause}
+            GROUP BY p.id
+            ORDER BY p.name
+        `;
+
+        logger.info('Executing MySQL search query', { sql, params });
+        const rows = await executeQuery(sql, params);
+        logger.info('MySQL talent search completed', { resultCount: rows.length, searchCriteria });
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error searching talents in MySQL', { searchCriteria, error: error.message });
+        throw error;
     }
 };
 
@@ -652,6 +966,19 @@ export default {
     // 统计相关
     getTotalPersonsCount,
     getAverageAge,
+    getTotalSkillsCount,
+    getCooperationStats,
+    getSkillsCategoryStats,
+    getAgricultureStats,
+    getEducationStats,
+    getAgeDistribution,
+    getSkillsLibraryStats,
+    getGenderDistribution,
+    getTopSkills,
+    getRecentRegistrations,
+
+    // 搜索相关
+    searchTalents,
 
     // 工具方法
     closePool

@@ -525,9 +525,38 @@ export default {
       loadPersons()
     }
     
-    const exportData = () => {
-      // 数据导出功能 - 计划中
-      ElMessage.info('导出功能开发中...')
+    const exportData = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          ElMessage.warning('请先登录后再导出数据')
+          return
+        }
+        const response = await axios.get('/api/persons/export', {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
+        })
+        const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        const contentDisposition = response.headers['content-disposition']
+        let filename = '人才信息导出.csv'
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?(.+)/)
+          if (match) {
+            filename = decodeURIComponent(match[1].replace(/"/g, ''))
+          }
+        }
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        ElMessage.success('数据导出成功')
+      } catch (error) {
+        ElMessage.error('导出失败: ' + (error.response?.data?.message || error.message))
+      }
     }
     
     const handleSizeChange = (newSize) => {

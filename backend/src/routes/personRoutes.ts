@@ -28,6 +28,8 @@ router.get('/skills-library-stats', optionalAuth, personController.getSkillsLibr
 // 获取所有人员信息（可选认证，影响返回数据详细程度）
 router.get('/persons', optionalAuth, personController.getAllPersons);
 
+router.get('/persons/export', authenticateToken, requireAdmin, personController.exportPersons);
+
 // 根据ID获取人员基础信息（可选认证，影响返回数据详细程度）
 router.get('/persons/:id', optionalAuth, personController.getPersonById);
 

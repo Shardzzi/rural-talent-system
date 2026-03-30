@@ -53,7 +53,7 @@
         
         <div class="search-form">
           <el-row :gutter="20" align="middle">
-            <el-col :span="8">
+            <el-col :span="6">
               <el-input
                 v-model="searchKeyword"
                 placeholder="搜索姓名、技能、地区"
@@ -67,6 +67,30 @@
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
+            </el-col>
+            <el-col :span="3">
+              <el-input-number
+                v-model="filterMinAge"
+                :min="1"
+                :max="150"
+                placeholder="最小年龄"
+                size="large"
+                controls-position="right"
+                clearable
+                @change="debouncedSearch"
+              />
+            </el-col>
+            <el-col :span="3">
+              <el-input-number
+                v-model="filterMaxAge"
+                :min="1"
+                :max="150"
+                placeholder="最大年龄"
+                size="large"
+                controls-position="right"
+                clearable
+                @change="debouncedSearch"
+              />
             </el-col>
             <el-col :span="4">
               <el-select 
@@ -97,12 +121,42 @@
                 <el-option label="已退休" value="已退休" />
               </el-select>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="4">
               <el-button type="primary" size="large" @click="handleSearch">
                 <el-icon><Search /></el-icon>
                 搜索
               </el-button>
               <el-button size="large" @click="resetFilters">重置</el-button>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" align="middle" style="margin-top: 12px;">
+            <el-col :span="6">
+              <el-input
+                v-model="filterSkill"
+                placeholder="技能关键词"
+                size="large"
+                clearable
+                @clear="debouncedSearch"
+                @input="debouncedSearch"
+              >
+                <template #prefix>
+                  <el-icon><Star /></el-icon>
+                </template>
+              </el-input>
+            </el-col>
+            <el-col :span="6">
+              <el-input
+                v-model="filterCrop"
+                placeholder="作物筛选（如：水稻、小麦）"
+                size="large"
+                clearable
+                @clear="debouncedSearch"
+                @input="debouncedSearch"
+              >
+                <template #prefix>
+                  <el-icon><Location /></el-icon>
+                </template>
+              </el-input>
             </el-col>
           </el-row>
         </div>
@@ -284,6 +338,10 @@ export default {
     const searchKeyword = ref('')
     const filterEducation = ref('')
     const filterStatus = ref('')
+    const filterMinAge = ref<number | undefined>(undefined)
+    const filterMaxAge = ref<number | undefined>(undefined)
+    const filterSkill = ref('')
+    const filterCrop = ref('')
     const searchTrigger = ref(0) // 用于手动触发搜索
     
     // 分页
@@ -330,6 +388,16 @@ export default {
         )
       }
       
+      if (filterMinAge.value) {
+        const minAge = filterMinAge.value
+        result = result.filter(person => person.age >= minAge)
+      }
+      
+      if (filterMaxAge.value) {
+        const maxAge = filterMaxAge.value
+        result = result.filter(person => person.age <= maxAge)
+      }
+      
       if (filterEducation.value) {
         result = result.filter(person => {
           const education = person.education_level
@@ -350,6 +418,20 @@ export default {
         result = result.filter(person => person.employment_status === filterStatus.value)
       }
       
+      if (filterSkill.value) {
+        const skillKeyword = filterSkill.value.toLowerCase()
+        result = result.filter(person =>
+          person.skills?.toLowerCase().includes(skillKeyword)
+        )
+      }
+      
+      if (filterCrop.value) {
+        const cropKeyword = filterCrop.value.toLowerCase()
+        result = result.filter(person =>
+          person.main_crops?.toLowerCase().includes(cropKeyword)
+        )
+      }
+      
       return result
     })
     
@@ -360,7 +442,7 @@ export default {
     })
     
     const hasActiveFilters = computed(() => {
-      return searchKeyword.value || filterEducation.value || filterStatus.value
+      return searchKeyword.value || filterEducation.value || filterStatus.value || filterMinAge.value || filterMaxAge.value || filterSkill.value || filterCrop.value
     })
     
     // 方法
@@ -420,6 +502,10 @@ export default {
       searchKeyword.value = ''
       filterEducation.value = ''
       filterStatus.value = ''
+      filterMinAge.value = undefined
+      filterMaxAge.value = undefined
+      filterSkill.value = ''
+      filterCrop.value = ''
       currentPage.value = 1
     }
     
@@ -492,6 +578,10 @@ export default {
       searchKeyword,
       filterEducation,
       filterStatus,
+      filterMinAge,
+      filterMaxAge,
+      filterSkill,
+      filterCrop,
       currentPage,
       pageSize,
       totalPersons,

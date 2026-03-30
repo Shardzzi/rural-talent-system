@@ -1282,6 +1282,8 @@ const searchTalents = async (searchCriteria) => {
               AND (? = 0 OR rtp.main_crops LIKE ?)
               AND (? = 0 OR p.age >= ?)
               AND (? = 0 OR p.age <= ?)
+              AND (? = 0 OR p.gender = ?)
+              AND (? = 0 OR p.education_level = ?)
             GROUP BY p.id
             ORDER BY p.name
         `;
@@ -1291,6 +1293,8 @@ const searchTalents = async (searchCriteria) => {
         const cropLike = searchCriteria.crop ? '%' + searchCriteria.crop + '%' : null;
         const minAge = searchCriteria.minAge ? parseInt(searchCriteria.minAge) : null;
         const maxAge = searchCriteria.maxAge ? parseInt(searchCriteria.maxAge) : null;
+        const gender = searchCriteria.gender || null;
+        const educationLevel = searchCriteria.education_level || null;
 
         params = [
             searchCriteria.name ? 1 : 0,
@@ -1303,7 +1307,11 @@ const searchTalents = async (searchCriteria) => {
             searchCriteria.minAge ? 1 : 0,
             minAge,
             searchCriteria.maxAge ? 1 : 0,
-            maxAge
+            maxAge,
+            searchCriteria.gender ? 1 : 0,
+            gender,
+            searchCriteria.education_level ? 1 : 0,
+            educationLevel
         ];
         
         logger.info('Executing search query', { query, params });
@@ -1605,6 +1613,74 @@ const getSkillsLibraryStats = () => {
     });
 };
 
+const getGenderDistribution = () => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        db.all(`
+            SELECT 
+                COALESCE(gender, '未知') as gender,
+                COUNT(*) as count 
+            FROM persons 
+            GROUP BY gender 
+            ORDER BY count DESC
+        `, (err, rows) => {
+            db.close();
+            if (err) {
+                logger.error('Error getting gender distribution', { error: err.message });
+                reject(err);
+            } else {
+                resolve(rows || []);
+            }
+        });
+    });
+};
+
+const getTopSkills = () => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        db.all(`
+            SELECT 
+                skill_name,
+                skill_category,
+                COUNT(*) as person_count
+            FROM talent_skills 
+            WHERE skill_name IS NOT NULL 
+            GROUP BY skill_name, skill_category
+            ORDER BY person_count DESC 
+            LIMIT 10
+        `, (err, rows) => {
+            db.close();
+            if (err) {
+                logger.error('Error getting top skills', { error: err.message });
+                reject(err);
+            } else {
+                resolve(rows || []);
+            }
+        });
+    });
+};
+
+const getRecentRegistrations = () => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        db.all(`
+            SELECT 
+                COUNT(CASE WHEN created_at >= datetime('now', '-7 days') THEN 1 END) as last_7_days,
+                COUNT(CASE WHEN created_at >= datetime('now', '-30 days') THEN 1 END) as last_30_days,
+                COUNT(*) as total
+            FROM persons
+        `, (err, rows) => {
+            db.close();
+            if (err) {
+                logger.error('Error getting recent registrations', { error: err.message });
+                reject(err);
+            } else {
+                resolve(rows?.[0] || { last_7_days: 0, last_30_days: 0, total: 0 });
+            }
+        });
+    });
+};
+
 // ==================== 用户认证相关方法 ====================
 
 // 创建新用户
@@ -1807,7 +1883,7 @@ const validateUserSession = async (token) => {
         db.get(`SELECT s.*, u.username, u.email, u.role, u.person_id 
                 FROM user_sessions s 
                 JOIN users u ON s.user_id = u.id 
-                WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP AND u.is_active = 1`, 
+                WHERE s.token = ? AND s.expires_at > (strftime('%s','now') * 1000) AND u.is_active = 1`, 
                 [token], (err, row) => {
             if (err) {
                 db.close();
@@ -2169,6 +2245,9 @@ export default {
     getEducationStats,
     getAgeDistribution,
     getSkillsLibraryStats,
+    getGenderDistribution,
+    getTopSkills,
+    getRecentRegistrations,
     
     // 用户认证相关方法
     createUser,

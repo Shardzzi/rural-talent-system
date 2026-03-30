@@ -37,6 +37,9 @@ interface DatabaseService {
     getEducationStats(): Promise<any>;
     getAgeDistribution(): Promise<any>;
     getSkillsLibraryStats(): Promise<any>;
+    getGenderDistribution(): Promise<any>;
+    getTopSkills(): Promise<any>;
+    getRecentRegistrations(): Promise<any>;
     createComprehensivePerson(data: any): Promise<any>;
     updateComprehensivePerson(personId: number, data: any): Promise<any>;
 }
