@@ -3,6 +3,17 @@ import logger from '../config/logger';
 import { getDbService } from '../services/dbServiceFactory';
 import { AuthenticatedRequest, Person, ApiResponse } from '../types/index';
 
+const isDuplicateEntryError = (error: any): boolean => {
+    return error?.code === 'SQLITE_CONSTRAINT' ||
+        error?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
+        error?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||
+        error?.code === 'ER_DUP_ENTRY' ||
+        error?.code === 'DUPLICATE_ENTRY' ||
+        error?.sqlState === '23000' ||
+        error?.errno === 19 ||
+        error?.errno === 1062;
+};
+
 // ID参数验证：必须是正整数
 const validateIdParam = (idStr: string | undefined, paramName: string = 'id'): number => {
     if (!idStr) {
@@ -268,8 +279,7 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
             userId: req.user?.userId
         });
         
-        // 处理唯一约束错误
-        if (error.message.includes('UNIQUE constraint failed')) {
+        if (isDuplicateEntryError(error)) {
             res.status(409).json({
                 success: false,
                 message: '邮箱或手机号已存在'
@@ -376,8 +386,7 @@ const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
             stack: error.stack 
         });
         
-        // 处理唯一约束错误
-        if (error.message.includes('UNIQUE constraint failed')) {
+        if (isDuplicateEntryError(error)) {
             res.status(409).json({
                 success: false,
                 message: '邮箱或手机号已存在'

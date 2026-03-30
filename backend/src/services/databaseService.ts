@@ -28,6 +28,122 @@ const createConnection = () => {
     });
 };
 
+const runDb = (db: sqlite3.Database, sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> => {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function(err) {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve({ lastID: this.lastID, changes: this.changes });
+        });
+    });
+};
+
+const getDb = <T = any>(db: sqlite3.Database, sql: string, params: any[] = []): Promise<T | undefined> => {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(row as T | undefined);
+        });
+    });
+};
+
+const closeDb = (db: sqlite3.Database): Promise<void> => {
+    return new Promise((resolve) => {
+        db.close(() => resolve());
+    });
+};
+
+const isUniqueConstraintError = (error: any): boolean => {
+    return error?.code === 'SQLITE_CONSTRAINT' ||
+        error?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
+        error?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||
+        error?.code === 'ER_DUP_ENTRY' ||
+        error?.code === 'DUPLICATE_ENTRY' ||
+        error?.sqlState === '23000' ||
+        error?.errno === 19 ||
+        error?.errno === 1062;
+};
+
+const createDuplicateEntryError = (message: string = '邮箱或手机号已存在') => {
+    const duplicateError = new Error(message) as Error & { code?: string };
+    duplicateError.code = 'DUPLICATE_ENTRY';
+    return duplicateError;
+};
+
+const createValidationError = (message: string) => {
+    const validationError = new Error(message) as Error & { code?: string };
+    validationError.code = 'VALIDATION_ERROR';
+    return validationError;
+};
+
+const safeRollback = async (db: sqlite3.Database, context: string) => {
+    try {
+        await runDb(db, 'ROLLBACK');
+    } catch (rollbackError: any) {
+        logger.error('Transaction rollback failed', {
+            context,
+            error: rollbackError.message
+        });
+    }
+};
+
+const runInTransaction = async <T>(
+    db: sqlite3.Database,
+    context: string,
+    operation: () => Promise<T>
+): Promise<T> => {
+    await runDb(db, 'BEGIN IMMEDIATE TRANSACTION');
+
+    try {
+        const result = await operation();
+        await runDb(db, 'COMMIT');
+        return result;
+    } catch (error) {
+        await safeRollback(db, context);
+        throw error;
+    }
+};
+
+const normalizeSkillData = (skill: any, index: number) => {
+    if (!skill || typeof skill !== 'object') {
+        throw createValidationError(`技能数据格式无效（索引: ${index}）`);
+    }
+
+    const category = skill.category ?? skill.skill_category;
+    const name = skill.name ?? skill.skill_name;
+    const proficiencyRaw = skill.proficiency ?? skill.proficiency_level;
+    const experienceYearsRaw = skill.experience_years ?? null;
+
+    if (!category || !name || proficiencyRaw === undefined || proficiencyRaw === null) {
+        throw createValidationError(`技能必填字段缺失（索引: ${index}）`);
+    }
+
+    const proficiency = Number(proficiencyRaw);
+    if (Number.isNaN(proficiency)) {
+        throw createValidationError(`技能熟练度必须为数字（索引: ${index}）`);
+    }
+
+    const experienceYears = experienceYearsRaw === null || experienceYearsRaw === undefined
+        ? null
+        : Number(experienceYearsRaw);
+
+    if (experienceYears !== null && Number.isNaN(experienceYears)) {
+        throw createValidationError(`技能经验年限必须为数字（索引: ${index}）`);
+    }
+
+    return {
+        category,
+        name,
+        proficiency,
+        experienceYears
+    };
+};
+
 // 初始化数据库表和数据
 const initDatabase = async (): Promise<void> => {
     try {
@@ -666,75 +782,56 @@ const createPerson = async (personData) => {
     
     return new Promise((resolve, reject) => {
         const db = createConnection();
-        
-        // 检查邮箱和手机号是否已存在
-        db.get("SELECT id FROM persons WHERE email = ? OR phone = ?", [email, phone], (err, existingPerson: any) => {
-            if (err) {
-                logger.error('Error checking existing person', { 
-                    email, 
-                    phone,
-                    error: err.message, 
-                    stack: err.stack 
-                });
-                db.close();
-                reject(err);
-                return;
-            }
-            
-            if (existingPerson) {
-                logger.warn('Person creation failed - duplicate email or phone', { 
-                    email, 
-                    phone, 
-                    existingPersonId: existingPerson.id 
-                });
-                db.close();
-                reject(new Error('邮箱或手机号已存在'));
-                return;
-            }
-            
-            // 插入新人员
-            db.run(`INSERT INTO persons 
+
+        const finalizeReject = (err: any) => {
+            closeDb(db).then(() => reject(err));
+        };
+
+        const finalizeResolve = (value: any) => {
+            closeDb(db).then(() => resolve(value));
+        };
+
+        runDb(
+            db,
+            `INSERT INTO persons 
                 (name, age, email, phone, gender, address, education_level, political_status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
-                [name, age, email, phone, gender, address, education_level, political_status], 
-                function(err) {
-                    if (err) {
-                        logger.error('Error creating person', { 
-                            personData,
-                            error: err.message, 
-                            stack: err.stack 
-                        });
-                        db.close();
-                        reject(err);
-                        return;
-                    }
-                    
-                    const newPersonId = this.lastID;
-                    
-                    // 获取新创建的人员信息
-                    db.get("SELECT * FROM persons WHERE id = ?", [newPersonId], (err, newPerson: any) => {
-                        if (err) {
-                            logger.error('Error retrieving created person', { 
-                                id: newPersonId,
-                                error: err.message, 
-                                stack: err.stack 
-                            });
-                            db.close();
-                            reject(err);
-                            return;
-                        }
-                        
-                        logger.info('Person created successfully', { 
-                            id: newPersonId, 
-                            name: newPerson.name
-                        });
-                        
-                        db.close();
-                        resolve(newPerson);
-                    });
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, age, email, phone, gender, address, education_level, political_status]
+        )
+            .then(({ lastID }) => getDb<any>(db, 'SELECT * FROM persons WHERE id = ?', [lastID])
+                .then((newPerson) => ({ lastID, newPerson })))
+            .then(({ lastID, newPerson }) => {
+                if (!newPerson) {
+                    throw new Error('创建人员后无法读取记录');
                 }
-            );
-        });
+
+                logger.info('Person created successfully', {
+                    id: lastID,
+                    name: newPerson.name
+                });
+                finalizeResolve(newPerson);
+            })
+            .catch((err: any) => {
+                if (isUniqueConstraintError(err)) {
+                    logger.warn('Person creation failed - duplicate email or phone', {
+                        email,
+                        phone,
+                        code: err.code,
+                        errno: err.errno
+                    });
+                    finalizeReject(createDuplicateEntryError());
+                    return;
+                }
+
+                logger.error('Error creating person', {
+                    personData,
+                    error: err.message,
+                    code: err.code,
+                    errno: err.errno,
+                    stack: err.stack
+                });
+                finalizeReject(err);
+            });
     });
 };
 
@@ -1068,67 +1165,53 @@ const getPersonWithDetails = async (id) => {
 
 // 创建或更新农村特色信息
 const upsertRuralProfile = async (personId, ruralData) => {
-    return new Promise((resolve, reject) => {
-        const db = createConnection();
-        
-        // 先检查是否存在
-        db.get("SELECT id FROM rural_talent_profile WHERE person_id = ?", [personId], (err, existing) => {
-            if (err) {
-                logger.error('Error checking rural profile', { personId, error: err.message });
-                db.close();
-                reject(err);
-                return;
-            }
-            
-            const { farming_years, main_crops, planting_scale, breeding_types, 
-                    cooperation_willingness, development_direction, available_time } = ruralData;
-            
-            if (existing) {
-                // 更新
-                db.run(`UPDATE rural_talent_profile SET 
-                    farming_years = ?, main_crops = ?, planting_scale = ?, breeding_types = ?,
-                    cooperation_willingness = ?, development_direction = ?, available_time = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                    WHERE person_id = ?`, 
-                    [farming_years, main_crops, planting_scale, breeding_types,
-                     cooperation_willingness, development_direction, available_time, personId],
-                    function(err) {
-                        if (err) {
-                            logger.error('Error updating rural profile', { personId, error: err.message });
-                            db.close();
-                            reject(err);
-                            return;
-                        }
-                        
-                        logger.info('Rural profile updated', { personId });
-                        db.close();
-                        resolve(true);
-                    }
-                );
-            } else {
-                // 新建
-                db.run(`INSERT INTO rural_talent_profile 
+    const db = createConnection();
+
+    try {
+        const {
+            farming_years,
+            main_crops,
+            planting_scale,
+            breeding_types,
+            cooperation_willingness,
+            development_direction,
+            available_time
+        } = ruralData;
+
+        await runInTransaction(db, 'upsertRuralProfile', async () => {
+            await runDb(db, 'DELETE FROM rural_talent_profile WHERE person_id = ?', [personId]);
+            await runDb(
+                db,
+                `INSERT INTO rural_talent_profile
                     (person_id, farming_years, main_crops, planting_scale, breeding_types,
-                     cooperation_willingness, development_direction, available_time) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [personId, farming_years, main_crops, planting_scale, breeding_types,
-                     cooperation_willingness, development_direction, available_time],
-                    function(err) {
-                        if (err) {
-                            logger.error('Error creating rural profile', { personId, error: err.message });
-                            db.close();
-                            reject(err);
-                            return;
-                        }
-                        
-                        logger.info('Rural profile created', { personId });
-                        db.close();
-                        resolve(true);
-                    }
-                );
-            }
+                     cooperation_willingness, development_direction, available_time)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    personId,
+                    farming_years,
+                    main_crops,
+                    planting_scale,
+                    breeding_types,
+                    cooperation_willingness,
+                    development_direction,
+                    available_time
+                ]
+            );
         });
-    });
+
+        logger.info('Rural profile upserted', { personId });
+        return true;
+    } catch (err: any) {
+        logger.error('Error upserting rural profile', {
+            personId,
+            error: err.message,
+            code: err.code,
+            errno: err.errno
+        });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
 };
 
 // 添加技能
@@ -1848,192 +1931,117 @@ const createComprehensivePerson = async (data: {
     skills: any[],
     userId?: number
 }): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        const db = createConnection();
-        
-        // 开始事务
-        db.serialize(() => {
-            db.run('BEGIN TRANSACTION');
-            
-            // 1. 创建基本人员信息
-            const personStmt = db.prepare(`INSERT INTO persons 
-                (name, age, gender, email, phone, address, education_level, political_status, employment_status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-            
-            personStmt.run([
-                data.person.name,
-                data.person.age,
-                data.person.gender,
-                data.person.email,
-                data.person.phone,
-                data.person.address,
-                data.person.education_level,
-                data.person.political_status,
-                data.person.employment_status
-            ], function(err) {
-                if (err) {
-                    db.run('ROLLBACK');
-                    db.close();
-                    logger.error('Error creating person', { error: err.message });
-                    reject(err);
-                    return;
-                }
-                
-                const personId = this.lastID;
-                logger.info('Person created', { personId, name: data.person.name });
-                
-                // 2. 创建农村特色信息
-                const ruralStmt = db.prepare(`INSERT INTO rural_talent_profile 
-                    (person_id, farming_years, planting_scale, main_crops, breeding_types, 
-                     cooperation_willingness, development_direction, available_time) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-                
-                ruralStmt.run([
+    const db = createConnection();
+    let personId: number | null = null;
+
+    try {
+        const normalizedSkills = Array.isArray(data.skills)
+            ? data.skills.map((skill, index) => normalizeSkillData(skill, index))
+            : [];
+
+        await runInTransaction(db, 'createComprehensivePerson', async () => {
+            const personResult = await runDb(
+                db,
+                `INSERT INTO persons
+                    (name, age, gender, email, phone, address, education_level, political_status, employment_status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    data.person.name,
+                    data.person.age,
+                    data.person.gender,
+                    data.person.email,
+                    data.person.phone,
+                    data.person.address,
+                    data.person.education_level,
+                    data.person.political_status,
+                    data.person.employment_status
+                ]
+            );
+
+            personId = personResult.lastID;
+
+            await runDb(
+                db,
+                `INSERT INTO rural_talent_profile
+                    (person_id, farming_years, planting_scale, main_crops, breeding_types,
+                     cooperation_willingness, development_direction, available_time)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
                     personId,
-                    data.ruralProfile.farming_years,
-                    data.ruralProfile.planting_scale,
-                    data.ruralProfile.main_crops,
-                    data.ruralProfile.breeding_types,
-                    data.ruralProfile.cooperation_willingness,
-                    data.ruralProfile.development_direction,
-                    data.ruralProfile.available_time
-                ], function(err) {
-                    if (err) {
-                        db.run('ROLLBACK');
-                        db.close();
-                        logger.error('Error creating rural profile', { error: err.message });
-                        reject(err);
-                        return;
-                    }
-                    
-                    logger.info('Rural profile created', { personId });
-                    
-                    // 3. 创建合作意向信息
-                    const cooperationStmt = db.prepare(`INSERT INTO cooperation_intentions 
-                        (person_id, cooperation_type, preferred_scale, investment_capacity, 
-                         time_availability, contact_preference) 
-                        VALUES (?, ?, ?, ?, ?, ?)`);
-                    
-                    cooperationStmt.run([
-                        personId,
-                        data.cooperation.cooperation_type,
-                        data.cooperation.preferred_scale,
-                        data.cooperation.investment_capacity,
-                        data.cooperation.time_availability,
-                        data.cooperation.contact_preference
-                    ], function(err) {
-                        if (err) {
-                            db.run('ROLLBACK');
-                            db.close();
-                            logger.error('Error creating cooperation intention', { error: err.message });
-                            reject(err);
-                            return;
-                        }
-                        
-                        logger.info('Cooperation intention created', { personId });
-                        
-                        // 4. 创建技能信息
-                        if (data.skills && data.skills.length > 0) {
-                            const skillStmt = db.prepare(`INSERT INTO talent_skills 
-                                (person_id, skill_category, skill_name, proficiency_level, experience_years) 
-                                VALUES (?, ?, ?, ?, ?)`);
-                            
-                            let skillsCreated = 0;
-                            const totalSkills = data.skills.length;
-                            
-                            data.skills.forEach(skill => {
-                                skillStmt.run([
-                                    personId,
-                                    skill.category,
-                                    skill.name,
-                                    skill.proficiency,
-                                    skill.experience_years
-                                ], function(err) {
-                                    if (err) {
-                                        db.run('ROLLBACK');
-                                        db.close();
-                                        logger.error('Error creating skill', { error: err.message });
-                                        reject(err);
-                                        return;
-                                    }
-                                    
-                                    skillsCreated++;
-                                    if (skillsCreated === totalSkills) {
-                                        finalizePerson();
-                                    }
-                                });
-                            });
-                            
-                            skillStmt.finalize();
-                        } else {
-                            finalizePerson();
-                        }
-                        
-                        function finalizePerson() {
-                            // 5. 如果有用户ID，关联用户
-                            if (data.userId) {
-                                db.run('UPDATE users SET person_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-                                    [personId, data.userId], function(err) {
-                                    if (err) {
-                                        logger.warn('Failed to link user to person', { 
-                                            error: err.message, 
-                                            userId: data.userId, 
-                                            personId 
-                                        });
-                                        // 不影响主流程，继续提交事务
-                                    }
-                                    
-                                    // 提交事务
-                                    db.run('COMMIT', (err) => {
-                                        if (err) {
-                                            db.close();
-                                            logger.error('Error committing transaction', { error: err.message });
-                                            reject(err);
-                                            return;
-                                        }
-                                        
-                                        // 获取创建的完整信息
-                                        getPersonWithDetails(personId).then(person => {
-                                            db.close();
-                                            resolve(person);
-                                        }).catch(err => {
-                                            db.close();
-                                            logger.error('Error getting created person details', { error: err.message });
-                                            resolve({ id: personId, name: data.person.name });
-                                        });
-                                    });
-                                });
-                            } else {
-                                // 提交事务
-                                db.run('COMMIT', (err) => {
-                                    if (err) {
-                                        db.close();
-                                        logger.error('Error committing transaction', { error: err.message });
-                                        reject(err);
-                                        return;
-                                    }
-                                    
-                                    // 获取创建的完整信息
-                                    getPersonWithDetails(personId).then(person => {
-                                        db.close();
-                                        resolve(person);
-                                    }).catch(err => {
-                                        db.close();
-                                        logger.error('Error getting created person details', { error: err.message });
-                                        resolve({ id: personId, name: data.person.name });
-                                    });
-                                });
-                            }
-                        }
-                    });
-                    
-                    cooperationStmt.finalize();
-                });
-                
-                personStmt.finalize();
-            });
+                    data.ruralProfile?.farming_years,
+                    data.ruralProfile?.planting_scale,
+                    data.ruralProfile?.main_crops,
+                    data.ruralProfile?.breeding_types,
+                    data.ruralProfile?.cooperation_willingness,
+                    data.ruralProfile?.development_direction,
+                    data.ruralProfile?.available_time
+                ]
+            );
+
+            await runDb(
+                db,
+                `INSERT INTO cooperation_intentions
+                    (person_id, cooperation_type, preferred_scale, investment_capacity,
+                     time_availability, contact_preference)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    personId,
+                    data.cooperation?.cooperation_type,
+                    data.cooperation?.preferred_scale,
+                    data.cooperation?.investment_capacity,
+                    data.cooperation?.time_availability,
+                    data.cooperation?.contact_preference
+                ]
+            );
+
+            for (const skill of normalizedSkills) {
+                await runDb(
+                    db,
+                    `INSERT INTO talent_skills
+                        (person_id, skill_category, skill_name, proficiency_level, experience_years)
+                     VALUES (?, ?, ?, ?, ?)`,
+                    [personId, skill.category, skill.name, skill.proficiency, skill.experienceYears]
+                );
+            }
         });
-    });
+
+        if (personId === null) {
+            throw new Error('创建综合人员信息失败：人员主记录未生成');
+        }
+
+        if (data.userId) {
+            try {
+                await runDb(
+                    db,
+                    'UPDATE users SET person_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    [personId, data.userId]
+                );
+            } catch (linkError: any) {
+                logger.warn('Failed to link user to person after commit', {
+                    error: linkError.message,
+                    userId: data.userId,
+                    personId
+                });
+            }
+        }
+
+        const person = await getPersonWithDetails(personId);
+        return person || { id: personId, name: data.person.name };
+    } catch (err: any) {
+        if (isUniqueConstraintError(err)) {
+            throw createDuplicateEntryError();
+        }
+
+        logger.error('Error creating comprehensive person', {
+            error: err.message,
+            code: err.code,
+            errno: err.errno,
+            stack: err.stack
+        });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
 };
 
 // 更新综合人员信息（事务处理）
@@ -2043,232 +2051,101 @@ const updateComprehensivePerson = async (personId: number, data: {
     cooperation: any,
     skills: any[]
 }): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        const db = createConnection();
-        
-        // 开始事务
-        db.serialize(() => {
-            db.run('BEGIN TRANSACTION');
-            
-            // 1. 更新基本人员信息
-            const personStmt = db.prepare(`UPDATE persons SET 
-                name = ?, age = ?, gender = ?, email = ?, phone = ?, address = ?, 
-                education_level = ?, political_status = ?, employment_status = ?, 
-                updated_at = CURRENT_TIMESTAMP 
-                WHERE id = ?`);
-            
-            personStmt.run([
-                data.person.name,
-                data.person.age,
-                data.person.gender,
-                data.person.email,
-                data.person.phone,
-                data.person.address,
-                data.person.education_level,
-                data.person.political_status,
-                data.person.employment_status,
-                personId
-            ], function(err) {
-                if (err) {
-                    db.run('ROLLBACK');
-                    db.close();
-                    logger.error('Error updating person', { error: err.message, personId });
-                    reject(err);
-                    return;
-                }
-                
-                logger.info('Person updated', { personId, name: data.person.name });
-                
-                // 2. 更新农村特色信息（UPSERT）
-                db.get('SELECT id FROM rural_talent_profile WHERE person_id = ?', [personId], (err, row) => {
-                    if (err) {
-                        db.run('ROLLBACK');
-                        db.close();
-                        reject(err);
-                        return;
-                    }
-                    
-                    let ruralQuery, ruralParams;
-                    if (row) {
-                        // 更新现有记录
-                        ruralQuery = `UPDATE rural_talent_profile SET 
-                            farming_years = ?, planting_scale = ?, main_crops = ?, breeding_types = ?, 
-                            cooperation_willingness = ?, development_direction = ?, available_time = ?, 
-                            updated_at = CURRENT_TIMESTAMP 
-                            WHERE person_id = ?`;
-                        ruralParams = [
-                            data.ruralProfile.farming_years,
-                            data.ruralProfile.planting_scale,
-                            data.ruralProfile.main_crops,
-                            data.ruralProfile.breeding_types,
-                            data.ruralProfile.cooperation_willingness,
-                            data.ruralProfile.development_direction,
-                            data.ruralProfile.available_time,
-                            personId
-                        ];
-                    } else {
-                        // 创建新记录
-                        ruralQuery = `INSERT INTO rural_talent_profile 
-                            (person_id, farming_years, planting_scale, main_crops, breeding_types, 
-                             cooperation_willingness, development_direction, available_time) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-                        ruralParams = [
-                            personId,
-                            data.ruralProfile.farming_years,
-                            data.ruralProfile.planting_scale,
-                            data.ruralProfile.main_crops,
-                            data.ruralProfile.breeding_types,
-                            data.ruralProfile.cooperation_willingness,
-                            data.ruralProfile.development_direction,
-                            data.ruralProfile.available_time
-                        ];
-                    }
-                    
-                    const ruralStmt = db.prepare(ruralQuery);
-                    ruralStmt.run(ruralParams, function(err) {
-                        if (err) {
-                            db.run('ROLLBACK');
-                            db.close();
-                            logger.error('Error updating rural profile', { error: err.message, personId });
-                            reject(err);
-                            return;
-                        }
-                        
-                        logger.info('Rural profile updated', { personId });
-                        
-                        // 3. 更新合作意向信息（UPSERT）
-                        db.get('SELECT id FROM cooperation_intentions WHERE person_id = ?', [personId], (err, row) => {
-                            if (err) {
-                                db.run('ROLLBACK');
-                                db.close();
-                                reject(err);
-                                return;
-                            }
-                            
-                            let cooperationQuery, cooperationParams;
-                            if (row) {
-                                // 更新现有记录
-                                cooperationQuery = `UPDATE cooperation_intentions SET 
-                                    cooperation_type = ?, preferred_scale = ?, investment_capacity = ?, 
-                                    time_availability = ?, contact_preference = ? 
-                                    WHERE person_id = ?`;
-                                cooperationParams = [
-                                    data.cooperation.cooperation_type,
-                                    data.cooperation.preferred_scale,
-                                    data.cooperation.investment_capacity,
-                                    data.cooperation.time_availability,
-                                    data.cooperation.contact_preference,
-                                    personId
-                                ];
-                            } else {
-                                // 创建新记录
-                                cooperationQuery = `INSERT INTO cooperation_intentions 
-                                    (person_id, cooperation_type, preferred_scale, investment_capacity, 
-                                     time_availability, contact_preference) 
-                                    VALUES (?, ?, ?, ?, ?, ?)`;
-                                cooperationParams = [
-                                    personId,
-                                    data.cooperation.cooperation_type,
-                                    data.cooperation.preferred_scale,
-                                    data.cooperation.investment_capacity,
-                                    data.cooperation.time_availability,
-                                    data.cooperation.contact_preference
-                                ];
-                            }
-                            
-                            const cooperationStmt = db.prepare(cooperationQuery);
-                            cooperationStmt.run(cooperationParams, function(err) {
-                                if (err) {
-                                    db.run('ROLLBACK');
-                                    db.close();
-                                    logger.error('Error updating cooperation intention', { error: err.message, personId });
-                                    reject(err);
-                                    return;
-                                }
-                                
-                                logger.info('Cooperation intention updated', { personId });
-                                
-                                // 4. 更新技能信息（先删除旧的，再插入新的）
-                                db.run('DELETE FROM talent_skills WHERE person_id = ?', [personId], function(err) {
-                                    if (err) {
-                                        db.run('ROLLBACK');
-                                        db.close();
-                                        logger.error('Error deleting old skills', { error: err.message, personId });
-                                        reject(err);
-                                        return;
-                                    }
-                                    
-                                    if (data.skills && data.skills.length > 0) {
-                                        const skillStmt = db.prepare(`INSERT INTO talent_skills 
-                                            (person_id, skill_category, skill_name, proficiency_level, experience_years) 
-                                            VALUES (?, ?, ?, ?, ?)`);
-                                        
-                                        let skillsCreated = 0;
-                                        const totalSkills = data.skills.length;
-                                        
-                                        data.skills.forEach(skill => {
-                                            skillStmt.run([
-                                                personId,
-                                                skill.category,
-                                                skill.name,
-                                                skill.proficiency,
-                                                skill.experience_years
-                                            ], function(err) {
-                                                if (err) {
-                                                    db.run('ROLLBACK');
-                                                    db.close();
-                                                    logger.error('Error creating skill', { error: err.message, personId });
-                                                    reject(err);
-                                                    return;
-                                                }
-                                                
-                                                skillsCreated++;
-                                                if (skillsCreated === totalSkills) {
-                                                    finalizeUpdate();
-                                                }
-                                            });
-                                        });
-                                        
-                                        skillStmt.finalize();
-                                    } else {
-                                        finalizeUpdate();
-                                    }
-                                    
-                                    function finalizeUpdate() {
-                                        // 提交事务
-                                        db.run('COMMIT', (err) => {
-                                            if (err) {
-                                                db.close();
-                                                logger.error('Error committing transaction', { error: err.message, personId });
-                                                reject(err);
-                                                return;
-                                            }
-                                            
-                                            // 获取更新后的完整信息
-                                            getPersonWithDetails(personId).then(person => {
-                                                db.close();
-                                                resolve(person);
-                                            }).catch(err => {
-                                                db.close();
-                                                logger.error('Error getting updated person details', { error: err.message, personId });
-                                                resolve({ id: personId, name: data.person.name });
-                                            });
-                                        });
-                                    }
-                                });
-                            });
-                            
-                            cooperationStmt.finalize();
-                        });
-                    });
-                    
-                    ruralStmt.finalize();
-                });
-            });
-            
-            personStmt.finalize();
+    const db = createConnection();
+
+    try {
+        const normalizedSkills = Array.isArray(data.skills)
+            ? data.skills.map((skill, index) => normalizeSkillData(skill, index))
+            : [];
+
+        await runInTransaction(db, 'updateComprehensivePerson', async () => {
+            await runDb(
+                db,
+                `UPDATE persons SET
+                    name = ?, age = ?, gender = ?, email = ?, phone = ?, address = ?,
+                    education_level = ?, political_status = ?, employment_status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?`,
+                [
+                    data.person.name,
+                    data.person.age,
+                    data.person.gender,
+                    data.person.email,
+                    data.person.phone,
+                    data.person.address,
+                    data.person.education_level,
+                    data.person.political_status,
+                    data.person.employment_status,
+                    personId
+                ]
+            );
+
+            await runDb(db, 'DELETE FROM rural_talent_profile WHERE person_id = ?', [personId]);
+            await runDb(
+                db,
+                `INSERT INTO rural_talent_profile
+                    (person_id, farming_years, planting_scale, main_crops, breeding_types,
+                     cooperation_willingness, development_direction, available_time)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    personId,
+                    data.ruralProfile?.farming_years,
+                    data.ruralProfile?.planting_scale,
+                    data.ruralProfile?.main_crops,
+                    data.ruralProfile?.breeding_types,
+                    data.ruralProfile?.cooperation_willingness,
+                    data.ruralProfile?.development_direction,
+                    data.ruralProfile?.available_time
+                ]
+            );
+
+            await runDb(db, 'DELETE FROM cooperation_intentions WHERE person_id = ?', [personId]);
+            await runDb(
+                db,
+                `INSERT INTO cooperation_intentions
+                    (person_id, cooperation_type, preferred_scale, investment_capacity,
+                     time_availability, contact_preference)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    personId,
+                    data.cooperation?.cooperation_type,
+                    data.cooperation?.preferred_scale,
+                    data.cooperation?.investment_capacity,
+                    data.cooperation?.time_availability,
+                    data.cooperation?.contact_preference
+                ]
+            );
+
+            await runDb(db, 'DELETE FROM talent_skills WHERE person_id = ?', [personId]);
+            for (const skill of normalizedSkills) {
+                await runDb(
+                    db,
+                    `INSERT INTO talent_skills
+                        (person_id, skill_category, skill_name, proficiency_level, experience_years)
+                     VALUES (?, ?, ?, ?, ?)`,
+                    [personId, skill.category, skill.name, skill.proficiency, skill.experienceYears]
+                );
+            }
         });
-    });
+
+        const person = await getPersonWithDetails(personId);
+        return person || { id: personId, name: data.person.name };
+    } catch (err: any) {
+        if (isUniqueConstraintError(err)) {
+            throw createDuplicateEntryError();
+        }
+
+        logger.error('Error updating comprehensive person', {
+            personId,
+            error: err.message,
+            code: err.code,
+            errno: err.errno,
+            stack: err.stack
+        });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
 };
 
 export default {

@@ -237,7 +237,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   User, 
@@ -308,8 +308,8 @@ export default {
     const locations = computed(() => {
       const locs = new Set()
       persons.value.forEach(person => {
-        if (person.location) {
-          locs.add(person.location)
+        if (person.address) {
+          locs.add(person.address)
         }
       })
       return locs.size
@@ -466,6 +466,12 @@ export default {
         user: authStore.user,
         token: authStore.token ? '已设置' : '未设置'
       })
+    })
+    
+    onUnmounted(() => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
     })
     
     // 监听认证状态变化

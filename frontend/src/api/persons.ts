@@ -1,4 +1,46 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+axios.defaults.timeout = 15000
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        ElMessage.error('网络请求超时，请检查网络连接后重试')
+      } else {
+        ElMessage.error('网络连接失败，请检查网络设置')
+      }
+      return Promise.reject(error)
+    }
+
+    const status = error.response.status
+    switch (status) {
+      case 401:
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        delete axios.defaults.headers.common['Authorization']
+        ElMessage.error('登录已过期，请重新登录')
+        setTimeout(() => {
+          window.location.hash = '#/login'
+          if (window.location.hash === '#/login') {
+            window.location.reload()
+          }
+        }, 500)
+        break
+      case 403:
+        ElMessage.error('权限不足，无法执行此操作')
+        break
+      case 500:
+        ElMessage.error('服务器内部错误，请稍后重试')
+        break
+      default:
+        ElMessage.error(error.response.data?.message || `请求失败 (${status})`)
+    }
+    return Promise.reject(error)
+  }
+)
 
 // 定义接口类型
 interface Person {

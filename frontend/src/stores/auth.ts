@@ -74,21 +74,14 @@ export const useAuthStore = defineStore('auth', () => {
   // 登录
   const login = async (credentials: LoginData) => {
     try {
-      const response = await fetch('http://localhost:8083/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(credentials)
-      })
-
-      const result = await response.json()
+      const response = await axios.post('/api/auth/login', credentials)
+      const result = response.data
 
       if (!result.success) {
         throw new Error(result.message || '登录失败')
       }
 
-            setAuth(result.data)
+      setAuth(result.data)
       return result.data
     } catch (error) {
       const err = error as Error
@@ -99,21 +92,14 @@ export const useAuthStore = defineStore('auth', () => {
   // 注册
   const register = async (userData: LoginData) => {
     try {
-      const response = await fetch('http://localhost:8083/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      })
-
-      const result = await response.json()
+      const response = await axios.post('/api/auth/register', userData)
+      const result = response.data
 
       if (!result.success) {
         throw new Error(result.message || '注册失败')
       }
 
-            return result.data
+      return result.data
     } catch (error) {
       const err = error as Error
       throw new Error(err.message || '注册失败，请检查网络连接')
@@ -124,13 +110,7 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     try {
       if (token.value) {
-        await fetch('http://localhost:8083/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token.value}`,
-            'Content-Type': 'application/json'
-          }
-        })
+        await axios.post('/api/auth/logout')
       }
     } catch (error) {
       console.warn('Logout request failed:', error)
@@ -146,14 +126,8 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('未登录')
       }
 
-      const response = await fetch('http://localhost:8083/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token.value}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      const result = await response.json()
+      const response = await axios.get('/api/auth/me')
+      const result = response.data
 
       if (!result.success) {
         throw new Error(result.message || '获取用户信息失败')
@@ -164,7 +138,6 @@ export const useAuthStore = defineStore('auth', () => {
       
       return result.data
     } catch (error) {
-      // 如果获取用户信息失败，可能是token过期，清除认证信息
       clearAuth()
       throw error
     }
@@ -177,22 +150,14 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('未登录')
       }
 
-      const response = await fetch('http://localhost:8083/api/auth/change-password', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token.value}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(passwordData)
-      })
-
-      const result = await response.json()
+      const response = await axios.put('/api/auth/change-password', passwordData)
+      const result = response.data
 
       if (!result.success) {
         throw new Error(result.message || '密码修改失败')
       }
 
-            return result
+      return result
     } catch (error) {
       const err = error as Error
       throw new Error(err.message || '密码修改失败，请检查网络连接')
@@ -202,23 +167,13 @@ export const useAuthStore = defineStore('auth', () => {
   // 将person与用户关联
   const linkPersonToUser = async (personId: any) => {
     try {
-      // 修复：使用fetch或者axios.put而不是api.put
-      const response = await fetch('http://localhost:8083/api/auth/link-person', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token.value}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ personId }) // 修正参数名为personId
-      });
-      
-      const result = await response.json();
+      const response = await axios.put('/api/auth/link-person', { personId })
+      const result = response.data
       
       if (!result.success) {
-        throw new Error(result.message || '关联个人信息失败');
+        throw new Error(result.message || '关联个人信息失败')
       }
       
-      // 更新用户信息中的person_id
       if (user.value) {
         user.value.person_id = personId
         localStorage.setItem('user', JSON.stringify(user.value))

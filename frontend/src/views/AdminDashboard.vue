@@ -158,7 +158,7 @@
         </template>
 
         <el-table
-          :data="filteredPersons"
+          :data="paginatedPersons"
           v-loading="loading"
           element-loading-text="正在加载..."
           style="width: 100%"
@@ -257,7 +257,7 @@
         </el-table>
 
         <!-- 无结果提示 -->
-        <div v-if="!loading && filteredPersons.length === 0" class="no-results">
+        <div v-if="!loading && paginatedPersons.length === 0" class="no-results">
           <div class="no-results-content">
             <el-icon class="no-results-icon"><DocumentRemove /></el-icon>
             <h3>暂无匹配结果</h3>
@@ -279,7 +279,7 @@
             v-model:page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
-            :total="totalCount"
+            :total="filteredPersons.length"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
           />
@@ -304,7 +304,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Download, Refresh, Edit, Delete, View as ViewIcon, DocumentRemove, MoreFilled } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
@@ -418,6 +418,12 @@ export default {
       return searchKeyword.value || filterAge.value || filterEducation.value || filterStatus.value
     })
     
+    const paginatedPersons = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      const end = start + pageSize.value
+      return filteredPersons.value.slice(start, end)
+    })
+    
     // 方法
     const goBack = () => {
       router.push('/')
@@ -430,9 +436,7 @@ export default {
         persons.value = response.data.data || []
         stats.totalPersons = persons.value.length
         totalCount.value = persons.value.length
-        console.log('✅ 加载人员列表成功:', persons.value.length, '条记录')
       } catch (error) {
-        console.error('❌ 加载人员列表失败:', error)
         ElMessage.error('加载人员列表失败')
       } finally {
         loading.value = false
@@ -485,31 +489,32 @@ export default {
     }
 
     const editPerson = async (person) => {
+      loading.value = true
       try {
-        // 获取完整的人员详细信息，包括扩展数据
         const response = await axios.get(`/api/persons/${person.id}/details`)
         currentPerson.value = response.data.data
         isEdit.value = true
         showAddDialog.value = true
-        console.log('✅ 获取完整人员信息成功:', currentPerson.value)
       } catch (error) {
-        console.error('❌ 获取人员详细信息失败:', error)
-        // 如果获取详细信息失败，降级使用基本信息
         currentPerson.value = { ...person }
         isEdit.value = true
         showAddDialog.value = true
         ElMessage.warning('无法获取完整信息，将使用基本信息编辑')
+      } finally {
+        loading.value = false
       }
     }
     
     const deletePerson = async (id) => {
+      loading.value = true
       try {
         await axios.delete(`/api/persons/${id}`)
         ElMessage.success('删除成功')
-        loadPersons()
+        await loadPersons()
       } catch (error) {
-        console.error('删除失败:', error)
         ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+      } finally {
+        loading.value = false
       }
     }
     
@@ -561,10 +566,17 @@ export default {
       loadStats()
     })
     
+    onUnmounted(() => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
+    })
+    
     return {
       loading,
       persons,
       filteredPersons,
+      paginatedPersons,
       hasActiveFilters,
       showAddDialog,
       showDetailDialog,
