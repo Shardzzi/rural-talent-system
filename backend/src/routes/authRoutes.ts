@@ -1,11 +1,19 @@
 import express, { Router } from 'express';
 import authController from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
+import {
+    validateRegister,
+    validateChangePassword,
+    validateLinkPerson,
+    handleValidationErrors
+} from '../middleware/validation';
 
 const router: Router = express.Router();
 
 // 用户注册
 router.post('/register', 
+    validateRegister, 
+    handleValidationErrors,
     authController.registerValidation, 
     authController.register
 );
@@ -31,6 +39,8 @@ router.get('/me',
 // 修改密码
 router.put('/change-password', 
     authenticateToken,
+    validateChangePassword,
+    handleValidationErrors,
     authController.changePasswordValidation,
     authController.changePassword
 );
@@ -38,6 +48,8 @@ router.put('/change-password',
 // 关联用户和个人信息
 router.put('/link-person', 
     authenticateToken,
+    validateLinkPerson,
+    handleValidationErrors,
     authController.linkPersonToUser
 );
 

@@ -1,6 +1,14 @@
 import express, { Router } from 'express';
-import { validatePerson, handleValidationErrors } from '../middleware/validation';
-import { authenticateToken, requireAdmin, requireUser, optionalAuth } from '../middleware/auth';
+import {
+    validatePerson,
+    validateCreatePerson,
+    validateUpdatePerson,
+    validateSearch,
+    validateRuralProfile,
+    validateSkill,
+    handleValidationErrors
+} from '../middleware/validation';
+import { authenticateToken, requireAdmin, optionalAuth } from '../middleware/auth';
 import * as personController from '../controllers/personController';
 
 const router: Router = express.Router();
@@ -9,7 +17,7 @@ const router: Router = express.Router();
 router.get('/health', personController.healthCheck);
 
 // 搜索人才（可选认证，影响返回数据详细程度）
-router.get('/search', optionalAuth, personController.searchTalents);
+router.get('/search', validateSearch, handleValidationErrors, optionalAuth, personController.searchTalents);
 
 // 获取数据统计分析（管理员权限）
 router.get('/statistics', authenticateToken, requireAdmin, personController.getStatistics);
@@ -30,20 +38,20 @@ router.get('/persons/:id/details', optionalAuth, personController.getPersonDetai
 router.post('/persons', authenticateToken, validatePerson, handleValidationErrors, personController.createPerson);
 
 // 创建综合人员信息（需要登录）
-router.post('/persons/comprehensive', authenticateToken, personController.createComprehensivePerson);
+router.post('/persons/comprehensive', authenticateToken, validateCreatePerson, handleValidationErrors, personController.createComprehensivePerson);
 
 // 更新人员信息（需要登录，用户只能更新自己的信息）
 router.put('/persons/:id', authenticateToken, validatePerson, handleValidationErrors, personController.updatePerson);
 
 // 更新综合人员信息（需要登录，用户只能更新自己的信息）
-router.put('/persons/:id/comprehensive', authenticateToken, personController.updateComprehensivePerson);
+router.put('/persons/:id/comprehensive', authenticateToken, validateUpdatePerson, handleValidationErrors, personController.updateComprehensivePerson);
 
 // 创建或更新农村特色信息（需要登录）
-router.post('/persons/:id/rural-profile', authenticateToken, personController.upsertRuralProfile);
-router.put('/persons/:id/rural-profile', authenticateToken, personController.upsertRuralProfile);
+router.post('/persons/:id/rural-profile', authenticateToken, validateRuralProfile, handleValidationErrors, personController.upsertRuralProfile);
+router.put('/persons/:id/rural-profile', authenticateToken, validateRuralProfile, handleValidationErrors, personController.upsertRuralProfile);
 
 // 添加技能（需要登录）
-router.post('/persons/:id/skills', authenticateToken, personController.addSkill);
+router.post('/persons/:id/skills', authenticateToken, validateSkill, handleValidationErrors, personController.addSkill);
 
 // 删除技能（需要登录）
 router.delete('/skills/:skillId', authenticateToken, personController.deleteSkill);
