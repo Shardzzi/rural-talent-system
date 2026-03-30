@@ -351,22 +351,22 @@ const updatePerson = async (id: number, personData: any) => {
             throw new Error('未找到指定的人员信息');
         }
 
-        // 只更新提供的字段
-        const fieldsToUpdate = [];
-        const values = [];
+        const hasField = (key: string) => (
+            Object.prototype.hasOwnProperty.call(personData, key) && personData[key] !== undefined
+        );
 
-        const fieldMap = {
-            name: 'name',
-            age: 'age',
-            gender: 'gender',
-            email: 'email',
-            phone: 'phone',
-            id_card: 'id_card',
-            address: 'address',
-            current_address: 'current_address',
-            education_level: 'education_level',
-            political_status: 'political_status',
-            employment_status: 'employment_status'
+        const updateFlags = {
+            name: hasField('name'),
+            age: hasField('age'),
+            gender: hasField('gender'),
+            email: hasField('email'),
+            phone: hasField('phone'),
+            id_card: hasField('id_card'),
+            address: hasField('address'),
+            current_address: hasField('current_address'),
+            education_level: hasField('education_level'),
+            political_status: hasField('political_status'),
+            employment_status: hasField('employment_status')
         };
 
         // 检查唯一性字段
@@ -374,44 +374,35 @@ const updatePerson = async (id: number, personData: any) => {
         let emailToCheck = null;
         let phoneToCheck = null;
 
-        // 遍历提供的数据
-        for (const [key, value] of Object.entries(personData)) {
-            if (fieldMap[key] && value !== undefined) {
-                fieldsToUpdate.push(`${fieldMap[key]} = ?`);
-                values.push(value);
-
-                if (key === 'email') {
-                    emailToCheck = value;
-                    hasUniqueFields = true;
-                } else if (key === 'phone') {
-                    phoneToCheck = value;
-                    hasUniqueFields = true;
-                }
-            }
+        if (updateFlags.email) {
+            emailToCheck = personData.email;
+            hasUniqueFields = true;
         }
 
-        if (fieldsToUpdate.length === 0) {
+        if (updateFlags.phone) {
+            phoneToCheck = personData.phone;
+            hasUniqueFields = true;
+        }
+
+        if (!Object.values(updateFlags).some(Boolean)) {
             return { id, changes: 0 };
         }
 
         // 检查重复字段
         if (hasUniqueFields) {
-            let duplicateCheckConditions = [];
-            let duplicateCheckParams = [];
-
-            if (emailToCheck) {
-                duplicateCheckConditions.push("email = ?");
-                duplicateCheckParams.push(emailToCheck);
-            }
-
-            if (phoneToCheck) {
-                duplicateCheckConditions.push("phone = ?");
-                duplicateCheckParams.push(phoneToCheck);
-            }
-
-            duplicateCheckParams.push(id);
-
-            const duplicateCheckSql = `SELECT id FROM persons WHERE (${duplicateCheckConditions.join(' OR ')}) AND id != ?`;
+            const duplicateCheckSql = `
+                SELECT id FROM persons
+                WHERE id != ?
+                  AND ((? IS NOT NULL AND email = ?) OR (? IS NOT NULL AND phone = ?))
+                LIMIT 1
+            `;
+            const duplicateCheckParams = [
+                id,
+                emailToCheck,
+                emailToCheck,
+                phoneToCheck,
+                phoneToCheck
+            ];
             const duplicatePersons = await executeQuery(duplicateCheckSql, duplicateCheckParams);
 
             if (duplicatePersons.length > 0) {
@@ -425,11 +416,36 @@ const updatePerson = async (id: number, personData: any) => {
             }
         }
 
-        // 执行更新
-        fieldsToUpdate.push('updated_at = CURRENT_TIMESTAMP');
-        values.push(id);
-
-        const updateSql = `UPDATE persons SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
+        const updateSql = `
+            UPDATE persons SET
+                name = CASE WHEN ? THEN ? ELSE name END,
+                age = CASE WHEN ? THEN ? ELSE age END,
+                gender = CASE WHEN ? THEN ? ELSE gender END,
+                email = CASE WHEN ? THEN ? ELSE email END,
+                phone = CASE WHEN ? THEN ? ELSE phone END,
+                id_card = CASE WHEN ? THEN ? ELSE id_card END,
+                address = CASE WHEN ? THEN ? ELSE address END,
+                current_address = CASE WHEN ? THEN ? ELSE current_address END,
+                education_level = CASE WHEN ? THEN ? ELSE education_level END,
+                political_status = CASE WHEN ? THEN ? ELSE political_status END,
+                employment_status = CASE WHEN ? THEN ? ELSE employment_status END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `;
+        const values = [
+            updateFlags.name, personData.name,
+            updateFlags.age, personData.age,
+            updateFlags.gender, personData.gender,
+            updateFlags.email, personData.email,
+            updateFlags.phone, personData.phone,
+            updateFlags.id_card, personData.id_card,
+            updateFlags.address, personData.address,
+            updateFlags.current_address, personData.current_address,
+            updateFlags.education_level, personData.education_level,
+            updateFlags.political_status, personData.political_status,
+            updateFlags.employment_status, personData.employment_status,
+            id
+        ];
         await executeQuery(updateSql, values);
 
         // 获取更新后的人员信息

@@ -763,61 +763,59 @@ const updatePerson = async (id, personData) => {
                 return;
             }
             
-            // 只更新提供的字段
-            const fieldsToUpdate = [];
-            const values = [];
-            
-            // 定义可更新的字段映射
-            const fieldMap = {
-                name: 'name',
-                age: 'age', 
-                gender: 'gender',
-                email: 'email',
-                phone: 'phone',
-                id_card: 'id_card',
-                address: 'address',
-                current_address: 'current_address',
-                education_level: 'education_level',
-                political_status: 'political_status',
-                employment_status: 'employment_status',
-                rural_profile: 'rural_profile',
-                cooperation_intentions: 'cooperation_intentions',
-                talent_skills: 'talent_skills'
+            const hasField = (key: string) => (
+                Object.prototype.hasOwnProperty.call(personData, key) && personData[key] !== undefined
+            );
+
+            const getProcessedValue = (key: string) => {
+                const value = personData[key];
+
+                if (key === 'talent_skills' && Array.isArray(value)) {
+                    return JSON.stringify(value);
+                }
+
+                if ((key === 'rural_profile' || key === 'cooperation_intentions') &&
+                    typeof value === 'object' && value !== null) {
+                    return JSON.stringify(value);
+                }
+
+                return value;
+            };
+
+            const updateFlags = {
+                name: hasField('name'),
+                age: hasField('age'),
+                gender: hasField('gender'),
+                email: hasField('email'),
+                phone: hasField('phone'),
+                id_card: hasField('id_card'),
+                address: hasField('address'),
+                current_address: hasField('current_address'),
+                education_level: hasField('education_level'),
+                political_status: hasField('political_status'),
+                employment_status: hasField('employment_status'),
+                rural_profile: hasField('rural_profile'),
+                cooperation_intentions: hasField('cooperation_intentions'),
+                talent_skills: hasField('talent_skills')
             };
             
             // 特殊处理需要检查重复的字段
-            const checkDuplicateFields = ['email', 'phone'];
             let hasUniqueFields = false;
             let emailToCheck = null;
             let phoneToCheck = null;
             
-            // 遍历提供的数据，只更新存在的字段
-            for (const [key, value] of Object.entries(personData)) {
-                if (fieldMap[key] && value !== undefined) {
-                    fieldsToUpdate.push(`${fieldMap[key]} = ?`);
-                    
-                    if (key === 'email') {
-                        emailToCheck = value;
-                        hasUniqueFields = true;
-                    } else if (key === 'phone') {
-                        phoneToCheck = value;
-                        hasUniqueFields = true;
-                    }
-                    
-                    // 处理 JSON 字段
-                    if (key === 'talent_skills' && Array.isArray(value)) {
-                        values.push(JSON.stringify(value));
-                    } else if ((key === 'rural_profile' || key === 'cooperation_intentions') && 
-                               typeof value === 'object' && value !== null) {
-                        values.push(JSON.stringify(value));
-                    } else {
-                        values.push(value);
-                    }
-                }
+            if (updateFlags.email) {
+                emailToCheck = getProcessedValue('email');
+                hasUniqueFields = true;
+            }
+
+            if (updateFlags.phone) {
+                phoneToCheck = getProcessedValue('phone');
+                hasUniqueFields = true;
             }
             
             // 如果没有字段需要更新，直接返回
-            if (fieldsToUpdate.length === 0) {
+            if (!Object.values(updateFlags).some(Boolean)) {
                 db.close();
                 resolve({ id, changes: 0 });
                 return;
@@ -825,23 +823,19 @@ const updatePerson = async (id, personData) => {
             
             // 如果有唯一性字段需要检查，先检查重复
             if (hasUniqueFields) {
-                // 构建检查重复的查询
-                let duplicateCheckConditions = [];
-                let duplicateCheckParams = [];
-                
-                if (emailToCheck) {
-                    duplicateCheckConditions.push("email = ?");
-                    duplicateCheckParams.push(emailToCheck);
-                }
-                
-                if (phoneToCheck) {
-                    duplicateCheckConditions.push("phone = ?");
-                    duplicateCheckParams.push(phoneToCheck);
-                }
-                
-                duplicateCheckParams.push(id);
-                
-                const duplicateCheckSql = `SELECT id FROM persons WHERE (${duplicateCheckConditions.join(' OR ')}) AND id != ?`;
+                const duplicateCheckSql = `
+                    SELECT id FROM persons
+                    WHERE id != ?
+                      AND ((? IS NOT NULL AND email = ?) OR (? IS NOT NULL AND phone = ?))
+                    LIMIT 1
+                `;
+                const duplicateCheckParams = [
+                    id,
+                    emailToCheck,
+                    emailToCheck,
+                    phoneToCheck,
+                    phoneToCheck
+                ];
                 
                 db.get(duplicateCheckSql, duplicateCheckParams, (err, duplicatePerson: any) => {
                     if (err) {
@@ -878,12 +872,42 @@ const updatePerson = async (id, personData) => {
             }
             
             function executeUpdate() {
-                // 添加更新时间
-                fieldsToUpdate.push('updated_at = CURRENT_TIMESTAMP');
-                
-                // 构建 SQL 语句
-                const sql = `UPDATE persons SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
-                values.push(id);
+                const sql = `
+                    UPDATE persons SET
+                        name = CASE WHEN ? THEN ? ELSE name END,
+                        age = CASE WHEN ? THEN ? ELSE age END,
+                        gender = CASE WHEN ? THEN ? ELSE gender END,
+                        email = CASE WHEN ? THEN ? ELSE email END,
+                        phone = CASE WHEN ? THEN ? ELSE phone END,
+                        id_card = CASE WHEN ? THEN ? ELSE id_card END,
+                        address = CASE WHEN ? THEN ? ELSE address END,
+                        current_address = CASE WHEN ? THEN ? ELSE current_address END,
+                        education_level = CASE WHEN ? THEN ? ELSE education_level END,
+                        political_status = CASE WHEN ? THEN ? ELSE political_status END,
+                        employment_status = CASE WHEN ? THEN ? ELSE employment_status END,
+                        rural_profile = CASE WHEN ? THEN ? ELSE rural_profile END,
+                        cooperation_intentions = CASE WHEN ? THEN ? ELSE cooperation_intentions END,
+                        talent_skills = CASE WHEN ? THEN ? ELSE talent_skills END,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                `;
+                const values = [
+                    updateFlags.name, getProcessedValue('name'),
+                    updateFlags.age, getProcessedValue('age'),
+                    updateFlags.gender, getProcessedValue('gender'),
+                    updateFlags.email, getProcessedValue('email'),
+                    updateFlags.phone, getProcessedValue('phone'),
+                    updateFlags.id_card, getProcessedValue('id_card'),
+                    updateFlags.address, getProcessedValue('address'),
+                    updateFlags.current_address, getProcessedValue('current_address'),
+                    updateFlags.education_level, getProcessedValue('education_level'),
+                    updateFlags.political_status, getProcessedValue('political_status'),
+                    updateFlags.employment_status, getProcessedValue('employment_status'),
+                    updateFlags.rural_profile, getProcessedValue('rural_profile'),
+                    updateFlags.cooperation_intentions, getProcessedValue('cooperation_intentions'),
+                    updateFlags.talent_skills, getProcessedValue('talent_skills'),
+                    id
+                ];
                 
                 db.run(sql, values, function(err) {
                     if (err) {
@@ -1159,36 +1183,7 @@ const searchTalents = async (searchCriteria) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
-        let whereConditions = [];
         let params = [];
-        
-        // 构建搜索条件
-        if (searchCriteria.name) {
-            whereConditions.push("p.name LIKE ?");
-            params.push(`%${searchCriteria.name}%`);
-        }
-        
-        if (searchCriteria.skill) {
-            whereConditions.push("(ts.skill_name LIKE ? OR ts.skill_category LIKE ?)");
-            params.push(`%${searchCriteria.skill}%`, `%${searchCriteria.skill}%`);
-        }
-        
-        if (searchCriteria.crop) {
-            whereConditions.push("rtp.main_crops LIKE ?");
-            params.push(`%${searchCriteria.crop}%`);
-        }
-        
-        if (searchCriteria.minAge) {
-            whereConditions.push("p.age >= ?");
-            params.push(parseInt(searchCriteria.minAge));
-        }
-        
-        if (searchCriteria.maxAge) {
-            whereConditions.push("p.age <= ?");
-            params.push(parseInt(searchCriteria.maxAge));
-        }
-        
-        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
         
         const query = `
             SELECT DISTINCT p.*, 
@@ -1199,10 +1194,34 @@ const searchTalents = async (searchCriteria) => {
             FROM persons p
             LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
             LEFT JOIN talent_skills ts ON p.id = ts.person_id
-            ${whereClause}
+            WHERE (? = 0 OR p.name LIKE ?)
+              AND (? = 0 OR (ts.skill_name LIKE ? OR ts.skill_category LIKE ?))
+              AND (? = 0 OR rtp.main_crops LIKE ?)
+              AND (? = 0 OR p.age >= ?)
+              AND (? = 0 OR p.age <= ?)
             GROUP BY p.id
             ORDER BY p.name
         `;
+
+        const nameLike = searchCriteria.name ? '%' + searchCriteria.name + '%' : null;
+        const skillLike = searchCriteria.skill ? '%' + searchCriteria.skill + '%' : null;
+        const cropLike = searchCriteria.crop ? '%' + searchCriteria.crop + '%' : null;
+        const minAge = searchCriteria.minAge ? parseInt(searchCriteria.minAge) : null;
+        const maxAge = searchCriteria.maxAge ? parseInt(searchCriteria.maxAge) : null;
+
+        params = [
+            searchCriteria.name ? 1 : 0,
+            nameLike,
+            searchCriteria.skill ? 1 : 0,
+            skillLike,
+            skillLike,
+            searchCriteria.crop ? 1 : 0,
+            cropLike,
+            searchCriteria.minAge ? 1 : 0,
+            minAge,
+            searchCriteria.maxAge ? 1 : 0,
+            maxAge
+        ];
         
         logger.info('Executing search query', { query, params });
         

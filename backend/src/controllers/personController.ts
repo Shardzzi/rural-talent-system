@@ -3,6 +3,30 @@ import logger from '../config/logger';
 import { getDbService } from '../services/dbServiceFactory';
 import { AuthenticatedRequest, Person, ApiResponse } from '../types/index';
 
+// ID参数验证：必须是正整数
+const validateIdParam = (idStr: string | undefined, paramName: string = 'id'): number => {
+    if (!idStr) {
+        throw new Error(`缺少${paramName}参数`);
+    }
+    const id = parseInt(idStr, 10);
+    if (isNaN(id) || id < 1 || !Number.isInteger(id)) {
+        throw new Error('无效的ID参数');
+    }
+    return id;
+};
+
+// 年龄验证：必须是1-150的整数
+const validateAge = (age: unknown): number => {
+    if (age === undefined || age === null || age === '') {
+        throw new Error('年龄不能为空');
+    }
+    const parsed = parseInt(String(age), 10);
+    if (isNaN(parsed) || !Number.isInteger(parsed) || parsed < 1 || parsed > 150) {
+        throw new Error('年龄必须是1-150之间的整数');
+    }
+    return parsed;
+};
+
 // 获取所有人员信息
 const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // 获取数据库服务
@@ -16,8 +40,8 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         
         // 权限控制：游客只能看到脱敏的基本信息，用户和管理员可以看到完整信息
         if (!req.user) {
-            // 未登录用户只能看到基本的公开信息
-            persons = await getDbService(req).getAllPersons() as Person[];
+            const rawPersons = await getDbService(req).getAllPersons();
+            persons = Array.isArray(rawPersons) ? rawPersons : [];
             // 过滤敏感信息
             const sanitizedPersons = persons.map(person => ({
                 id: person.id,
@@ -38,7 +62,8 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         } else {
             // 登录用户（包括普通用户和管理员）可以看到所有详细信息
             // 这是因为用户既可能是求职者也可能是招聘者，需要看到完整的人才信息
-            persons = await getDbService(req).getAllPersonsWithDetails() as Person[];
+            const rawPersons = await getDbService(req).getAllPersonsWithDetails();
+            persons = Array.isArray(rawPersons) ? rawPersons : [];
         }
         
         logger.info('Retrieved all persons successfully', { 
@@ -66,7 +91,16 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
 // 根据ID获取人员信息
 const getPersonById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const id = parseInt(req.params.id);
+        let id: number;
+        try {
+            id = validateIdParam(req.params.id);
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         logger.info('Getting person by ID', { 
             id, 
             user: req.user ? { id: req.user.userId, role: req.user.role, personId: req.user.personId } : 'anonymous'
@@ -156,8 +190,20 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         }
 
         const { name, age, email, phone, gender, address, education_level, political_status } = req.body;
+        
+        let validatedAge: number;
+        try {
+            validatedAge = validateAge(age);
+        } catch (ageError) {
+            res.status(400).json({
+                success: false,
+                message: (ageError as Error).message
+            });
+            return;
+        }
+        
         logger.info('Creating new person', { 
-            name, age, email, phone,
+            name, age: validatedAge, email, phone,
             userId: req.user.userId,
             userRole: req.user.role
         });
@@ -173,7 +219,7 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         
         const newPerson = await getDbService(req).createPerson({
             name,
-            age: parseInt(age),
+            age: validatedAge,
             gender,
             email,
             phone,
@@ -241,7 +287,16 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
 // 更新人员信息
 const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const id = parseInt(req.params.id);
+        let id: number;
+        try {
+            id = validateIdParam(req.params.id);
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         
         // 权限检查：必须登录
         if (!req.user) {
@@ -253,7 +308,7 @@ const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         }
         
         // 权限检查：普通用户只能修改自己的信息
-        if (req.user.role === 'user' && req.user.personId !== id) {
+        if (req.user.role === 'user' && (!req.user.personId || req.user.personId !== id)) {
             res.status(403).json({
                 success: false,
                 message: '您只能修改自己的信息'
@@ -262,15 +317,29 @@ const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         }
         
         const { name, age, gender, email, phone, address, education_level, political_status } = req.body;
+        
+        let validatedAge: number | undefined;
+        if (age !== undefined && age !== null) {
+            try {
+                validatedAge = validateAge(age);
+            } catch (ageError) {
+                res.status(400).json({
+                    success: false,
+                    message: (ageError as Error).message
+                });
+                return;
+            }
+        }
+        
         logger.info('Updating person', { 
-            id, name, age, email, phone,
+            id, name, age: validatedAge, email, phone,
             userId: req.user.userId,
             userRole: req.user.role
         });
         
         const updatedPerson = await getDbService(req).updatePerson(id, {
             name,
-            age: parseInt(age),
+            age: validatedAge,
             gender,
             email,
             phone,
@@ -326,7 +395,16 @@ const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
 // 删除人员信息
 const deletePerson = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const id = parseInt(req.params.id);
+        let id: number;
+        try {
+            id = validateIdParam(req.params.id);
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         
         // 权限检查：必须登录
         if (!req.user) {
@@ -399,10 +477,19 @@ const healthCheck = (req: AuthenticatedRequest, res: Response): void => {
 // 获取人员详细信息（包括农村特色信息）
 const getPersonDetails = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const id = parseInt(req.params.id);
+        let id: number;
+        try {
+            id = validateIdParam(req.params.id);
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         logger.info('Getting person details', { id });
         
-        const personDetails = await getDbService(req).getPersonWithDetails(id) as any;
+        const personDetails = await getDbService(req).getPersonWithDetails(id);
         
         if (!personDetails) {
             logger.warn('Person not found', { id });
@@ -435,7 +522,16 @@ const getPersonDetails = async (req: AuthenticatedRequest, res: Response): Promi
 // 创建或更新农村特色信息
 const upsertRuralProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const personId = parseInt(req.params.id);
+        let personId: number;
+        try {
+            personId = validateIdParam(req.params.id, 'personId');
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         const ruralData = req.body;
         
         logger.info('Upserting rural profile', { personId, ruralData });
@@ -465,12 +561,21 @@ const upsertRuralProfile = async (req: AuthenticatedRequest, res: Response): Pro
 // 添加技能
 const addSkill = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const personId = parseInt(req.params.id);
+        let personId: number;
+        try {
+            personId = validateIdParam(req.params.id, 'personId');
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         const skillData = req.body;
         
         logger.info('Adding skill', { personId, skillData });
         
-        const newSkill = await getDbService(req).addSkill(personId, skillData) as any;
+        const newSkill = await getDbService(req).addSkill(personId, skillData);
         
         logger.info('Skill added successfully', { personId, skillId: newSkill.id });
         res.json({
@@ -496,7 +601,16 @@ const addSkill = async (req: AuthenticatedRequest, res: Response): Promise<void>
 // 删除技能
 const deleteSkill = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const skillId = parseInt(req.params.skillId);
+        let skillId: number;
+        try {
+            skillId = validateIdParam(req.params.skillId, 'skillId');
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         
         logger.info('Deleting skill', { skillId });
         
@@ -528,13 +642,14 @@ const searchTalents = async (req: AuthenticatedRequest, res: Response): Promise<
         
         logger.info('Searching talents', { searchCriteria });
         
-        const results = await getDbService(req).searchTalents(searchCriteria) as any[];
+        const results = await getDbService(req).searchTalents(searchCriteria);
+        const validatedResults = Array.isArray(results) ? results : [];
         
-        logger.info('Talent search completed', { resultCount: results.length });
+        logger.info('Talent search completed', { resultCount: validatedResults.length });
         res.json({
             success: true,
-            data: results,
-            count: results.length
+            data: validatedResults,
+            count: validatedResults.length
         });
     } catch (err) {
         const error = err as Error;
@@ -556,14 +671,14 @@ const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<
         logger.info('Getting talent statistics');
         
         // 获取基础统计
-        const totalTalents = await getDbService(req).getTotalPersonsCount() as number;
-        const avgAge = await getDbService(req).getAverageAge() as number;
-        const totalSkills = await getDbService(req).getTotalSkillsCount() as number;
-        const cooperationStats = await getDbService(req).getCooperationStats() as any;
-        const skillsCategoryStats = await getDbService(req).getSkillsCategoryStats() as any[];
-        const agricultureStats = await getDbService(req).getAgricultureStats() as any;
-        const educationStats = await getDbService(req).getEducationStats() as any[];
-        const ageDistribution = await getDbService(req).getAgeDistribution() as any[];
+        const totalTalents = await getDbService(req).getTotalPersonsCount();
+        const avgAge = await getDbService(req).getAverageAge();
+        const totalSkills = await getDbService(req).getTotalSkillsCount();
+        const cooperationStats = (await getDbService(req).getCooperationStats()) as { strong?: number; moderate?: number; weak?: number; total?: number };
+        const skillsCategoryStats = (await getDbService(req).getSkillsCategoryStats()) as Record<string, unknown>[];
+        const agricultureStats = (await getDbService(req).getAgricultureStats()) as { avgFarmingYears?: number; totalCrops?: number; popularCrops?: unknown[]; breedingTypes?: unknown[] };
+        const educationStats = (await getDbService(req).getEducationStats()) as Record<string, unknown>[];
+        const ageDistribution = (await getDbService(req).getAgeDistribution()) as Record<string, unknown>[];
 
         const statistics = {
             // 基础统计
@@ -618,7 +733,7 @@ const getSkillsLibraryStats = async (req: AuthenticatedRequest, res: Response): 
     try {
         logger.info('Getting skills library statistics');
         
-        const skillsLibrary = await getDbService(req).getSkillsLibraryStats() as any;
+        const skillsLibrary = await getDbService(req).getSkillsLibraryStats();
         
         res.json(skillsLibrary);
     } catch (error) {
@@ -707,7 +822,16 @@ const updateComprehensivePerson = async (req: AuthenticatedRequest, res: Respons
             return;
         }
 
-        const id = parseInt(req.params.id);
+        let id: number;
+        try {
+            id = validateIdParam(req.params.id);
+        } catch (validationError) {
+            res.status(400).json({
+                success: false,
+                message: (validationError as Error).message
+            });
+            return;
+        }
         const { person, ruralProfile, cooperation, skills } = req.body;
         
         logger.info('Updating comprehensive person info', { 
@@ -719,7 +843,7 @@ const updateComprehensivePerson = async (req: AuthenticatedRequest, res: Respons
         });
         
         // 权限检查
-        if (req.user.role === 'user' && req.user.personId !== id) {
+        if (req.user.role === 'user' && (!req.user.personId || req.user.personId !== id)) {
             res.status(403).json({
                 success: false,
                 message: '您只能修改自己的信息'
