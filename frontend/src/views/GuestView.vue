@@ -465,8 +465,23 @@ export default {
     const loadPersons = async () => {
       loading.value = true
       try {
-        // 游客模式访问，会返回脱敏数据
-        const response = await axios.get('/api/persons')
+        // 构建搜索参数
+        const params = {}
+        if (searchKeyword.value) params.name = searchKeyword.value
+        if (filterStatus.value) params.employment_status = filterStatus.value
+        if (filterMinAge.value) params.minAge = filterMinAge.value
+        if (filterMaxAge.value) params.maxAge = filterMaxAge.value
+        if (filterEducation.value) {
+          // 只传递精确匹配的学历
+          if (['专科', '本科'].includes(filterEducation.value)) {
+            params.education_level = filterEducation.value
+          }
+        }
+        if (filterSkill.value) params.skill = filterSkill.value
+        if (filterCrop.value) params.crop = filterCrop.value
+
+        // 游客模式访问，会返回脱敏数据，使用搜索接口
+        const response = await axios.get('/api/search', { params })
         persons.value = response.data.data || []
         console.log('✅ 游客模式加载人员列表成功:', persons.value.length, '条记录')
       } catch (error) {
@@ -485,6 +500,7 @@ export default {
       }
       searchTimeout = setTimeout(() => {
         searchTrigger.value++
+        loadPersons()
       }, 500)
     }
     
@@ -496,6 +512,7 @@ export default {
         education: filterEducation.value,
         status: filterStatus.value
       })
+      loadPersons()
     }
     
     const resetFilters = () => {
@@ -507,6 +524,7 @@ export default {
       filterSkill.value = ''
       filterCrop.value = ''
       currentPage.value = 1
+      loadPersons()
     }
     
     const viewTalentDetail = (person) => {

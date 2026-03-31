@@ -9,12 +9,8 @@ const http = require('http');
 const API_BASE = 'http://localhost:8083/api';
 
 const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m'
+  reset: '\x1b[0m', red: '\x1b[31m', green: '\x1b[32m',
+  yellow: '\x1b[33m', blue: '\x1b[34m', cyan: '\x1b[36m'
 };
 
 function colorLog(text, color = 'reset') {
@@ -31,24 +27,17 @@ let failedTests = 0;
 
 function assert(condition, testName, detail = '') {
   totalTests++;
-  if (condition) {
-    passedTests++;
-    colorLog(`  ✅ ${testName}`, 'green');
-  } else {
-    failedTests++;
-    colorLog(`  ❌ ${testName}${detail ? ' - ' + detail : ''}`, 'red');
-  }
+  if (condition) { passedTests++; colorLog(`  ✅ ${testName}`, 'green'); }
+  else { failedTests++; colorLog(`  ❌ ${testName}${detail ? ' - ' + detail : ''}`, 'red'); }
 }
 
-// 单次登录获取token，全局复用以避免速率限制
 let cachedToken = null;
 async function getAdminToken() {
   if (cachedToken) return cachedToken;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, {
-        username: 'admin',
-        password: 'admin123'
+        username: 'admin', password: 'admin123'
       });
       cachedToken = res.data.data?.token || res.data.token;
       return cachedToken;
@@ -97,7 +86,7 @@ async function testSQLInjection() {
       'SQL注入 DROP TABLE 未导致500', `实际状态: ${error.response?.status}`);
   }
 
-  // 3. 验证数据库仍完整 - persons表未被删除（用单条记录验证，避免列表接口schema问题）
+  // 3. 验证数据库仍完整（用单条记录验证，避免列表接口schema bug）
   try {
     const res = await axios.get(`${API_BASE}/persons/1`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -119,6 +108,7 @@ async function testSQLInjection() {
   }
 
   // 5. 登录SQL注入
+  await sleep(1500);
   try {
     await axios.post(`${API_BASE}/auth/login`, {
       username: "admin'--", password: "anything"
@@ -151,7 +141,7 @@ async function testXSSProtection() {
   const token = await getAdminToken();
   await sleep(500);
 
-  // 1. name字段script标签 - sanitizer剥离HTML后name为空，应返回400
+  // 1. name字段script标签 - sanitizer剥离HTML后name为空
   try {
     await axios.post(`${API_BASE}/persons`, {
       name: '<script>alert(1)</script>', age: 25, gender: 'male'
@@ -166,7 +156,8 @@ async function testXSSProtection() {
   try {
     const ts = Date.now();
     const res = await axios.post(`${API_BASE}/persons`, {
-      name: 'XSSImgTest' + ts, age: 25, gender: 'male'
+      name: 'XSSImgTest' + ts, age: 25, gender: 'male',
+      email: 'xss_' + ts + '@test.com', phone: '138' + String(ts).slice(-8)
     }, { headers: authHeaders(token) });
     const personId = res.data?.data?.id || res.data?.id;
 
@@ -316,7 +307,7 @@ async function testConcurrentRequests() {
 
   const results = await Promise.all(promises);
   const failCount = results.filter(r => !r.ok).length;
-  assert(failCount === 0, '10个并发GET /persons全部成功', `失败数: ${failCount}`);
+  assert(failCount === 0, '10个并发GET /persons/1全部成功', `失败数: ${failCount}`);
 
   // 2. 10个并发GET请求到health
   const healthPromises = [];
@@ -416,9 +407,8 @@ async function testDuplicateOperations() {
   colorLog('\n🔄 重复操作测试', 'cyan');
 
   const ts = Date.now();
-
-  // 1. 重复注册同一用户
   await sleep(2000);
+
   try {
     await axios.post(`${API_BASE}/auth/register`, {
       username: `dup_test_${ts}`, password: 'test123456',

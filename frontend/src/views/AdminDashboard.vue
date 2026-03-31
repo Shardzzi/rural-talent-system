@@ -532,8 +532,28 @@ export default {
           ElMessage.warning('请先登录后再导出数据')
           return
         }
+
+        // 构建导出参数，与当前筛选条件保持一致
+        const params = {}
+        if (searchKeyword.value) params.name = searchKeyword.value
+        if (filterStatus.value) params.employment_status = filterStatus.value
+        if (filterEducation.value) {
+          // 只传递精确匹配的学历
+          if (['专科', '本科'].includes(filterEducation.value)) {
+            params.education_level = filterEducation.value
+          }
+        }
+        if (filterAge.value) {
+          if (filterAge.value === '18-25') { params.minAge = 18; params.maxAge = 25 }
+          else if (filterAge.value === '26-35') { params.minAge = 26; params.maxAge = 35 }
+          else if (filterAge.value === '36-45') { params.minAge = 36; params.maxAge = 45 }
+          else if (filterAge.value === '46-55') { params.minAge = 46; params.maxAge = 55 }
+          else if (filterAge.value === '55+') { params.minAge = 56 }
+        }
+
         const response = await axios.get('/api/persons/export', {
           headers: { Authorization: `Bearer ${token}` },
+          params: params,
           responseType: 'blob'
         })
         const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' })
