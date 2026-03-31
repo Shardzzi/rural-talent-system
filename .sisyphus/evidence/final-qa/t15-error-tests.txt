@@ -1,0 +1,48 @@
+[34m🚀 错误处理测试开始...
+[0m
+[36m
+📁 404 错误测试[0m
+[32m  ✅ GET /api/nonexistent-route 返回404[0m
+[32m  ✅ 404响应包含 success: false[0m
+[32m  ✅ GET /api/persons/999999 返回404[0m
+[32m  ✅ DELETE /api/persons/999999 返回404[0m
+[36m
+🔐 401 认证错误测试[0m
+[32m  ✅ 无token POST /api/persons 返回401[0m
+[32m  ✅ 无效token访问 /auth/me 返回401[0m
+[32m  ✅ 无效Authorization格式返回401[0m
+[32m  ✅ 空Bearer token返回401[0m
+[36m
+🚫 403 权限错误测试[0m
+[32m  ✅ 普通用户GET /statistics 返回403[0m
+[32m  ✅ 普通用户GET /persons/export 返回403[0m
+[36m
+✏️ 400 验证错误测试[0m
+[32m  ✅ 空body POST /persons 返回400[0m
+[32m  ✅ 验证错误包含 success: false[0m
+[32m  ✅ 年龄999 POST /persons 返回400[0m
+[32m  ✅ 年龄-5 POST /persons 返回400[0m
+[32m  ✅ 性别invalid POST /persons 返回400[0m
+[32m  ✅ 无效邮箱 POST /persons 返回400[0m
+[32m  ✅ 无效电话 POST /persons 返回400[0m
+[32m  ✅ 姓名1字符 POST /persons 返回400[0m
+[32m  ✅ 用户名2字符注册返回400[0m
+[32m  ✅ 密码3字符注册返回400[0m
+[32m  ✅ 无效邮箱注册返回400[0m
+[32m  ✅ 搜索page=0返回400[0m
+[32m  ✅ 搜索limit=999返回400[0m
+[32m  ✅ link-person personId=abc 返回400[0m
+[36m
+🔧 请求格式错误测试[0m
+[32m  ✅ 无效JSON返回4xx/5xx[0m
+[32m  ✅ 无Content-Type请求得到响应[0m
+[32m  ✅ GET带body返回错误状态码[0m
+[32m  ✅ PATCH /persons/1 返回404或405[0m
+[34m
+📋 错误处理测试总结[0m
+[34m=====================================[0m
+[0m总测试数: 28[0m
+[32m通过: 28[0m
+[32m失败: 0[0m
+[32m
+🎉 所有错误处理测试通过！[0m

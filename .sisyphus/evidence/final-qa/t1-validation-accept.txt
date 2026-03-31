@@ -1,0 +1,1 @@
+{"success":true,"message":"创建成功","data":{"id":7,"name":"测试用户QA","age":30,"gender":"male","email":"qa590494@test.com","phone":"13900590493","id_card":null,"address":null,"current_address":null,"education_level":null,"political_status":null,"created_at":"2026-03-31 04:16:30","updated_at":"2026-03-31 04:16:30"}}

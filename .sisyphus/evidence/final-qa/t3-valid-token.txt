@@ -1,0 +1,1 @@
+HTTP 200: {"success":true,"data":{"id":1,"name":"张三","age":25,"gender":"男","email":"zhangsan@example.com","phone":"13812345678","id_card":null,"address":"山东省烟台市福山区张格庄镇张三村","current_address":null,"education_leve
