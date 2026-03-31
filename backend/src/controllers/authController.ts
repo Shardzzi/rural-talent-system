@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import { Response } from 'express';
 import { randomUUID } from 'crypto';
@@ -9,7 +10,75 @@ import { AuthenticatedRequest, User, JWTPayload, ApiResponse, UserPersonInfo } f
 
 // JWT密钥 - 生产环境应该使用环境变量
 const JWT_SECRET = process.env.JWT_SECRET || 'rural_talent_system_secret_key_2025';
-const JWT_EXPIRES_IN = '24h'; // token过期时间
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '24h') as SignOptions['expiresIn'];
+const JWT_REFRESH_EXPIRES_IN = '7d' as SignOptions['expiresIn'];
+
+type RefreshJWTPayload = JWTPayload & {
+    tokenType: 'refresh';
+};
+
+const getBearerToken = (authorizationHeader?: string): string | null => {
+    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+        return null;
+    }
+
+    const token = authorizationHeader.slice(7).trim();
+    return token || null;
+};
+
+const parseExpiresInToMs = (expiresIn: SignOptions['expiresIn']): number => {
+    if (typeof expiresIn === 'number') {
+        return expiresIn * 1000;
+    }
+
+    if (typeof expiresIn !== 'string') {
+        return 24 * 60 * 60 * 1000;
+    }
+
+    const normalized = expiresIn.trim();
+
+    if (/^\d+$/.test(normalized)) {
+        return Number(normalized) * 1000;
+    }
+
+    const match = normalized.match(/^(\d+)([smhd])$/i);
+    if (!match) {
+        return 24 * 60 * 60 * 1000;
+    }
+
+    const value = Number(match[1]);
+    const unit = match[2].toLowerCase();
+
+    switch (unit) {
+        case 's':
+            return value * 1000;
+        case 'm':
+            return value * 60 * 1000;
+        case 'h':
+            return value * 60 * 60 * 1000;
+        case 'd':
+            return value * 24 * 60 * 60 * 1000;
+        default:
+            return 24 * 60 * 60 * 1000;
+    }
+};
+
+const createAccessToken = (tokenPayload: JWTPayload): string => {
+    return jwt.sign(tokenPayload, JWT_SECRET, {
+        expiresIn: JWT_EXPIRES_IN,
+        jwtid: randomUUID()
+    });
+};
+
+const createRefreshToken = (tokenPayload: JWTPayload): string => {
+    return jwt.sign({
+        ...tokenPayload,
+        tokenType: 'refresh'
+    }, JWT_SECRET, {
+        expiresIn: JWT_REFRESH_EXPIRES_IN,
+        jwtid: randomUUID()
+    });
+};
 
 // 用户注册
 export const register = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -145,14 +214,12 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
             personId: user.person_id
         };
 
-        const token = jwt.sign(tokenPayload, JWT_SECRET, { 
-            expiresIn: JWT_EXPIRES_IN,
-            jwtid: randomUUID()
-        });
+        const token = createAccessToken(tokenPayload);
+        const refreshToken = createRefreshToken(tokenPayload);
 
         // 计算过期时间
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24);
+        expiresAt.setTime(expiresAt.getTime() + parseExpiresInToMs(JWT_EXPIRES_IN));
 
         // 保存会话
         await getDbService(req).createUserSession(user.id, token, expiresAt);
@@ -168,6 +235,7 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
             message: '登录成功',
             data: {
                 token,
+                refreshToken,
                 user: {
                     id: user.id,
                     username: user.username,
@@ -178,6 +246,7 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
             }
         } as ApiResponse<{
             token: string;
+            refreshToken: string;
             user: Partial<User>;
         }>);
 
@@ -189,6 +258,93 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
         res.status(500).json({
             success: false,
             message: '登录失败，请稍后重试'
+        } as ApiResponse);
+    }
+};
+
+export const refresh = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const refreshToken = getBearerToken(req.headers.authorization);
+
+        if (!refreshToken) {
+            res.status(401).json({
+                success: false,
+                message: '刷新token缺失'
+            } as ApiResponse);
+            return;
+        }
+
+        const decoded = jwt.verify(refreshToken, JWT_SECRET) as RefreshJWTPayload;
+        if (decoded.tokenType !== 'refresh') {
+            res.status(401).json({
+                success: false,
+                message: '无效的刷新token'
+            } as ApiResponse);
+            return;
+        }
+
+        const user = await getDbService(req).getUserById(decoded.userId) as User | null;
+        if (!user) {
+            res.status(401).json({
+                success: false,
+                message: '用户不存在或已失效'
+            } as ApiResponse);
+            return;
+        }
+
+        const tokenPayload: JWTPayload = {
+            userId: user.id,
+            username: user.username,
+            role: user.role,
+            personId: user.person_id
+        };
+
+        const newAccessToken = createAccessToken(tokenPayload);
+        const newRefreshToken = createRefreshToken(tokenPayload);
+        const expiresAt = new Date(Date.now() + parseExpiresInToMs(JWT_EXPIRES_IN));
+
+        await getDbService(req).createUserSession(user.id, newAccessToken, expiresAt);
+
+        logger.info('User token refreshed successfully', {
+            userId: user.id,
+            username: user.username
+        });
+
+        res.json({
+            success: true,
+            message: 'token刷新成功',
+            data: {
+                token: newAccessToken,
+                refreshToken: newRefreshToken
+            }
+        } as ApiResponse<{ token: string; refreshToken: string }>);
+    } catch (error) {
+        const err = error as Error;
+
+        if (err.name === 'TokenExpiredError') {
+            res.status(401).json({
+                success: false,
+                message: '刷新token已过期，请重新登录'
+            } as ApiResponse);
+            return;
+        }
+
+        if (err.name === 'JsonWebTokenError') {
+            res.status(401).json({
+                success: false,
+                message: '无效的刷新token'
+            } as ApiResponse);
+            return;
+        }
+
+        logger.error('Error refreshing token', {
+            error: err.message,
+            stack: err.stack
+        });
+
+        res.status(500).json({
+            success: false,
+            message: '刷新token失败'
         } as ApiResponse);
     }
 };
@@ -489,6 +645,7 @@ export const changePasswordValidation = [
 export default {
     register,
     login,
+    refresh,
     logout,
     getCurrentUser,
     changePassword,

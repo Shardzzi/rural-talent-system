@@ -44,6 +44,8 @@ router.post('/login',
     authController.login
 );
 
+router.post('/refresh', authController.refresh);
+
 // 用户登出
 router.post('/logout', 
     authenticateToken, 

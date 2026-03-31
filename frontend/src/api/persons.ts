@@ -1,11 +1,20 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { useAuthStore } from '../stores/auth'
+
+type RetriableAxiosConfig = {
+  _retry?: boolean
+  headers?: Record<string, string>
+}
+
+let isRefreshing = false
+let refreshPromise: Promise<string> | null = null
 
 axios.defaults.timeout = 15000
 
 axios.interceptors.response.use(
   response => response,
-  error => {
+  async error => {
     if (!error.response) {
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         ElMessage.error('网络请求超时，请检查网络连接后重试')
@@ -16,9 +25,44 @@ axios.interceptors.response.use(
     }
 
     const status = error.response.status
+    const originalConfig = (error.config || {}) as RetriableAxiosConfig
+
+    if (status === 401 && !originalConfig._retry && !String(error.config?.url || '').includes('/api/auth/refresh')) {
+      originalConfig._retry = true
+
+      try {
+        const authStore = useAuthStore()
+
+        if (!authStore.refreshToken) {
+          throw new Error('缺少刷新令牌')
+        }
+
+        if (!isRefreshing) {
+          isRefreshing = true
+          refreshPromise = authStore.refreshAccessToken().finally(() => {
+            isRefreshing = false
+          })
+        }
+
+        const newToken = await refreshPromise
+        originalConfig.headers = {
+          ...(originalConfig.headers || {}),
+          Authorization: `Bearer ${newToken}`
+        }
+
+        return axios(originalConfig)
+      } catch (refreshError) {
+        const authStore = useAuthStore()
+        authStore.handleRefreshFailure()
+        ElMessage.error('登录已过期，请重新登录')
+        return Promise.reject(refreshError)
+      }
+    }
+
     switch (status) {
       case 401:
         localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
         delete axios.defaults.headers.common['Authorization']
         ElMessage.error('登录已过期，请重新登录')

@@ -12,6 +12,7 @@ interface User {
 
 interface AuthData {
   token: string
+  refreshToken?: string
   user: User
 }
 
@@ -23,6 +24,7 @@ interface LoginData {
 export const useAuthStore = defineStore('auth', () => {
   // 状态
   const token = ref<string | null>(localStorage.getItem('token') || null)
+  const refreshToken = ref<string | null>(localStorage.getItem('refreshToken') || null)
   const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
   const isGuest = ref<boolean>(false)
 
@@ -38,10 +40,14 @@ export const useAuthStore = defineStore('auth', () => {
   // 设置认证信息
   const setAuth = (authData: AuthData) => {
     token.value = authData.token
+    refreshToken.value = authData.refreshToken || refreshToken.value
     user.value = authData.user
     isGuest.value = false
     
     localStorage.setItem('token', authData.token)
+    if (authData.refreshToken) {
+      localStorage.setItem('refreshToken', authData.refreshToken)
+    }
     localStorage.setItem('user', JSON.stringify(authData.user))
     
     // 设置API默认请求头
@@ -53,10 +59,12 @@ export const useAuthStore = defineStore('auth', () => {
   // 清除认证信息
   const clearAuth = () => {
     token.value = null
+    refreshToken.value = null
     user.value = null
     isGuest.value = false
     
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     
     // 清除API请求头
@@ -116,6 +124,43 @@ export const useAuthStore = defineStore('auth', () => {
       console.warn('Logout request failed:', error)
     } finally {
       clearAuth()
+    }
+  }
+
+  const refreshAccessToken = async (): Promise<string> => {
+    if (!refreshToken.value) {
+      throw new Error('刷新令牌不存在')
+    }
+
+    const response = await axios.post('/api/auth/refresh', null, {
+      headers: {
+        Authorization: `Bearer ${refreshToken.value}`
+      }
+    })
+
+    const result = response.data
+    if (!result.success || !result.data?.token) {
+      throw new Error(result.message || '刷新令牌失败')
+    }
+
+    token.value = result.data.token
+    refreshToken.value = result.data.refreshToken || refreshToken.value
+    localStorage.setItem('token', token.value)
+    if (refreshToken.value) {
+      localStorage.setItem('refreshToken', refreshToken.value)
+    }
+
+    if (axios.defaults) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+    }
+
+    return token.value
+  }
+
+  const handleRefreshFailure = () => {
+    clearAuth()
+    if (window.location.hash !== '#/login') {
+      window.location.hash = '#/login'
     }
   }
 
@@ -208,10 +253,12 @@ export const useAuthStore = defineStore('auth', () => {
     // 从localStorage恢复认证状态
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
+    const storedRefreshToken = localStorage.getItem('refreshToken')
     
     if (storedToken && storedUser) {
       try {
         token.value = storedToken
+        refreshToken.value = storedRefreshToken
         user.value = JSON.parse(storedUser)
         
         // 设置API默认请求头
@@ -230,6 +277,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     // 状态
     token,
+    refreshToken,
     user,
     isGuest,
     
@@ -246,6 +294,8 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    refreshAccessToken,
+    handleRefreshFailure,
     getCurrentUser,
     changePassword,
     linkPersonToUser,
