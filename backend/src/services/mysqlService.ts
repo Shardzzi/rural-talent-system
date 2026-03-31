@@ -107,8 +107,52 @@ const getAllPersons = async () => {
 };
 
 // 获取所有人员信息（包括详细信息）
-const getAllPersonsWithDetails = async () => {
+const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
     try {
+        let whereClause = '';
+        const params: any[] = [];
+
+        if (filters && Object.keys(filters).length > 0) {
+            const conditions: string[] = [];
+
+            if (filters.name) {
+                conditions.push('p.name LIKE ?');
+                params.push('%' + filters.name + '%');
+            }
+            if (filters.skill) {
+                conditions.push('(ts.skill_name LIKE ? OR ts.skill_category LIKE ?)');
+                params.push('%' + filters.skill + '%', '%' + filters.skill + '%');
+            }
+            if (filters.crop) {
+                conditions.push('rtp.main_crops LIKE ?');
+                params.push('%' + filters.crop + '%');
+            }
+            if (filters.minAge) {
+                conditions.push('p.age >= ?');
+                params.push(parseInt(filters.minAge as string));
+            }
+            if (filters.maxAge) {
+                conditions.push('p.age <= ?');
+                params.push(parseInt(filters.maxAge as string));
+            }
+            if (filters.gender) {
+                conditions.push('p.gender = ?');
+                params.push(filters.gender);
+            }
+            if (filters.education_level) {
+                conditions.push('p.education_level = ?');
+                params.push(filters.education_level);
+            }
+            if (filters.employment_status) {
+                conditions.push('p.employment_status = ?');
+                params.push(filters.employment_status);
+            }
+
+            if (conditions.length > 0) {
+                whereClause = 'WHERE ' + conditions.join(' AND ');
+            }
+        }
+
         const sql = `
             SELECT
                 p.*,
@@ -140,11 +184,12 @@ const getAllPersonsWithDetails = async () => {
             LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
             LEFT JOIN cooperation_intentions ci ON p.id = ci.person_id
             LEFT JOIN talent_skills ts ON p.id = ts.person_id
+            ${whereClause}
             GROUP BY p.id, rtp.id, ci.id
             ORDER BY p.id
         `;
 
-        const rows = await executeQuery(sql);
+        const rows = await executeQuery(sql, params);
 
         // 处理数据格式
         const detailedPersons = rows.map((row: any) => ({

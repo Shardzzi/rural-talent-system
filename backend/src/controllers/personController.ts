@@ -687,13 +687,30 @@ const escapeCsvField = (value: unknown): string => {
 
 const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+        const filters: Record<string, unknown> = {};
+        const filterKeys = ['name', 'skill', 'crop', 'minAge', 'maxAge', 'gender', 'education_level', 'employment_status'];
+        let hasFilters = false;
+        
+        for (const key of filterKeys) {
+            if (req.query[key] !== undefined && req.query[key] !== '') {
+                filters[key] = req.query[key];
+                hasFilters = true;
+            }
+        }
+
         logger.info('Exporting persons as CSV', {
-            user: req.user ? { id: req.user.userId, role: req.user.role } : 'anonymous'
+            user: req.user ? { id: req.user.userId, role: req.user.role } : 'anonymous',
+            hasFilters,
+            filters: hasFilters ? filters : undefined
         });
 
         let persons: any[];
         try {
-            persons = await getDbService(req).getAllPersonsWithDetails();
+            if (hasFilters) {
+                persons = await getDbService(req).getAllPersonsWithDetails(filters);
+            } else {
+                persons = await getDbService(req).getAllPersonsWithDetails();
+            }
         } catch {
             persons = await getDbService(req).getAllPersons();
         }

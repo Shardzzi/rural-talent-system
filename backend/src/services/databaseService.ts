@@ -563,10 +563,54 @@ const getAllPersons = async () => {
 };
 
 // 获取所有人员信息（包括详细信息）
-const getAllPersonsWithDetails = async () => {
+const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
+        let whereClause = '';
+        const params: any[] = [];
+        
+        if (filters && Object.keys(filters).length > 0) {
+            const conditions: string[] = [];
+            
+            if (filters.name) {
+                conditions.push('p.name LIKE ?');
+                params.push('%' + filters.name + '%');
+            }
+            if (filters.skill) {
+                conditions.push('p.id IN (SELECT person_id FROM talent_skills WHERE skill_name LIKE ? OR skill_category LIKE ?)');
+                params.push('%' + filters.skill + '%', '%' + filters.skill + '%');
+            }
+            if (filters.crop) {
+                conditions.push('rtp.main_crops LIKE ?');
+                params.push('%' + filters.crop + '%');
+            }
+            if (filters.minAge) {
+                conditions.push('p.age >= ?');
+                params.push(parseInt(filters.minAge as string));
+            }
+            if (filters.maxAge) {
+                conditions.push('p.age <= ?');
+                params.push(parseInt(filters.maxAge as string));
+            }
+            if (filters.gender) {
+                conditions.push('p.gender = ?');
+                params.push(filters.gender);
+            }
+            if (filters.education_level) {
+                conditions.push('p.education_level = ?');
+                params.push(filters.education_level);
+            }
+            if (filters.employment_status) {
+                conditions.push('p.employment_status = ?');
+                params.push(filters.employment_status);
+            }
+            
+            if (conditions.length > 0) {
+                whereClause = 'WHERE ' + conditions.join(' AND ');
+            }
+        }
+
         // 优化：使用单个 JOIN 查询获取所有人员及其关联信息
         const query = `
             SELECT 
@@ -588,10 +632,11 @@ const getAllPersonsWithDetails = async () => {
             FROM persons p
             LEFT JOIN rural_talent_profile rtp ON rtp.person_id = p.id
             LEFT JOIN cooperation_intentions ci ON ci.person_id = p.id
+            ${whereClause}
             ORDER BY p.id
         `;
         
-        db.all(query, async (err: any, rows: any[]) => {
+        db.all(query, params, async (err: any, rows: any[]) => {
             if (err) {
                 logger.error('Error getting all persons with details', { 
                     error: err.message, 

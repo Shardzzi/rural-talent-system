@@ -6,7 +6,7 @@ import mysqlService from './mysqlService';
 interface DatabaseService {
     initDatabase(): Promise<void>;
     getAllPersons(): Promise<any[]>;
-    getAllPersonsWithDetails(): Promise<any[]>;
+    getAllPersonsWithDetails(filters?: Record<string, unknown>): Promise<any[]>;
     getPersonById(id: number): Promise<any>;
     getPersonWithDetails(id: number): Promise<any>;
     createPerson(personData: any): Promise<any>;
