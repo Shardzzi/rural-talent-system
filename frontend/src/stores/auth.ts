@@ -224,10 +224,8 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('user', JSON.stringify(user.value))
       }
       
-      console.log('✅ 用户关联person成功:', result)
       return result
     } catch (error) {
-      console.error('❌ 用户关联person失败:', error)
       throw error
     }
   }
@@ -265,10 +263,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (axios.defaults) {
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
         }
-        
-        console.log('✅ 认证状态已恢复:', user.value)
       } catch (error) {
-        console.error('❌ 恢复认证状态失败:', error)
         clearAuth()
       }
     }

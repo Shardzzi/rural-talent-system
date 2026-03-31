@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
 import logger from '../config/logger';
-import { DatabaseResult, User, Person, SearchParams } from '../types';
+import { DatabaseResult, User, Person, SearchParams, ResultSetHeader } from '../types';
 
 // MySQL 数据库配置
 const MYSQL_CONFIG = {
@@ -364,7 +364,7 @@ const createPerson = async (personData: any) => {
             name, age, email, phone, gender, address, education_level, political_status, employment_status
         ]);
 
-        const newPersonId = (result as any).insertId;
+        const newPersonId = (result as ResultSetHeader).insertId;
 
         // 获取新创建的人员信息
         const newPerson = await getPersonById(newPersonId);
@@ -595,11 +595,11 @@ const createUserSession = async (userId: number, token: string, expiresAt: Date)
         const result = await executeQuery(sql, [userId, token, expiresAt]);
 
         logger.info('User session created successfully', {
-            sessionId: (result as any).insertId,
+            sessionId: (result as ResultSetHeader).insertId,
             userId
         });
 
-        return (result as any).insertId;
+        return (result as ResultSetHeader).insertId;
     } catch (error: any) {
         logger.error('Error creating user session', {
             error: error.message,
@@ -633,7 +633,7 @@ const deleteUserSession = async (token: string) => {
     try {
         const sql = 'DELETE FROM user_sessions WHERE token = ?';
         const result = await executeQuery(sql, [token]);
-        return (result as any).affectedRows > 0;
+        return (result as ResultSetHeader).affectedRows > 0;
     } catch (error: any) {
         logger.error('Error deleting user session', {
             error: error.message

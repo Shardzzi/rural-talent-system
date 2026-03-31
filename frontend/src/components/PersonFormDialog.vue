@@ -648,10 +648,7 @@ export default {
     
     // 从person数据解析技能
     const parseSkillsFromPerson = (person) => {
-      console.log('parseSkillsFromPerson 收到的数据:', person)
-      
       if (!person) {
-        console.log('person为空，返回默认技能')
         return [{
           category: '',
           name: '',
@@ -663,22 +660,14 @@ export default {
       try {
         let skills = null
         
-        console.log('person.skills:', person.skills)
-        console.log('person.skills 类型:', typeof person.skills)
-        
-        // 如果数据结构是嵌套的（来自详细API）
         if (person.skills && Array.isArray(person.skills)) {
           skills = person.skills
-          console.log('使用数组形式的skills:', skills)
         } else if (person.skills && typeof person.skills === 'string') {
-          // 如果skills是JSON字符串，解析它
           skills = JSON.parse(person.skills)
-          console.log('解析JSON字符串后的skills:', skills)
         }
         
         if (Array.isArray(skills) && skills.length > 0) {
-          const parsedSkills = skills.map(skill => {
-            console.log('处理单个技能:', skill)
+          return skills.map(skill => {
             return {
               category: skill.skill_category || skill.category || '',
               name: skill.skill_name || skill.name || '',
@@ -686,14 +675,11 @@ export default {
               experience_years: skill.experience_years || null
             }
           })
-          console.log('最终解析的技能列表:', parsedSkills)
-          return parsedSkills
         }
       } catch (error) {
-        console.warn('解析技能数据失败:', error)
+        // Silently handle parse errors, return default
       }
       
-      console.log('返回默认空技能')
       return [{
         category: '',
         name: '',
@@ -908,7 +894,6 @@ export default {
           
           response = await axios.put(`/api/persons/${props.person.id}/comprehensive`, updateData)
           ElMessage.success('信息更新成功')
-          console.log('✅ 更新人员综合信息成功:', response.data)
         } else {
           // 添加模式
           const createData = {
@@ -919,20 +904,15 @@ export default {
           }
           
           response = await axios.post('/api/persons/comprehensive', createData)
-          console.log('✅ 添加人员综合信息成功:', response.data)
           
-          // 如果是用户模式，需要关联到用户账号
           if (props.isUserMode && response.data.data?.id) {
             try {
               await authStore.linkPersonToUser(response.data.data.id)
-              console.log('✅ 用户关联人员信息成功')
             } catch (error) {
-              console.error('❌ 用户关联人员信息失败，回滚人员创建:', error)
-              // 失败时回滚：删除刚刚创建的人员信息，保证状态一致性
               try {
                 await axios.delete(`/api/persons/${response.data.data.id}`)
               } catch (rollbackError) {
-                console.error('❌ 回滚人员创建失败:', rollbackError)
+                // Silently handle rollback failure
               }
               throw new Error('关联用户账号失败，已取消人员创建')
             }

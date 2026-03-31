@@ -359,18 +359,14 @@ export default {
         // 导入API服务
         const { default: personService } = await import('../api/persons')
         const response = await personService.getPersonDetails(props.person.id)
-        console.log('获取到详细信息响应:', response)
         
         if (response.success) {
-          // 获取并映射详细信息
           detailedPerson.value = {
             ...props.person,
-            // 兼容旧版字段名
             rural_profile: response.data.ruralProfile || response.data.rural_profile,
             talent_skills: response.data.skills || [],
             cooperation_intentions: response.data.cooperation || null
           }
-          console.log('组装后的详细信息:', detailedPerson.value)
         } else {
           detailedPerson.value = props.person
         }

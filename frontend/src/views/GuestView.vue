@@ -483,9 +483,7 @@ export default {
         // 游客模式访问，会返回脱敏数据，使用搜索接口
         const response = await axios.get('/api/search', { params })
         persons.value = response.data.data || []
-        console.log('✅ 游客模式加载人员列表成功:', persons.value.length, '条记录')
       } catch (error) {
-        console.error('❌ 加载人员列表失败:', error)
         ElMessage.error('加载人员列表失败')
       } finally {
         loading.value = false
@@ -507,11 +505,6 @@ export default {
     const handleSearch = () => {
       currentPage.value = 1
       searchTrigger.value++
-      console.log('🔍 游客搜索:', {
-        keyword: searchKeyword.value,
-        education: filterEducation.value,
-        status: filterStatus.value
-      })
       loadPersons()
     }
     
@@ -564,12 +557,6 @@ export default {
     // 生命周期
     onMounted(() => {
       loadPersons()
-      // 调试：输出认证状态
-      console.log('🔍 GuestView mounted - 认证状态:', {
-        isAuthenticated: authStore.isAuthenticated,
-        user: authStore.user,
-        token: authStore.token ? '已设置' : '未设置'
-      })
     })
     
     onUnmounted(() => {
@@ -577,15 +564,6 @@ export default {
         clearTimeout(searchTimeout)
       }
     })
-    
-    // 监听认证状态变化
-    watch(() => authStore.isAuthenticated, (newValue, oldValue) => {
-      console.log('🔄 GuestView - 认证状态变化:', {
-        from: oldValue,
-        to: newValue,
-        user: authStore.user
-      })
-    }, { immediate: true })
     
     return {
       contentRef,

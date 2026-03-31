@@ -6,7 +6,7 @@ import { Response } from 'express';
 import { randomUUID } from 'crypto';
 import { getDbService } from '../services/dbServiceFactory';
 import logger from '../config/logger';
-import { AuthenticatedRequest, User, JWTPayload, ApiResponse, UserPersonInfo } from '../types/index';
+import { AuthenticatedRequest, User, JWTPayload, ApiResponse, UserPersonInfo, UserPersonRow } from '../types/index';
 
 // JWT密钥 - 生产环境应该使用环境变量
 const JWT_SECRET = process.env.JWT_SECRET || 'rural_talent_system_secret_key_2025';
@@ -394,7 +394,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
         }
 
         // 定义临时类型来处理数据库返回的数据
-        const dbResult = userInfo as any;
+        const dbResult = userInfo as UserPersonRow;
 
         // 构造返回数据，区分用户信息和人员信息
         const userData: UserPersonInfo = {
@@ -402,7 +402,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
             username: dbResult.username,
             password: dbResult.password,
             email: dbResult.email,
-            role: dbResult.role,
+            role: dbResult.role as 'admin' | 'user',
             person_id: dbResult.person_id,
             is_active: dbResult.is_active,
             created_at: dbResult.created_at,

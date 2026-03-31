@@ -163,3 +163,47 @@ export interface PersonCreateRequest {
 export interface PersonUpdateRequest extends Partial<PersonCreateRequest> {
   id: number;
 }
+
+// MySQL ResultSetHeader (from mysql2/promise)
+export interface ResultSetHeader {
+  affectedRows: number;
+  insertId: number;
+  warningStatus: number;
+}
+
+// 人员详情（包含关联信息）
+export interface PersonWithDetails extends Person {
+  rural_profile?: Record<string, unknown> | null;
+  cooperation_intentions?: Record<string, unknown> | null;
+  talent_skills?: Record<string, unknown>[];
+}
+
+// 人员完整档案（包含农村信息、技能、合作意向）
+export interface PersonFullProfile {
+  [key: string]: unknown;
+  ruralProfile?: Record<string, unknown> | null;
+  skills?: Record<string, unknown>[];
+  cooperation?: Record<string, unknown> | null;
+}
+
+// 用户-人员关联查询结果
+export interface UserPersonRow {
+  id: number;
+  username: string;
+  password: string;
+  email: string;
+  role: string;
+  person_id: number | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  name?: string;
+  age?: number;
+  gender?: string;
+  phone?: string;
+  address?: string;
+  education_level?: string;
+  political_status?: string;
+  employment_status?: string;
+  [key: string]: unknown;
+}

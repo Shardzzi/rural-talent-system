@@ -467,12 +467,6 @@ export default {
     const handleSearch = () => {
       currentPage.value = 1
       searchTrigger.value++
-      console.log('🔍 搜索条件:', {
-        keyword: searchKeyword.value,
-        age: filterAge.value,
-        education: filterEducation.value,
-        status: filterStatus.value
-      })
     }
     
     const resetFilters = () => {

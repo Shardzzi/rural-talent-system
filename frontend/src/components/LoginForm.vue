@@ -191,13 +191,6 @@ export default {
             password: formData.password
           })
           
-          // 调试：输出登录后的认证状态
-          console.log('🎉 登录成功 - 认证状态:', {
-            isAuthenticated: authStore.isAuthenticated,
-            user: authStore.user,
-            token: authStore.token ? '已设置' : '未设置'
-          })
-          
           ElMessage.success('登录成功')
           
           // 根据用户角色跳转到不同页面

@@ -377,9 +377,7 @@ export default {
       try {
         const response = await axios.get('/api/persons')
         persons.value = response.data.data || []
-        console.log('✅ 加载人员列表成功:', persons.value.length, '条记录')
       } catch (error) {
-        console.error('❌ 加载人员列表失败:', error)
         ElMessage.error('加载人员列表失败')
       } finally {
         loading.value = false
@@ -390,17 +388,13 @@ export default {
       // 检查用户是否有关联的个人信息ID（兼容两种字段名）
       const personId = authStore.user?.personId || authStore.user?.person_id
       if (!personId) {
-        console.log('👤 用户还没有关联的个人信息')
         return
       }
       
       try {
         const response = await axios.get(`/api/persons/${personId}`)
         userPerson.value = response.data.data
-        console.log('✅ 加载用户个人信息成功:', userPerson.value)
       } catch (error) {
-        console.error('❌ 加载用户个人信息失败:', error)
-        // 如果404，说明用户还没有关联的person记录，这是正常的
         if (error.response?.status !== 404) {
           ElMessage.error('加载个人信息失败')
         }
@@ -414,10 +408,7 @@ export default {
         currentPerson.value = response.data.data
         isEdit.value = true
         showAddDialog.value = true
-        console.log('✅ 获取完整人员信息成功:', currentPerson.value)
       } catch (error) {
-        console.error('❌ 获取人员详细信息失败:', error)
-        // 如果获取详细信息失败，降级使用基本信息
         currentPerson.value = { ...userPerson.value }
         isEdit.value = true
         showAddDialog.value = true
@@ -439,11 +430,6 @@ export default {
     const handleSearch = () => {
       currentPage.value = 1
       searchTrigger.value++
-      console.log('🔍 用户搜索:', {
-        keyword: searchKeyword.value,
-        education: filterEducation.value,
-        status: filterStatus.value
-      })
     }
     
     const resetFilters = () => {

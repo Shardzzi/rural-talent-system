@@ -798,7 +798,7 @@ const getPersonById = async (id) => {
                         
                         // 组合所有信息
                         const personWithDetails = {
-                            ...(row as any),
+                            ...(row as Person),
                             rural_profile: ruralProfile || null,
                             cooperation_intentions: cooperation || null,
                             talent_skills: skills || []
@@ -806,7 +806,7 @@ const getPersonById = async (id) => {
                         
                         logger.debug('Retrieved person with details successfully', { 
                             id, 
-                            name: (row as any).name,
+                            name: (row as Person).name,
                             hasRuralProfile: !!ruralProfile,
                             hasCooperation: !!cooperation,
                             skillsCount: skills ? skills.length : 0
@@ -1193,7 +1193,7 @@ const getPersonWithDetails = async (id) => {
                         
                         // 组合完整信息
                         const fullProfile = {
-                            ...(person as any),
+                            ...(person as Person),
                             ruralProfile: ruralProfile || null,
                             skills: skills || [],
                             cooperation: cooperation || null
