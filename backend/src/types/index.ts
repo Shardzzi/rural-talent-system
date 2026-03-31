@@ -101,6 +101,7 @@ export interface SearchParams extends PaginationParams {
   is_employed?: boolean;
   skill?: string;
   crop?: string;
+  employment_status?: string;
 }
 
 // JWT载荷类型

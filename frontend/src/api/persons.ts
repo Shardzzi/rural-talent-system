@@ -136,6 +136,7 @@ interface SearchCriteria {
   maxAge?: number
   gender?: string
   address?: string
+  employment_status?: string
 }
 
 interface Statistics {
@@ -152,6 +153,7 @@ interface SearchCriteria {
   maxAge?: number
   gender?: string
   address?: string
+  employment_status?: string
 }
 
 // 人员信息管理 API 服务

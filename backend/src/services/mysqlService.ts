@@ -918,6 +918,10 @@ const searchTalents = async (searchCriteria: any): Promise<any[]> => {
             conditions.push('p.education_level = ?');
             params.push(searchCriteria.education_level);
         }
+        if (searchCriteria.employment_status) {
+            conditions.push('p.employment_status = ?');
+            params.push(searchCriteria.employment_status);
+        }
 
         const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
 

@@ -1284,6 +1284,7 @@ const searchTalents = async (searchCriteria) => {
               AND (? = 0 OR p.age <= ?)
               AND (? = 0 OR p.gender = ?)
               AND (? = 0 OR p.education_level = ?)
+              AND (? = 0 OR p.employment_status = ?)
             GROUP BY p.id
             ORDER BY p.name
         `;
@@ -1295,6 +1296,7 @@ const searchTalents = async (searchCriteria) => {
         const maxAge = searchCriteria.maxAge ? parseInt(searchCriteria.maxAge) : null;
         const gender = searchCriteria.gender || null;
         const educationLevel = searchCriteria.education_level || null;
+        const employmentStatus = searchCriteria.employment_status || null;
 
         params = [
             searchCriteria.name ? 1 : 0,
@@ -1311,7 +1313,9 @@ const searchTalents = async (searchCriteria) => {
             searchCriteria.gender ? 1 : 0,
             gender,
             searchCriteria.education_level ? 1 : 0,
-            educationLevel
+            educationLevel,
+            searchCriteria.employment_status ? 1 : 0,
+            employmentStatus
         ];
         
         logger.info('Executing search query', { query, params });
