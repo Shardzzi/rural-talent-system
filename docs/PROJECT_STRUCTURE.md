@@ -1,8 +1,8 @@
 # 项目结构说明
 
 **数字乡村人才信息系统**
-**版本**: v2.2.1
-**更新时间**: 2025年11月26日
+**版本**: v3.0
+**更新时间**: 2026年4月1日
 
 ## 📁 标准化项目结构
 
@@ -11,6 +11,7 @@ rural-talent-system/                     # 项目根目录
 │
 ├── 📄 核心文档
 │   ├── README.md                        # 项目说明文档
+│   ├── API_REFERENCE.md                 # API参考文档 (v3.0新增)
 │   ├── PROJECT_SUMMARY.md               # 项目总结和成果展示
 │   ├── PROJECT_STRUCTURE.md             # 项目结构说明 (本文件)
 │   ├── CLAUDE.md                        # Claude AI 开发指南
@@ -79,9 +80,14 @@ rural-talent-system/                     # 项目根目录
 │
 ├── 🧪 测试套件
 │   └── test/                            # 测试文件目录
-│       ├── simple-verification.js       # 简单验证测试
+│       ├── simple-verification.js       # 系统健康检查
 │       ├── test_system_integration.js   # 系统集成测试
-│       └── test_dual_user_features.js   # 双用户权限测试
+│       ├── test_dual_user_features.js   # 双用户权限测试
+│       ├── test_all_endpoints.js        # 全部22个端点测试 (T14)
+│       ├── test_error_handling.js       # 错误处理测试 (T15)
+│       ├── test_edge_cases.js           # 边界情况测试 (T15)
+│       ├── test_auth_permissions.js     # 认证权限测试 (T16)
+│       └── test_search_pagination.js    # 搜索分页测试 (T17)
 │
 ├── ⚙️ 项目配置
 │   ├── package.json                     # 根项目配置
@@ -231,5 +237,5 @@ pnpm clean
 ---
 
 **项目团队**: 数字乡村人才信息系统项目团队
-**维护时间**: 2025年11月26日
-**版本**: v2.2.1 (生产就绪版本)
+**维护时间**: 2026年4月1日
+**版本**: v3.0 (生产就绪版本)

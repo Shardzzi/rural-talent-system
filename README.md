@@ -1,6 +1,6 @@
 # 数字乡村人才信息系统
 
-[![Version](https://img.shields.io/badge/version-v2.2.1-blue.svg)](https://github.com/Shardzzi/rural-talent-system)
+[![Version](https://img.shields.io/badge/version-v3.0-blue.svg)](https://github.com/Shardzzi/rural-talent-system)
 [![Status](https://img.shields.io/badge/status-production--ready-green.svg)](https://github.com/Shardzzi/rural-talent-system)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](docs/LICENSE)
 [![Performance](https://img.shields.io/badge/performance-98%25_optimized-brightgreen.svg)](docs/PROJECT_SUMMARY.md)
@@ -16,6 +16,7 @@
 ### ⚡ 核心亮点
 - **🚀 超快性能**: 主包体积减少98%，首屏加载 < 1秒
 - **🔒 安全可靠**: 三级权限控制 + 数据脱敏保护
+- **🛡️ 安全加固**: 频率限制、JWT验证、XSS防护、SQL注入防护
 - **💻 现代技术**: TypeScript全栈 + Vue3 + Express
 - **💻 PC端优化**: 专为桌面环境设计，流畅的用户体验
 - **🛠️ 易部署**: 一键启动脚本，简单快速
@@ -26,8 +27,8 @@
 | **服务对象** | 农村居民、合作社、农业企业、政府部门 |
 | **核心价值** | 盘活农村人力资源，促进产业发展，助力乡村振兴 |
 | **技术特点** | 轻量化、易部署、本地化、可扩展 |
-| **项目版本** | v2.2.1 |
-| **项目状态** | 🟢 生产就绪 (已完成性能优化) |
+| **项目版本** | v3.0 |
+| **项目状态** | 🟢 生产就绪 (已完成 v3.0 安全与功能增强) |
 
 ## 🚀 快速开始
 
@@ -187,8 +188,25 @@ rural-talent-system/
 - ✅ **超快启动**: 主包体积从1.17MB减少到22.7KB (减少98%)
 - ✅ **按需加载**: Element Plus组件按需导入，减少51%体积
 - ✅ **代码分割**: 智能分包策略，框架与业务代码分离
-- ✅ **本地化**: 完整的中文界面和国际化支持
+- ✅ **本地化**: 完整的中文界面 and 国际化支持
 - ✅ **类型安全**: 全面的TypeScript支持和类型检查
+
+### 🛡️ 安全特性 (v3.0 新增)
+- ✅ **频率限制**: 登录5次/15分钟，注册3次/小时
+- ✅ **JWT格式验证**: 3段结构验证，Bearer前缀检查
+- ✅ **综合输入验证**: express-validator全端点覆盖
+- ✅ **XSS防护**: HTML标签过滤，输入消毒
+- ✅ **SQL注入防护**: 参数化查询，禁止字符串拼接
+
+### 🔌 API功能增强 (v3.0 新增)
+- ✅ **令牌刷新**: POST /api/auth/refresh，24h访问令牌+7d刷新令牌
+- ✅ **统计API**: GET /api/statistics，管理员仪表板实时数据
+- ✅ **CSV导出**: GET /api/persons/export，支持筛选条件导出
+- ✅ **高级搜索**: 年龄范围、性别、学历、技能、作物多条件筛选
+
+### 🎨 前端改进 (v3.0)
+- ✅ **实时表单验证**: PersonFormDialog字段级验证
+- ✅ **访客高级搜索**: GuestView支持筛选条件
 
 ### 👥 用户管理系统
 - ✅ 用户注册/登录功能
@@ -252,6 +270,13 @@ pnpm --filter rural-talent-system-test test:all
 pnpm --filter rural-talent-system-test test:health        # 健康检查
 pnpm --filter rural-talent-system-test test:integration   # 集成测试
 pnpm --filter rural-talent-system-test test:permissions   # 权限测试
+
+# 扩展测试套件 (v3.0)
+pnpm --filter rural-talent-system-test test:endpoints    # 全部22个端点
+pnpm --filter rural-talent-system-test test:errors       # 错误处理
+pnpm --filter rural-talent-system-test test:edge         # 边界情况
+pnpm --filter rural-talent-system-test test:auth         # 认证权限
+pnpm --filter rural-talent-system-test test:search       # 搜索分页
 ```
 
 > 📖 **详细指南**: 查看 [测试指南](docs/TESTING_GUIDE.md) 了解完整的测试分类、运行方式和故障排除
@@ -269,14 +294,14 @@ pnpm --filter rural-talent-system-test test:permissions   # 权限测试
 - **架构重构**: TypeScript化、模块化改进 (v2.2.1)
 - **国际化**: 完整的中文本地化支持 (v2.2.1)
 - **依赖管理**: 使用 pnpm 工作区管理，提升开发体验和性能
+- **CSV导出**: 批量数据导出 (v3.0, T13)
+- **高级搜索**: 多条件组合筛选 (v3.0, T11)
+- **数据可视化**: 统计图表展示 (v3.0, T10)
 
 ### 🔄 待优化功能
 - **响应式设计**: 移动端和平板设备适配优化
 - **Docker部署**: 容器化部署支持
 - **文件上传**: 头像、证书等文件上传功能
-- **数据导入导出**: 批量数据管理
-- **高级筛选**: 多条件组合筛选
-- **数据可视化**: 统计图表展示
 - **邮箱验证**: 用户邮箱验证功能
 
 ## 🔧 技术实现详情
@@ -291,9 +316,11 @@ pnpm --filter rural-talent-system-test test:permissions   # 权限测试
 
 ### API设计
 RESTful API设计，主要端点：
-- `/api/auth/*` - 认证相关API
-- `/api/persons/*` - 人员信息API
+- `/api/auth/*` - 认证相关API (登录、注册、刷新)
+- `/api/persons/*` - 人员信息API (CRUD、搜索、导出)
 - `/api/statistics` - 统计信息API
+
+详细端点文档请参考 [API参考](docs/API_REFERENCE.md)。
 
 > 📖 **详细架构**: 查看 [技术架构文档](docs/TECHNICAL_ARCHITECTURE.md) 了解完整的数据库设计、API规范和前端架构
 
@@ -333,6 +360,7 @@ cd rural-talent-system
 |---------|------|------|
 | 启动指南 | [STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md) | 详细启动说明和故障排除 |
 | 技术架构 | [TECHNICAL_ARCHITECTURE.md](docs/TECHNICAL_ARCHITECTURE.md) | 完整架构设计和技术选型 |
+| API参考 | [API_REFERENCE.md](docs/API_REFERENCE.md) | 完整API端点文档和调用示例 |
 | 部署指南 | [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | 生产环境部署和运维 |
 | 测试指南 | [TESTING_GUIDE.md](docs/TESTING_GUIDE.md) | 测试分类和运行方式 |
 | pnpm指南 | [PNPM_GUIDE.md](docs/PNPM_GUIDE.md) | 包管理器使用和最佳实践 |
@@ -356,10 +384,10 @@ cd rural-talent-system
 ## 📊 项目信息
 
 | 项目信息 | 详情 |
-|---------|------|
-| **项目状态** | ✅ 生产就绪 - 已完成全面性能优化和权限控制修复 |
-| **文档更新** | 2025年6月7日 |
-| **版本** | v2.2.1 |
+|---------|------|------|
+| **项目状态** | ✅ 生产就绪 - 已完成 v3.0 安全与功能增强 |
+| **文档更新** | 2026年4月1日 |
+| **版本** | v3.0 |
 | **性能提升** | 主包体积减少98%，加载速度提升62% |
 | **管理工具** | pnpm 工作区架构 |
 | **许可证** | MIT License |
