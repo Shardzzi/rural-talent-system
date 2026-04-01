@@ -434,7 +434,6 @@ export default {
       try {
         const response = await axios.get('/api/persons')
         persons.value = response.data.data || []
-        stats.totalPersons = persons.value.length
         totalCount.value = persons.value.length
       } catch (error) {
         ElMessage.error('加载人员列表失败')
@@ -445,9 +444,12 @@ export default {
     
     const loadStats = async () => {
       try {
-        // 统计数据 - 将来可通过API获取实时数据
-        stats.totalUsers = 25
-        stats.onlineToday = 12
+        const response = await axios.get('/api/statistics')
+        const data = response.data?.data || response.data || {}
+
+        stats.totalPersons = data.totalTalents ?? 0
+        stats.totalUsers = data.recentRegistrations?.total ?? 0
+        stats.onlineToday = data.recentRegistrations?.last7Days ?? 0
       } catch (error) {
         console.error('加载统计数据失败:', error)
       }
@@ -505,6 +507,7 @@ export default {
         await axios.delete(`/api/persons/${id}`)
         ElMessage.success('删除成功')
         await loadPersons()
+        await loadStats()
       } catch (error) {
         ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
       } finally {
@@ -517,6 +520,7 @@ export default {
       currentPerson.value = null
       isEdit.value = false
       loadPersons()
+      loadStats()
     }
     
     const exportData = async () => {

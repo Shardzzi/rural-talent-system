@@ -31,8 +31,8 @@
             <el-form-item label="年龄" prop="age">
               <el-input-number 
                 v-model="form.age" 
-                :min="16" 
-                :max="100" 
+                :min="1" 
+                :max="150" 
                 style="width: 100%"
               />
             </el-form-item>
@@ -120,7 +120,7 @@
               <el-input-number 
                 v-model="form.farming_years" 
                 :min="0" 
-                :max="50" 
+                :max="100" 
                 style="width: 100%"
                 placeholder="请输入从业年限"
               />
@@ -289,7 +289,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item :prop="`skills.${index}.name`" :rules="[{ required: true, message: '请输入名称', trigger: 'blur' }]" label-width="0">
+                <el-form-item :prop="`skills.${index}.name`" :rules="[{ required: true, message: '请输入名称', trigger: ['blur', 'change'] }]" label-width="0">
                   <el-input 
                     v-model="skill.name" 
                     placeholder="如：玉米种植、养鸡技术"
@@ -550,12 +550,12 @@ export default {
     // 表单验证规则
     const rules = {
       name: [
-        { required: true, message: '请输入姓名', trigger: 'blur' },
-        { min: 2, max: 50, message: '姓名长度应在2-50个字符', trigger: 'blur' }
+        { required: true, message: '请输入姓名', trigger: ['blur', 'change'] },
+        { min: 2, max: 50, message: '姓名长度应在2-50个字符', trigger: ['blur', 'change'] }
       ],
       age: [
-        { required: true, message: '请输入年龄', trigger: 'blur' },
-        { type: 'number', min: 1, max: 150, message: '年龄应在1-150岁之间', trigger: 'blur' }
+        { required: true, message: '请输入年龄', trigger: ['blur', 'change'] },
+        { type: 'number', min: 1, max: 150, message: '年龄应在1-150岁之间', trigger: ['blur', 'change'] }
       ],
       gender: [
         { required: true, message: '请选择性别', trigger: 'change' }
@@ -564,16 +564,16 @@ export default {
         { required: false, message: '请选择学历', trigger: 'change' }
       ],
       phone: [
-        { required: false, pattern: /^(1[3-9]\d{9}|0\d{2,3}-\d{7,8})$/, message: '请输入正确的手机或固话号码', trigger: 'blur' }
+        { required: false, pattern: /^(1[3-9]\d{9}|0\d{2,3}-\d{7,8})$/, message: '请输入正确的手机或固话号码', trigger: ['blur', 'change'] }
       ],
       email: [
-        { required: false, type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+        { required: false, type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
       ],
       id_number: [
-        { required: false, pattern: /^\d{17}[\dXx]$/, message: '请输入18位有效身份证号', trigger: 'blur' }
+        { required: false, pattern: /^\d{17}[\dXx]$/, message: '请输入18位有效身份证号', trigger: ['blur', 'change'] }
       ],
       address: [
-        { required: false, message: '请输入所在地区', trigger: 'blur' }
+        { required: false, message: '请输入所在地区', trigger: ['blur', 'change'] }
       ],
       employment_status: [
         { required: false, message: '请选择就业状态', trigger: 'change' }
@@ -582,13 +582,13 @@ export default {
         { required: false, message: '请选择政治面貌', trigger: 'change' }
       ],
       experience: [
-        { max: 500, message: '工作经验描述不超过500字符', trigger: 'blur' }
+        { max: 500, message: '工作经验描述不超过500字符', trigger: ['blur', 'change'] }
       ],
       farming_years: [
-        { type: 'number', min: 0, max: 100, message: '从事农业年限应在0-100年之间', trigger: 'blur' }
+        { type: 'number', min: 0, max: 100, message: '从事农业年限应在0-100年之间', trigger: ['blur', 'change'] }
       ],
       planting_scale: [
-        { type: 'number', min: 0, message: '种植规模必须为正数', trigger: 'blur' }
+        { type: 'number', min: 0, message: '种植规模必须为正数', trigger: ['blur', 'change'] }
       ],
       main_crops: [
         {
@@ -625,7 +625,7 @@ export default {
         }
       ],
       investment_capacity: [
-        { type: 'number', min: 0, message: '投资能力必须为正数', trigger: 'blur' }
+        { type: 'number', min: 0, message: '投资能力必须为正数', trigger: ['blur', 'change'] }
       ]
     }
     
