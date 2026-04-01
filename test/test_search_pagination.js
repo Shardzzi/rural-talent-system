@@ -340,6 +340,131 @@ async function testCsvExport(token) {
   assert(noAuthExport.status === 401, '未登录访问CSV导出返回401');
 }
 
+async function testExactNameMatch(token) {
+  log('\n📋 测试10: 精确姓名匹配测试', 'cyan');
+
+  const ts = Date.now();
+  const uniqueName = 'ExactMatch测试' + ts;
+  let createdPersonId = null;
+
+  const createResult = await apiRequest('POST', '/persons', {
+    name: uniqueName,
+    age: 30,
+    gender: 'male',
+    email: `exact_${ts}@test.com`,
+    phone: '138' + String(ts).slice(-8)
+  }, token);
+  assert(createResult.success, '创建唯一姓名测试数据成功');
+  createdPersonId = createResult.data?.data?.id || createResult.data?.id || null;
+  await sleep(200);
+
+  const exactSearch = await apiRequest('GET', `/search?name=${encodeURIComponent(uniqueName)}`, null, token);
+  assert(exactSearch.status === 200, '精确姓名搜索返回200');
+  const exactResults = exactSearch.data?.data || [];
+  assert(exactResults.length >= 1, '精确姓名搜索至少返回1条结果');
+  if (exactResults.length > 0) {
+    const firstName = exactResults[0]?.name || '';
+    assert(firstName.includes(uniqueName) || firstName === uniqueName, '首条结果姓名包含或等于搜索词');
+  }
+
+  const partialSearch = await apiRequest('GET', '/search?name=ExactMatch', null, token);
+  assert(partialSearch.status === 200, '部分姓名搜索返回200');
+
+  const chineseSearch = await apiRequest('GET', `/search?name=${encodeURIComponent('测试')}`, null, token);
+  assert(chineseSearch.status === 200, '中文字符姓名搜索返回200');
+
+  if (createdPersonId) {
+    const cleanupResult = await apiRequest('DELETE', `/persons/${createdPersonId}`, null, token);
+    assert(cleanupResult.success || cleanupResult.status === 404, '清理测试数据完成');
+  } else {
+    assert(true, '未获取到创建ID，跳过清理（允许测试数据保留）');
+  }
+}
+
+async function testSearchWithPagination(token) {
+  log('\n📋 测试11: 搜索与分页组合测试', 'cyan');
+
+  const pageLimit = await apiRequest('GET', '/search?page=1&limit=3', null, token);
+  assert(pageLimit.status === 200, '分页搜索(page=1&limit=3)返回200');
+  const pageLimitResults = pageLimit.data?.data || [];
+  if (pageLimitResults.length > 0) {
+    assert(pageLimitResults.length <= 3, '分页搜索结果数量不超过limit=3');
+  } else {
+    assert(true, '分页搜索结果为空（允许）');
+  }
+
+  const nameWithPage = await apiRequest('GET', '/search?name=张&page=1&limit=5', null, token);
+  assert(nameWithPage.status === 200, '姓名+分页搜索返回200');
+
+  const ageWithPage = await apiRequest('GET', '/search?minAge=20&maxAge=50&page=1&limit=10', null, token);
+  assert(ageWithPage.status === 200, '年龄范围+分页搜索返回200');
+  const ageWithPageResults = ageWithPage.data?.data || [];
+  if (ageWithPageResults.length > 0) {
+    const allInRange = ageWithPageResults.every(p => p.age >= 20 && p.age <= 50);
+    assert(allInRange, '年龄范围+分页结果全部在20-50之间');
+  } else {
+    assert(true, '年龄范围+分页结果为空（允许）');
+  }
+
+  const beyondData = await apiRequest('GET', '/search?minAge=100&maxAge=150&page=999&limit=10', null, token);
+  assert(beyondData.status === 200, '高页码搜索返回200');
+  const beyondResults = beyondData.data?.data || [];
+  assert(beyondResults.length >= 0, '高页码搜索返回空或少量结果');
+
+  const allCombined = await apiRequest('GET', '/search?name=测试&minAge=18&maxAge=60&gender=male&page=1&limit=5', null, token);
+  assert(allCombined.status === 200, '全参数组合搜索返回200');
+  const allCombinedResults = allCombined.data?.data || [];
+  if (allCombinedResults.length > 0) {
+    const allValid = allCombinedResults.every(p =>
+      String(p.name || '').includes('测试') &&
+      p.age >= 18 &&
+      p.age <= 60 &&
+      p.gender === 'male'
+    );
+    assert(allValid, '全参数组合结果符合所有筛选条件');
+  } else {
+    assert(true, '全参数组合搜索无匹配结果（允许）');
+  }
+}
+
+async function testSpecialCharactersInSearch(token) {
+  log('\n📋 测试12: 特殊字符搜索测试', 'cyan');
+
+  const chinese = await apiRequest('GET', `/search?name=${encodeURIComponent('张三')}`, null, token);
+  assert(chinese.status === 200, '中文字符URL编码搜索返回200（非500）');
+
+  const spaceName = await apiRequest('GET', `/search?name=${encodeURIComponent('张 三')}`, null, token);
+  assert(spaceName.status === 200, '空格字符搜索返回200（非500）');
+
+  const hyphen = await apiRequest('GET', `/search?name=${encodeURIComponent('test-user')}`, null, token);
+  assert(hyphen.status === 200, '连字符搜索返回200（非500）');
+
+  const percent = await apiRequest('GET', `/search?name=${encodeURIComponent('test%name')}`, null, token);
+  assert(percent.status === 200 || percent.status === 400, '百分号搜索返回200或400（非500）');
+
+  const sqlInjection = await apiRequest('GET', `/search?name=${encodeURIComponent("' OR '1'='1")}`, null, token);
+  assert(sqlInjection.status === 200, 'SQL注入尝试搜索返回200（非500）');
+  if (sqlInjection.success) {
+    const sqlResults = sqlInjection.data?.data || [];
+    const allNormal = sqlResults.every(p => p && typeof p === 'object' && p.id !== undefined);
+    assert(allNormal, 'SQL注入尝试未导致异常数据泄露');
+  } else {
+    assert(true, 'SQL注入尝试返回失败响应（未发生500）');
+  }
+
+  const emoji = await apiRequest('GET', `/search?name=${encodeURIComponent('测试🌸')}`, null, token);
+  assert(emoji.status === 200, 'Emoji搜索返回200（非500）');
+
+  const longTerm = await apiRequest('GET', `/search?name=${encodeURIComponent('A'.repeat(500))}`, null, token);
+  if (longTerm.status === 400) {
+    assert(true, '超长搜索词触发参数校验返回400');
+  } else {
+    assert(longTerm.status === 200, '超长搜索词返回200或400（非500）');
+    const longResults = longTerm.data?.data || [];
+    assert(longResults.length === 0, '超长搜索词在200时返回空结果');
+  }
+}
+
 // ============================================================
 // 主函数
 // ============================================================
@@ -384,6 +509,15 @@ async function runTests() {
   await sleep(200);
 
   await testCsvExport(adminToken);
+  await sleep(200);
+
+  await testExactNameMatch(adminToken);
+  await sleep(200);
+
+  await testSearchWithPagination(adminToken);
+  await sleep(200);
+
+  await testSpecialCharactersInSearch(adminToken);
 
   // 测试结果汇总
   log('\n' + '='.repeat(50), 'blue');

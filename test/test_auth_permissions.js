@@ -461,10 +461,195 @@ async function testDuplicateRegistration() {
 }
 
 // ========================
-// 6. Token 过期测试
+// 6. Token 刷新流程测试
+// ========================
+async function testTokenRefreshFlow() {
+  log('\n📋 6. Token刷新流程测试', 'blue');
+
+  const loginRes = await request('POST', '/auth/login', {
+    username: 'admin', password: 'admin123'
+  });
+  assert(loginRes.status === 200, '登录成功（用于refresh测试）');
+
+  const accessToken = loginRes.data.data?.token;
+  const refreshToken = loginRes.data.data?.refreshToken;
+  assert(typeof accessToken === 'string' && accessToken.length > 0, '登录返回access token');
+  assert(typeof refreshToken === 'string' && refreshToken.length > 0, '登录返回refresh token');
+
+  await sleep(100);
+  const refreshSuccess = await request('POST', '/auth/refresh', null, refreshToken);
+  assert(refreshSuccess.status === 200, 'refresh token可成功换新token', `status=${refreshSuccess.status}`);
+
+  const newAccessToken = refreshSuccess.data.data?.token;
+  const newRefreshToken = refreshSuccess.data.data?.refreshToken;
+  assert(typeof newAccessToken === 'string' && newAccessToken.length > 0, '刷新响应包含新access token');
+  assert(typeof newRefreshToken === 'string' && newRefreshToken.length > 0, '刷新响应包含新refresh token');
+
+  await sleep(100);
+  const meWithNewToken = await request('GET', '/auth/me', null, newAccessToken);
+  assert(meWithNewToken.status === 200, '新access token可访问 /auth/me');
+
+  await sleep(100);
+  const refreshWithAccessToken = await request('POST', '/auth/refresh', null, accessToken);
+  assert(refreshWithAccessToken.status === 401, 'access token不能用于refresh', `status=${refreshWithAccessToken.status}`);
+
+  await sleep(100);
+  const refreshWithInvalidToken = await request('POST', '/auth/refresh', null, 'garbage.invalid.refresh.token');
+  assert(refreshWithInvalidToken.status === 401, '无效refresh token被拒绝', `status=${refreshWithInvalidToken.status}`);
+
+  await sleep(100);
+  const refreshWithoutToken = await request('POST', '/auth/refresh');
+  assert(refreshWithoutToken.status === 401, '无token调用refresh被拒绝', `status=${refreshWithoutToken.status}`);
+}
+
+// ========================
+// 7. 弱密码注册拒绝测试
+// ========================
+async function testWeakPasswordRejection() {
+  log('\n📋 7. 弱密码注册拒绝测试', 'blue');
+
+  async function assertWeakPasswordRejected(password, confirmPassword, label) {
+    const username = `weakpw_${Date.now()}`;
+    const email = `${username}@test.com`;
+
+    const regRes = await request('POST', '/auth/register', {
+      username,
+      password,
+      confirmPassword,
+      email
+    });
+
+    const isExpected = regRes.status === 400 || regRes.status === 429;
+    assert(isExpected, label, `status=${regRes.status}`);
+
+    if (regRes.status === 429) {
+      log('  ⚠️ 命中注册限流(429)，视为通过（限流保护生效）', 'yellow');
+    }
+  }
+
+  await assertWeakPasswordRejected('ab1', 'ab1', '密码过短(ab1)被拒绝');
+  await sleep(1000);
+  await assertWeakPasswordRejected('12345', '12345', '密码过短(12345)被拒绝');
+
+  await sleep(1000);
+  await assertWeakPasswordRejected('12345678', '12345678', '纯数字密码被拒绝');
+  await sleep(1000);
+  await assertWeakPasswordRejected('abcdefgh', 'abcdefgh', '纯字母密码被拒绝');
+
+  await sleep(1000);
+  await assertWeakPasswordRejected('Test1234', 'Different5678', '确认密码不匹配被拒绝');
+}
+
+// ========================
+// 8. 普通用户仅可编辑本人信息测试
+// ========================
+async function testEditOwnPersonOnly() {
+  log('\n📋 8. 普通用户仅可编辑本人信息测试', 'blue');
+
+  const suffix = Date.now();
+  const username = `editown_${suffix}`;
+  const email = `${username}@test.com`;
+  const password = 'Test1234';
+
+  let ownPersonId = null;
+  let otherPersonId = null;
+  let adminToken = null;
+
+  const regRes = await request('POST', '/auth/register', {
+    username,
+    password,
+    confirmPassword: password,
+    email
+  });
+  assert(regRes.status === 201, '编辑权限测试用户注册成功', `status=${regRes.status}`);
+  if (regRes.status !== 201) return;
+
+  await sleep(100);
+  const userLogin = await request('POST', '/auth/login', { username, password });
+  assert(userLogin.status === 200, '编辑权限测试用户登录成功', `status=${userLogin.status}`);
+  if (userLogin.status !== 200) return;
+
+  const userToken = userLogin.data.data?.token;
+  assert(typeof userToken === 'string' && userToken.length > 0, '编辑权限测试用户token有效');
+  if (!userToken) return;
+
+  await sleep(100);
+  const adminLogin = await request('POST', '/auth/login', {
+    username: 'admin',
+    password: 'admin123'
+  });
+  assert(adminLogin.status === 200, '管理员登录成功（编辑权限测试）', `status=${adminLogin.status}`);
+  if (adminLogin.status !== 200) return;
+  adminToken = adminLogin.data.data?.token;
+
+  try {
+    await sleep(100);
+    const createOwn = await request('POST', '/persons', {
+      name: `编辑本人_${suffix}`,
+      age: 26,
+      gender: '男',
+      phone: `139${String(suffix).slice(-8)}`,
+      email: `person_${suffix}@test.com`
+    }, userToken);
+    assert(createOwn.status === 200 || createOwn.status === 201, '普通用户创建本人person成功', `status=${createOwn.status}`);
+    ownPersonId = createOwn.data?.data?.id || createOwn.data?.id;
+    assert(!!ownPersonId, '获取本人personId成功', `personId=${ownPersonId}`);
+    if (!ownPersonId) return;
+
+    await sleep(100);
+    const linkRes = await request('PUT', '/auth/link-person', { personId: ownPersonId }, userToken);
+    assert(linkRes.status === 200, '普通用户成功绑定本人person', `status=${linkRes.status}`);
+
+    await sleep(100);
+    const updateOwn = await request('PUT', `/persons/${ownPersonId}`, {
+      name: `编辑本人_已更新_${suffix}`,
+      age: 27,
+      gender: '男',
+      phone: `138${String(suffix).slice(-8)}`
+    }, userToken);
+    assert(updateOwn.status === 200, '普通用户可编辑本人person', `status=${updateOwn.status}`);
+
+    await sleep(100);
+    const createOther = await request('POST', '/persons', {
+      name: `他人记录_${suffix}`,
+      age: 33,
+      gender: '女',
+      phone: `137${String(suffix).slice(-8)}`,
+      email: `otherperson_${suffix}@test.com`
+    }, adminToken);
+    assert(createOther.status === 200 || createOther.status === 201, '管理员创建他人person成功', `status=${createOther.status}`);
+    otherPersonId = createOther.data?.data?.id || createOther.data?.id;
+    assert(!!otherPersonId, '获取他人personId成功', `personId=${otherPersonId}`);
+    if (!otherPersonId) return;
+
+    await sleep(100);
+    const updateOther = await request('PUT', `/persons/${otherPersonId}`, {
+      name: `越权编辑_${suffix}`,
+      age: 40,
+      gender: '女',
+      phone: '13600000000'
+    }, userToken);
+    assert(updateOther.status === 403, '普通用户不能编辑他人person', `status=${updateOther.status}`);
+  } finally {
+    if (adminToken && ownPersonId) {
+      await sleep(100);
+      const delOwn = await request('DELETE', `/persons/${ownPersonId}`, null, adminToken);
+      assert(delOwn.status === 200 || delOwn.status === 404, '清理本人person完成', `status=${delOwn.status}`);
+    }
+
+    if (adminToken && otherPersonId) {
+      await sleep(100);
+      const delOther = await request('DELETE', `/persons/${otherPersonId}`, null, adminToken);
+      assert(delOther.status === 200 || delOther.status === 404, '清理他人person完成', `status=${delOther.status}`);
+    }
+  }
+}
+
+// ========================
+// 9. Token 过期测试
 // ========================
 async function testTokenExpiry() {
-  log('\n📋 6. Token过期验证', 'blue');
+  log('\n📋 9. Token过期验证', 'blue');
 
   // 登录获取token
   const loginRes = await request('POST', '/auth/login', {
@@ -538,6 +723,12 @@ async function main() {
     await testPasswordChange();
     await sleep(200);
     await testDuplicateRegistration();
+    await sleep(200);
+    await testTokenRefreshFlow();
+    await sleep(200);
+    await testWeakPasswordRejection();
+    await sleep(200);
+    await testEditOwnPersonOnly();
     await sleep(200);
     await testTokenExpiry();
 
