@@ -601,10 +601,8 @@ const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
                 conditions.push('p.education_level = ?');
                 params.push(filters.education_level);
             }
-            if (filters.employment_status) {
-                conditions.push('p.employment_status = ?');
-                params.push(filters.employment_status);
-            }
+            // employment_status column does not exist in persons table
+            // Filter removed per guardrail: no schema changes
             
             if (conditions.length > 0) {
                 whereClause = 'WHERE ' + conditions.join(' AND ');
@@ -1329,7 +1327,6 @@ const searchTalents = async (searchCriteria) => {
               AND (? = 0 OR p.age <= ?)
               AND (? = 0 OR p.gender = ?)
               AND (? = 0 OR p.education_level = ?)
-              AND (? = 0 OR p.employment_status = ?)
             GROUP BY p.id
             ORDER BY p.name
         `;
@@ -1341,7 +1338,6 @@ const searchTalents = async (searchCriteria) => {
         const maxAge = searchCriteria.maxAge ? parseInt(searchCriteria.maxAge) : null;
         const gender = searchCriteria.gender || null;
         const educationLevel = searchCriteria.education_level || null;
-        const employmentStatus = searchCriteria.employment_status || null;
 
         params = [
             searchCriteria.name ? 1 : 0,
@@ -1358,9 +1354,7 @@ const searchTalents = async (searchCriteria) => {
             searchCriteria.gender ? 1 : 0,
             gender,
             searchCriteria.education_level ? 1 : 0,
-            educationLevel,
-            searchCriteria.employment_status ? 1 : 0,
-            employmentStatus
+            educationLevel
         ];
         
         logger.info('Executing search query', { query, params });

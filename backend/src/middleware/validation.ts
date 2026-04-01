@@ -239,11 +239,6 @@ export const validateSearch = [
         .customSanitizer(sanitizeString)
         .isLength({ max: 100 })
         .withMessage('作物搜索条件长度不能超过100个字符'),
-    query('employment_status')
-        .optional({ nullable: true, checkFalsy: true })
-        .customSanitizer(sanitizeString)
-        .isLength({ max: 50 })
-        .withMessage('就业状态筛选值无效'),
     query('page')
         .optional({ nullable: true, checkFalsy: true })
         .isInt({ min: 1 })
