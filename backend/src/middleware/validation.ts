@@ -349,19 +349,9 @@ export const validateComprehensivePerson = [
         }
         next();
     },
-    ...validatePerson,
+    ...validateCreatePerson,
 
-    // 额外字符串字段统一清理
-    body('person.political_status')
-        .optional({ nullable: true, checkFalsy: true })
-        .customSanitizer(sanitizeString)
-        .isLength({ max: 50 })
-        .withMessage('政治面貌长度不能超过50个字符'),
-    body('person.employment_status')
-        .optional({ nullable: true, checkFalsy: true })
-        .customSanitizer(sanitizeString)
-        .isLength({ max: 50 })
-        .withMessage('就业状态长度不能超过50个字符'),
+    ...validateCreatePerson,
 
     // 农村画像字段验证
     body('ruralProfile.farming_years')

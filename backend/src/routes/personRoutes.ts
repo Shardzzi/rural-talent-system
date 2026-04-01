@@ -6,6 +6,7 @@ import {
     validateSearch,
     validateRuralProfile,
     validateSkill,
+    validateComprehensivePerson,
     handleValidationErrors
 } from '../middleware/validation';
 import { authenticateToken, requireAdmin, optionalAuth } from '../middleware/auth';
@@ -40,13 +41,13 @@ router.get('/persons/:id/details', optionalAuth, personController.getPersonDetai
 router.post('/persons', authenticateToken, validatePerson, handleValidationErrors, personController.createPerson);
 
 // 创建综合人员信息（需要登录）
-router.post('/persons/comprehensive', authenticateToken, validateCreatePerson, handleValidationErrors, personController.createComprehensivePerson);
+router.post('/persons/comprehensive', authenticateToken, validateComprehensivePerson, handleValidationErrors, personController.createComprehensivePerson);
 
 // 更新人员信息（需要登录，用户只能更新自己的信息）
 router.put('/persons/:id', authenticateToken, validatePerson, handleValidationErrors, personController.updatePerson);
 
 // 更新综合人员信息（需要登录，用户只能更新自己的信息）
-router.put('/persons/:id/comprehensive', authenticateToken, validateUpdatePerson, handleValidationErrors, personController.updateComprehensivePerson);
+router.put('/persons/:id/comprehensive', authenticateToken, validateComprehensivePerson, handleValidationErrors, personController.updateComprehensivePerson);
 
 // 创建或更新农村特色信息（需要登录）
 router.post('/persons/:id/rural-profile', authenticateToken, validateRuralProfile, handleValidationErrors, personController.upsertRuralProfile);
