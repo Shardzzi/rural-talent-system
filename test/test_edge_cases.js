@@ -428,17 +428,300 @@ async function testDuplicateOperations() {
   await sleep(200);
 }
 
+async function testEmptyDatabaseOperations() {
+  colorLog('\n🗂️ 空结果数据库操作测试', 'cyan');
+
+  const token = await getAdminToken();
+  await sleep(200);
+
+  try {
+    const res = await axios.get(`${API_BASE}/search?name=${encodeURIComponent('绝对不存在的名字XYZ123456789')}`);
+    const records = res.data?.data?.records || res.data?.data || [];
+    assert(res.status === 200, '搜索绝对不存在名字返回200', `实际状态: ${res.status}`);
+    assert(Array.isArray(records), '搜索结果为数组');
+    assert(records.length === 0, '搜索结果为空数组', `实际长度: ${records.length}`);
+  } catch (error) {
+    assert(false, '搜索绝对不存在名字应成功返回空数组', error.message);
+  }
+
+  try {
+    await axios.get(`${API_BASE}/persons/999999`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    assert(false, 'GET /persons/999999 应返回404');
+  } catch (error) {
+    assert(error.response?.status === 404,
+      'GET /persons/999999 返回404', `实际状态: ${error.response?.status}`);
+  }
+
+  try {
+    await axios.delete(`${API_BASE}/persons/999999`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    assert(false, 'DELETE /persons/999999 应返回404');
+  } catch (error) {
+    assert(error.response?.status === 404,
+      'DELETE /persons/999999 返回404', `实际状态: ${error.response?.status}`);
+  }
+}
+
+async function testUnicodeAndEmoji() {
+  colorLog('\n🌏 Unicode 与 Emoji 测试', 'cyan');
+
+  const token = await getAdminToken();
+  await sleep(200);
+
+  const createdIds = [];
+
+  try {
+    const ts1 = Date.now();
+    const res1 = await axios.post(`${API_BASE}/persons`, {
+      name: '测试用户🌸', age: 25, gender: 'male', email: `unicode_${ts1}@test.com`
+    }, { headers: authHeaders(token) });
+    const id1 = res1.data?.data?.id || res1.data?.id;
+    if (id1) createdIds.push(id1);
+    assert(res1.status === 200 || res1.status === 201,
+      '中文+emoji姓名创建成功', `实际状态: ${res1.status}`);
+  } catch (error) {
+    assert(error.response?.status !== 500,
+      '中文+emoji姓名未触发500', `实际状态: ${error.response?.status}`);
+  }
+
+  try {
+    const ts2 = Date.now() + 1;
+    const res2 = await axios.post(`${API_BASE}/persons`, {
+      name: '日本語テスト', age: 26, gender: 'female', email: `jp_${ts2}@test.com`
+    }, { headers: authHeaders(token) });
+    const id2 = res2.data?.data?.id || res2.data?.id;
+    if (id2) createdIds.push(id2);
+    assert(res2.status === 200 || res2.status === 201,
+      '日文姓名创建成功', `实际状态: ${res2.status}`);
+  } catch (error) {
+    assert(error.response?.status !== 500,
+      '日文姓名未触发500', `实际状态: ${error.response?.status}`);
+  }
+
+  try {
+    await axios.post(`${API_BASE}/persons`, {
+      name: 'EmojiEmailTest', age: 27, gender: 'male', email: 'emoji🌸@example.com'
+    }, { headers: authHeaders(token) });
+    assert(false, 'emoji邮箱应触发验证失败');
+  } catch (error) {
+    assert(error.response?.status === 400,
+      'emoji邮箱返回400', `实际状态: ${error.response?.status}`);
+    assert(error.response?.status !== 500,
+      'emoji邮箱验证失败未触发500', `实际状态: ${error.response?.status}`);
+  }
+
+  try {
+    const searchRes = await axios.get(`${API_BASE}/search?name=${encodeURIComponent('测试')}`);
+    assert(searchRes.status === 200,
+      'Unicode搜索返回200', `实际状态: ${searchRes.status}`);
+  } catch (error) {
+    assert(false, 'Unicode搜索应返回200', error.message);
+  }
+
+  for (const id of createdIds) {
+    await sleep(100);
+    try {
+      await axios.delete(`${API_BASE}/persons/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      assert(true, `清理Unicode测试数据成功 (id=${id})`);
+    } catch (error) {
+      assert(false, `清理Unicode测试数据失败 (id=${id})`, error.message);
+    }
+  }
+}
+
+async function testBoundaryValues() {
+  colorLog('\n📐 精确边界值测试', 'cyan');
+
+  const token = await getAdminToken();
+  await sleep(200);
+
+  const createdIds = [];
+
+  try {
+    const ts = Date.now();
+    const res = await axios.post(`${API_BASE}/persons`, {
+      name: `AgeMin${ts}`, age: 1, gender: 'male', email: `age1_${ts}@test.com`
+    }, { headers: authHeaders(token) });
+    const id = res.data?.data?.id || res.data?.id;
+    if (id) createdIds.push(id);
+    assert(res.status === 200 || res.status === 201,
+      'age=1 创建成功', `实际状态: ${res.status}`);
+  } catch (error) {
+    assert(false, 'age=1 应成功', error.message);
+  }
+
+  try {
+    const ts = Date.now() + 1;
+    const res = await axios.post(`${API_BASE}/persons`, {
+      name: `AgeMax${ts}`, age: 150, gender: 'female', email: `age150_${ts}@test.com`
+    }, { headers: authHeaders(token) });
+    const id = res.data?.data?.id || res.data?.id;
+    if (id) createdIds.push(id);
+    assert(res.status === 200 || res.status === 201,
+      'age=150 创建成功', `实际状态: ${res.status}`);
+  } catch (error) {
+    assert(false, 'age=150 应成功', error.message);
+  }
+
+  try {
+    const ts = Date.now() + 2;
+    const res = await axios.post(`${API_BASE}/persons`, {
+      name: 'AB', age: 25, gender: 'male', email: `name2_${ts}@test.com`
+    }, { headers: authHeaders(token) });
+    const id = res.data?.data?.id || res.data?.id;
+    if (id) createdIds.push(id);
+    assert(res.status === 200 || res.status === 201,
+      'name长度=2 创建成功', `实际状态: ${res.status}`);
+  } catch (error) {
+    assert(false, 'name长度=2 应成功', error.message);
+  }
+
+  try {
+    const ts = Date.now() + 3;
+    const name50 = 'A'.repeat(50);
+    const res = await axios.post(`${API_BASE}/persons`, {
+      name: name50, age: 25, gender: 'female', email: `name50_${ts}@test.com`
+    }, { headers: authHeaders(token) });
+    const id = res.data?.data?.id || res.data?.id;
+    if (id) createdIds.push(id);
+    assert(res.status === 200 || res.status === 201,
+      'name长度=50 创建成功', `实际状态: ${res.status}`);
+  } catch (error) {
+    assert(false, 'name长度=50 应成功', error.message);
+  }
+
+  try {
+    const name51 = 'A'.repeat(51);
+    await axios.post(`${API_BASE}/persons`, {
+      name: name51, age: 25, gender: 'male'
+    }, { headers: authHeaders(token) });
+    assert(false, 'name长度=51 应失败');
+  } catch (error) {
+    assert(error.response?.status === 400,
+      'name长度=51 返回400', `实际状态: ${error.response?.status}`);
+  }
+
+  for (const id of createdIds) {
+    await sleep(100);
+    try {
+      await axios.delete(`${API_BASE}/persons/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      assert(true, `清理边界值测试数据成功 (id=${id})`);
+    } catch (error) {
+      assert(false, `清理边界值测试数据失败 (id=${id})`, error.message);
+    }
+  }
+}
+
+async function testNullHandling() {
+  colorLog('\n🧪 Null/空值处理测试', 'cyan');
+
+  const token = await getAdminToken();
+  await sleep(200);
+
+  const createdIds = [];
+
+  try {
+    const ts = Date.now();
+    const res = await axios.post(`${API_BASE}/persons`, {
+      name: `NullTest${ts}`,
+      age: 25,
+      gender: 'male',
+      email: null,
+      phone: null
+    }, { headers: authHeaders(token) });
+    const id = res.data?.data?.id || res.data?.id;
+    if (id) createdIds.push(id);
+    assert(res.status === 200 || res.status === 201,
+      'email/phone为null时创建未触发500', `实际状态: ${res.status}`);
+  } catch (error) {
+    assert(error.response?.status !== 500,
+      'email/phone为null创建未触发500', `实际状态: ${error.response?.status}`);
+  }
+
+  try {
+    const ts = Date.now() + 1;
+    const res = await axios.post(`${API_BASE}/persons`, {
+      name: `UndefinedTest${ts}`,
+      age: 25,
+      gender: 'male',
+      address: '',
+      notes: ''
+    }, { headers: authHeaders(token) });
+    const id = res.data?.data?.id || res.data?.id;
+    if (id) createdIds.push(id);
+    assert(res.status === 200 || res.status === 201,
+      'address/notes为空字符串创建未触发500', `实际状态: ${res.status}`);
+  } catch (error) {
+    assert(error.response?.status !== 500,
+      'address/notes为空字符串创建未触发500', `实际状态: ${error.response?.status}`);
+  }
+
+  if (createdIds.length > 0) {
+    await sleep(100);
+    try {
+      const res = await axios.put(`${API_BASE}/persons/${createdIds[0]}`, {
+        name: 'NullUpdate',
+        age: 26,
+        gender: 'male',
+        email: '',
+        phone: '',
+        address: '',
+        notes: ''
+      }, { headers: authHeaders(token) });
+      assert(res.status === 200,
+        'PUT更新为空可选字段未触发500', `实际状态: ${res.status}`);
+    } catch (error) {
+      assert(error.response?.status !== 500,
+        'PUT更新为空可选字段未触发500', `实际状态: ${error.response?.status}`);
+    }
+  } else {
+    assert(true, 'Null处理更新测试跳过（无可用personId）');
+  }
+
+  for (const id of createdIds) {
+    await sleep(100);
+    try {
+      await axios.delete(`${API_BASE}/persons/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      assert(true, `清理Null处理测试数据成功 (id=${id})`);
+    } catch (error) {
+      assert(false, `清理Null处理测试数据失败 (id=${id})`, error.message);
+    }
+  }
+}
+
 // ========== 主函数 ==========
 async function main() {
   colorLog('🚀 边界情况测试开始...\n', 'blue');
 
   try {
     await testSQLInjection();
+    await sleep(200);
     await testXSSProtection();
+    await sleep(200);
     await testOversizedInputs();
+    await sleep(200);
     await testConcurrentRequests();
+    await sleep(200);
     await testDataTypeBoundaries();
+    await sleep(200);
     await testDuplicateOperations();
+    await sleep(200);
+    await testEmptyDatabaseOperations();
+    await sleep(200);
+    await testUnicodeAndEmoji();
+    await sleep(200);
+    await testBoundaryValues();
+    await sleep(200);
+    await testNullHandling();
 
     colorLog('\n📋 边界情况测试总结', 'blue');
     colorLog('=====================================', 'blue');
