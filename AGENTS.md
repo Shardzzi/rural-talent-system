@@ -24,7 +24,7 @@ rural-talent-system/
 │   ├── stores/          # Pinia state management
 │   ├── api/             # Axios service layer
 │   └── router/          # Vue Router config
-├── test/                # Custom Node.js test suite
+├── test/                # Custom Node.js test suite (8 test files, 22 endpoints)
 └── docs/                # Comprehensive documentation
 ```
 
@@ -34,6 +34,11 @@ rural-talent-system/
 |------|----------|-------|
 | Add API endpoint | `backend/src/routes/` + `controllers/` | Follow existing CRUD patterns |
 | Add database field | `backend/src/types/index.ts` + `services/databaseService.ts` | Update interfaces first |
+| Add rate limiting | `backend/src/app.ts` | Login: 5/15min, Register: 3/hr per IP |
+| Add token refresh | `backend/src/controllers/authController.ts` | POST /api/auth/refresh, 7d refresh token |
+| Add CSV export | `backend/src/controllers/personController.ts` | GET /api/persons/export with filters |
+| Add statistics | `backend/src/controllers/personController.ts` | GET /api/statistics real DB data |
+| Add search filters | `backend/src/services/databaseService.ts` | searchTalents with age/gender/education/skill/crop filters |
 | Add UI component | `frontend/src/components/` | Element Plus based |
 | Add page/view | `frontend/src/views/` | Three views: Admin/User/Guest |
 | Update auth logic | `backend/src/middleware/auth.ts` | JWT validation |
@@ -47,11 +52,16 @@ rural-talent-system/
 |--------|------|----------|---------|
 | `app` | Express | `backend/src/app.ts` | Server bootstrap, middleware chain |
 | `authController` | Controller | `controllers/authController.ts` | Login/register/logout |
+| `refresh` | Controller | `controllers/authController.ts` | Token refresh endpoint (7d expiry) |
 | `personController` | Controller | `controllers/personController.ts` | CRUD ops (791 lines) |
+| `getStatistics` | Controller | `controllers/personController.ts` | Real statistics from DB |
+| `exportPersons` | Controller | `controllers/personController.ts` | CSV export with filters |
 | `databaseService` | Service | `services/databaseService.ts` | SQLite ops (2253 lines) |
+| `searchTalents` | Service | `services/databaseService.ts` | Advanced search with multi-filters |
 | `mysqlService` | Service | `services/mysqlService.ts` | MySQL ops (641 lines) |
 | `auth` | Middleware | `middleware/auth.ts` | JWT verification |
 | `validation` | Middleware | `middleware/validation.ts` | Input validation |
+| `validateComprehensivePerson` | Middleware | `middleware/validation.ts` | Full person validation |
 
 ### Frontend Entry Points
 | Symbol | Type | Location | Purpose |
@@ -91,8 +101,12 @@ rural-talent-system/
 - **NEVER:** Use `any` type suppression - strict TypeScript enforced
 - **NEVER:** Skip auth middleware on protected routes
 - **NEVER:** Modify data on Guest view (read-only)
+- **NEVER:** Disable rate limiting on auth endpoints
+- **NEVER:** Use `as any` type assertions (use `unknown` with runtime checks)
 - **ALWAYS:** Update TypeScript interfaces when changing DB schema
 - **ALWAYS:** Use API service layer - no direct axios calls in components
+- **ALWAYS:** Use `sanitizeString` for user-provided string inputs
+- **ALWAYS:** Parameterize SQL queries (never interpolate user input)
 
 ## UNIQUE STYLES
 
@@ -112,6 +126,11 @@ No Jest/Mocha - pure Node.js test scripts in `test/`:
 - `simple-verification.js` - Health checks
 - `test_system_integration.js` - Full flow tests
 - `test_dual_user_features.js` - Permission tests
+- `test_all_endpoints.js` - API coverage
+- `test_error_handling.js` - Error resilience
+- `test_edge_cases.js` - Boundary conditions
+- `test_auth_permissions.js` - Security validation
+- `test_search_pagination.js` - Data retrieval tests
 
 ## COMMANDS
 
@@ -128,6 +147,14 @@ pnpm start                # Start production services
 # Testing
 pnpm test                 # Run full test suite
 ./test/run-tests.sh all   # Alternative test runner
+node test/simple-verification.js
+node test/test_system_integration.js
+node test/test_dual_user_features.js
+node test/test_all_endpoints.js
+node test/test_error_handling.js
+node test/test_edge_cases.js
+node test/test_auth_permissions.js
+node test/test_search_pagination.js
 
 # Docker
 ./deploy.sh dev           # Docker dev environment
@@ -147,3 +174,6 @@ pnpm security:check       # Audit dependencies
 - **Logs:** `logs/backend.log` and `logs/frontend.log`
 - **Performance:** v2.2.1 reduced bundle by 98% (1.17MB → 22.7KB) via code splitting
 - **Browser quirks:** main.ts contains ResizeObserver error suppression for Element Plus compatibility
+- **Rate limiting:** Per-IP with configurable windows
+- **Security:** JWT format validation (3-part structure), XSS sanitization via `sanitizeString`
+- **Auth Tokens:** 24h access token + 7d refresh token

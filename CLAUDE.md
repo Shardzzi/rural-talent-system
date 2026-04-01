@@ -67,6 +67,9 @@ pnpm security:check       # Run security audit
 - **Frontend**: Vue 3 + TypeScript + Element Plus + Vite (Port 8081)
 - **Backend**: Node.js + Express + TypeScript + SQLite (Port 8083)
 - **Authentication**: JWT with bcrypt password hashing
+- **Rate limiting**: In-memory per-IP limiter
+- **Input validation**: express-validator with custom sanitizers
+- **XSS protection**: HTML tag stripping
 - **Package Manager**: pnpm workspace
 - **Database**: SQLite with 7 main tables
 
@@ -84,6 +87,26 @@ SQLite database with tables for users, persons, rural_talent_profile, talent_ski
 - Three-tier role system: admin/user/guest
 - Data masking for unauthenticated users
 - Users can only edit their own bound person information
+
+### Token Refresh (T9)
+- POST /api/auth/refresh endpoint
+- Access token: 24h expiry
+- Refresh token: 7d expiry
+- Frontend axios interceptor auto-refreshes on 401
+
+### Rate Limiting (T2)
+- Login: 5 attempts per 15 minutes per IP
+- Register: 3 attempts per hour per IP
+- Headers: X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After
+
+### JWT Format Validation (T3)
+- Bearer prefix enforced
+- 3-part JWT structure validated
+- Failed attempts logged with IP
+
+### XSS Protection (T1)
+- sanitizeString middleware strips HTML tags
+- All user inputs sanitized before validation
 
 ## Development Workflow
 
@@ -130,14 +153,22 @@ The project includes a comprehensive test suite:
 # Run all tests
 pnpm test
 
-# Individual test categories
+# All test files (8 total)
 node test/simple-verification.js        # Health checks
 node test/test_system_integration.js    # Integration tests
 node test/test_dual_user_features.js    # Permission tests
+node test/test_all_endpoints.js         # All 22 endpoints
+node test/test_error_handling.js        # Error responses
+node test/test_edge_cases.js            # Security/edge cases
+node test/test_auth_permissions.js      # Auth & permissions
+node test/test_search_pagination.js     # Search & pagination
 ```
 
 ## Important Notes
 
+- Never disable rate limiting in production
+- Always use parameterized SQL queries
+- Always sanitize user inputs with sanitizeString
 - Use TypeScript throughout - strict type checking is enabled
 - Follow the existing authentication and permission patterns
 - Database is SQLite - located at `backend/data/persons.db`
