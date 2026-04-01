@@ -3,15 +3,16 @@ import logger from '../config/logger';
 import { getDbService } from '../services/dbServiceFactory';
 import { AuthenticatedRequest, Person, ApiResponse } from '../types/index';
 
-const isDuplicateEntryError = (error: any): boolean => {
-    return error?.code === 'SQLITE_CONSTRAINT' ||
-        error?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
-        error?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||
-        error?.code === 'ER_DUP_ENTRY' ||
-        error?.code === 'DUPLICATE_ENTRY' ||
-        error?.sqlState === '23000' ||
-        error?.errno === 19 ||
-        error?.errno === 1062;
+const isDuplicateEntryError = (error: unknown): boolean => {
+    const err = error as Record<string, unknown>;
+    return err?.code === 'SQLITE_CONSTRAINT' ||
+        err?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
+        err?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||
+        err?.code === 'ER_DUP_ENTRY' ||
+        err?.code === 'DUPLICATE_ENTRY' ||
+        err?.sqlState === '23000' ||
+        err?.errno === 19 ||
+        err?.errno === 1062;
 };
 
 // ID参数验证：必须是正整数
@@ -736,21 +737,21 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
             { key: 'updated_at', header: '更新时间' }
         ];
 
-        const getNestedValue = (obj: any, path: string): unknown => {
+        const getNestedValue = (obj: Record<string, unknown>, path: string): unknown => {
             if (path === '_skills_list') {
                 if (obj.talent_skills && Array.isArray(obj.talent_skills)) {
                     return obj.talent_skills
-                        .map((s: any) => s.skill_name || s.name || '')
+                        .map((s: Record<string, unknown>) => (s.skill_name || s.name || '') as string)
                         .filter(Boolean)
                         .join('、');
                 }
                 return '';
             }
             const parts = path.split('.');
-            let current: any = obj;
+            let current: unknown = obj;
             for (const part of parts) {
                 if (current === null || current === undefined) return '';
-                current = current[part];
+                current = (current as Record<string, unknown>)[part];
             }
             return current;
         };
@@ -859,7 +860,8 @@ const getStatistics = async (req: AuthenticatedRequest, res: Response): Promise<
         const err = error as Error;
         logger.error('Error getting statistics:', err);
         res.status(500).json({ 
-            error: 'Failed to get statistics',
+            success: false,
+            message: '获取统计数据失败',
             details: err.message 
         });
     }
@@ -877,7 +879,8 @@ const getSkillsLibraryStats = async (req: AuthenticatedRequest, res: Response): 
         const err = error as Error;
         logger.error('Error getting skills library stats:', err);
         res.status(500).json({ 
-            error: 'Failed to get skills library statistics',
+            success: false,
+            message: '获取技能统计失败',
             details: err.message 
         });
     }

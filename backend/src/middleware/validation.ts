@@ -346,8 +346,6 @@ export const validateComprehensivePerson = [
     },
     ...validateCreatePerson,
 
-    ...validateCreatePerson,
-
     // 农村画像字段验证
     body('ruralProfile.farming_years')
         .optional({ nullable: true, checkFalsy: true })
@@ -438,14 +436,17 @@ export const validateRegister = [
 ];
 
 export const validateChangePassword = [
-    body('oldPassword')
+    body('currentPassword')
         .notEmpty()
-        .withMessage('旧密码不能为空'),
+        .withMessage('当前密码不能为空'),
     body('newPassword')
         .notEmpty()
         .withMessage('新密码不能为空')
         .isLength({ min: 6, max: 50 })
-        .withMessage('新密码长度必须在6-50个字符之间')
+        .withMessage('新密码长度必须在6-50个字符之间'),
+    body('confirmPassword')
+        .notEmpty()
+        .withMessage('请确认新密码')
 ];
 
 export const validateLinkPerson = [
