@@ -704,16 +704,9 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
             filters: hasFilters ? filters : undefined
         });
 
-        let persons: any[];
-        try {
-            if (hasFilters) {
-                persons = await getDbService(req).getAllPersonsWithDetails(filters);
-            } else {
-                persons = await getDbService(req).getAllPersonsWithDetails();
-            }
-        } catch {
-            persons = await getDbService(req).getAllPersons();
-        }
+        const persons = hasFilters
+            ? await getDbService(req).getAllPersonsWithDetails(filters)
+            : await getDbService(req).getAllPersonsWithDetails();
         const validatedPersons = Array.isArray(persons) ? persons : [];
 
         const columns = [
@@ -726,19 +719,19 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
             { key: 'address', header: '地址' },
             { key: 'education_level', header: '学历' },
             { key: 'political_status', header: '政治面貌' },
-            { key: 'skills', header: '技能' },
-            { key: 'rural_profile.farming_years', header: '种植年限' },
+            { key: '_skills_list', header: '技能特长' },
+            { key: 'rural_profile.farming_years', header: '务农年限' },
             { key: 'rural_profile.planting_scale', header: '种植规模' },
             { key: 'rural_profile.main_crops', header: '主要作物' },
             { key: 'rural_profile.breeding_types', header: '养殖类型' },
             { key: 'rural_profile.cooperation_willingness', header: '合作意愿' },
             { key: 'rural_profile.development_direction', header: '发展方向' },
+            { key: 'rural_profile.available_time', header: '可参与时间' },
             { key: 'cooperation_intentions.cooperation_type', header: '合作类型' },
             { key: 'cooperation_intentions.investment_capacity', header: '投资能力' },
             { key: 'cooperation_intentions.preferred_scale', header: '偏好规模' },
-            { key: 'cooperation_intentions.time_availability', header: '可用时间' },
+            { key: 'cooperation_intentions.time_availability', header: '合作时间安排' },
             { key: 'cooperation_intentions.contact_preference', header: '联系偏好' },
-            { key: '_skills_list', header: '技能特长列表' },
             { key: 'created_at', header: '创建时间' },
             { key: 'updated_at', header: '更新时间' }
         ];

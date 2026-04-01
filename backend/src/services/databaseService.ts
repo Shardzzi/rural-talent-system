@@ -616,19 +616,19 @@ const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
             SELECT 
                 p.*,
                 rtp.id as rtp_id,
-                rtp.planting_years as rtp_planting_years,
+                rtp.farming_years as rtp_farming_years,
                 rtp.planting_scale as rtp_planting_scale,
                 rtp.main_crops as rtp_main_crops,
-                rtp.has_agricultural_machinery as rtp_has_agricultural_machinery,
-                rtp.agricultural_machinery_details as rtp_agricultural_machinery_details,
-                rtp.storage_facilities as rtp_storage_facilities,
+                rtp.breeding_types as rtp_breeding_types,
+                rtp.cooperation_willingness as rtp_cooperation_willingness,
+                rtp.development_direction as rtp_development_direction,
+                rtp.available_time as rtp_available_time,
                 ci.id as ci_id,
                 ci.cooperation_type as ci_cooperation_type,
                 ci.investment_capacity as ci_investment_capacity,
                 ci.preferred_scale as ci_preferred_scale,
-                ci.expected_cooperation_mode as ci_expected_cooperation_mode,
-                ci.cooperation_purpose as ci_cooperation_purpose,
-                ci.cooperation_details as ci_cooperation_details
+                ci.time_availability as ci_time_availability,
+                ci.contact_preference as ci_contact_preference
             FROM persons p
             LEFT JOIN rural_talent_profile rtp ON rtp.person_id = p.id
             LEFT JOIN cooperation_intentions ci ON ci.person_id = p.id
@@ -695,12 +695,13 @@ const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
                         // 构建农村特色信息
                         person.rural_profile = row.rtp_id ? {
                             id: row.rtp_id,
-                            planting_years: row.rtp_planting_years,
+                            farming_years: row.rtp_farming_years,
                             planting_scale: row.rtp_planting_scale,
                             main_crops: row.rtp_main_crops,
-                            has_agricultural_machinery: row.rtp_has_agricultural_machinery,
-                            agricultural_machinery_details: row.rtp_agricultural_machinery_details,
-                            storage_facilities: row.rtp_storage_facilities,
+                            breeding_types: row.rtp_breeding_types,
+                            cooperation_willingness: row.rtp_cooperation_willingness,
+                            development_direction: row.rtp_development_direction,
+                            available_time: row.rtp_available_time,
                             person_id: personId
                         } : null;
                         
@@ -710,9 +711,8 @@ const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
                             cooperation_type: row.ci_cooperation_type,
                             investment_capacity: row.ci_investment_capacity,
                             preferred_scale: row.ci_preferred_scale,
-                            expected_cooperation_mode: row.ci_expected_cooperation_mode,
-                            cooperation_purpose: row.ci_cooperation_purpose,
-                            cooperation_details: row.ci_cooperation_details,
+                            time_availability: row.ci_time_availability,
+                            contact_preference: row.ci_contact_preference,
                             person_id: personId
                         } : null;
                         

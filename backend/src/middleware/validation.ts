@@ -112,7 +112,17 @@ export const validateCreatePerson = [
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
         .isLength({ max: 1000 })
-        .withMessage('备注长度不能超过1000个字符')
+        .withMessage('备注长度不能超过1000个字符'),
+    body('political_status')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 50 })
+        .withMessage('政治面貌长度不能超过50个字符'),
+    body('employment_status')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 50 })
+        .withMessage('就业状态长度不能超过50个字符')
 ];
 
 export const validateUpdatePerson = [
@@ -182,7 +192,17 @@ export const validateUpdatePerson = [
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
         .isLength({ max: 1000 })
-        .withMessage('备注长度不能超过1000个字符')
+        .withMessage('备注长度不能超过1000个字符'),
+    body('political_status')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 50 })
+        .withMessage('政治面貌长度不能超过50个字符'),
+    body('employment_status')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 50 })
+        .withMessage('就业状态长度不能超过50个字符')
 ];
 
 export const validateSearch = [
@@ -261,7 +281,27 @@ export const validateRuralProfile = [
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
         .isLength({ max: 500 })
-        .withMessage('仓储设施描述长度不能超过500个字符')
+        .withMessage('仓储设施描述长度不能超过500个字符'),
+    body('breeding_types')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 200 })
+        .withMessage('养殖类型长度不能超过200个字符'),
+    body('cooperation_willingness')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('合作意愿长度不能超过100个字符'),
+    body('development_direction')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 200 })
+        .withMessage('发展方向长度不能超过200个字符'),
+    body('available_time')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('可用时间长度不能超过100个字符')
 ];
 
 export const validateSkill = [
@@ -279,8 +319,115 @@ export const validateSkill = [
         .withMessage('技能分类长度必须在1-50个字符之间'),
     body('proficiency_level')
         .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
         .isIn(['beginner', 'intermediate', 'advanced', 'expert'])
-        .withMessage('熟练度必须是 beginner、intermediate、advanced 或 expert')
+        .withMessage('熟练度必须是 beginner、intermediate、advanced 或 expert'),
+    body('certification')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('技能认证长度不能超过100个字符')
+];
+
+export const validateComprehensivePerson = [
+    // 复用基础人员字段验证（通过将 person 对象字段映射到根级字段）
+    body('person')
+        .isObject()
+        .withMessage('person 必须是对象'),
+    body('ruralProfile')
+        .isObject()
+        .withMessage('ruralProfile 必须是对象'),
+    body('skills')
+        .isArray({ min: 1 })
+        .withMessage('skills 必须是非空数组'),
+    (req: Request, res: Response, next: NextFunction): void => {
+        if (req.body?.person && typeof req.body.person === 'object') {
+            req.body = {
+                ...req.body,
+                ...req.body.person
+            };
+        }
+        next();
+    },
+    ...validatePerson,
+
+    // 额外字符串字段统一清理
+    body('person.political_status')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 50 })
+        .withMessage('政治面貌长度不能超过50个字符'),
+    body('person.employment_status')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 50 })
+        .withMessage('就业状态长度不能超过50个字符'),
+
+    // 农村画像字段验证
+    body('ruralProfile.farming_years')
+        .optional({ nullable: true, checkFalsy: true })
+        .isInt({ min: 0, max: 100 })
+        .withMessage('farming_years 必须是0-100之间的整数'),
+    body('ruralProfile.planting_scale')
+        .optional({ nullable: true, checkFalsy: true })
+        .isFloat({ gt: 0 })
+        .withMessage('planting_scale 必须是正数'),
+    body('ruralProfile.main_crops')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isString()
+        .withMessage('main_crops 必须是字符串'),
+    body('ruralProfile.breeding_types')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 200 })
+        .withMessage('养殖类型长度不能超过200个字符'),
+    body('ruralProfile.cooperation_willingness')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('合作意愿长度不能超过100个字符'),
+    body('ruralProfile.development_direction')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 200 })
+        .withMessage('发展方向长度不能超过200个字符'),
+    body('ruralProfile.available_time')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('可用时间长度不能超过100个字符'),
+
+    // 合作意向字符串字段清理
+    body('cooperation.cooperation_type')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('合作类型长度不能超过100个字符'),
+    body('cooperation.contact_preference')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('联系偏好长度不能超过100个字符'),
+
+    // 技能字段验证
+    body('skills.*.skill_name')
+        .customSanitizer(sanitizeString)
+        .notEmpty()
+        .withMessage('skill_name 不能为空')
+        .isLength({ min: 1, max: 50 })
+        .withMessage('skill_name 长度必须在1-50个字符之间'),
+    body('skills.*.skill_category')
+        .customSanitizer(sanitizeString)
+        .notEmpty()
+        .withMessage('skill_category 不能为空')
+        .isLength({ min: 1, max: 50 })
+        .withMessage('skill_category 长度必须在1-50个字符之间'),
+    body('skills.*.certification')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isLength({ max: 100 })
+        .withMessage('技能认证长度不能超过100个字符')
 ];
 
 export const validateRegister = [
@@ -351,6 +498,7 @@ export default {
     validateSearch,
     validateRuralProfile,
     validateSkill,
+    validateComprehensivePerson,
     validateRegister,
     validateChangePassword,
     validateLinkPerson,
