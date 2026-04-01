@@ -1,0 +1,5 @@
+=== Evidence: Negative ID returns 400 ===
+Test: GET /api/persons/-1
+Expected: 400 with 无效的ID参数
+Actual:
+{"success":false,"message":"无效的ID参数"}

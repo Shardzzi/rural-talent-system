@@ -1,0 +1,4 @@
+  王五: age=28, education=本科
+All ages 20-40: True
+All education=本科: True
+Count: 1

@@ -1,0 +1,5 @@
+=== Evidence: Invalid ID parameter returns 400 ===
+Test: GET /api/persons/abc
+Expected: 400 with 无效的ID参数
+Actual:
+{"success":false,"message":"无效的ID参数"}

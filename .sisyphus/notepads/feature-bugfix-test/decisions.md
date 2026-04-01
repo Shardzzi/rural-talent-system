@@ -43,6 +43,13 @@ try {
 - Frontend uses `responseType: 'blob'` for proper binary download handling.
 - Route placed at `/persons/export` before `:id` route to avoid path parameter conflicts.
 
+## Wave 3 Scope Review (2026-03-31)
+- T9: PASS scope fidelity; refresh tokens are rotated and frontend retries one 401 with the refreshed access token.
+- T10: FAIL scope fidelity; backend stats are real, but admin dashboard statistics still hardcode values and the spec-requested employment-status distribution was not added.
+- T11: PASS scope fidelity with an intentional omission; employment_status SQL filter was skipped because the persons table lacks that column, while other requested filters were added.
+- T12: PARTIAL; validation coverage improved, but some UI-level expectations from the spec (real-time feedback, exact submit gating) are not fully verifiable from code.
+- T13: PASS scope fidelity; CSV export includes filter parity, BOM, and proper download headers, while using a defensive fallback for schema mismatch.
+
 ## Task 11: Advanced Search Filters
 - **Decision**: Did NOT add employment_status filter to SQL query because the persons table lacks this column. The column is referenced in code (createComprehensivePerson) but was never added to the actual SQLite schema.
 - **Decision**: Frontend employment_status filter remains as client-side filter (pre-existing behavior, unchanged).
@@ -60,3 +67,7 @@ try {
 - Added single-script endpoint coverage in `test/test_all_endpoints.js` for all 22 backend routes.
 - Kept existing custom Node+axios style (no new test framework/dependencies), with explicit checks for happy path, 401, 403, 400 and error/fallback responses where route design allows.
 - Used unique `X-Forwarded-For` values per request to avoid auth rate-limit interference during sequential login/register tests.
+
+## F4 Final Verdict (2026-04-01)
+- Decision: REJECT.
+- Rationale: 8/17 tasks still fail scope fidelity, and the remaining gaps are substantive enough to block approval despite clean guardrails.

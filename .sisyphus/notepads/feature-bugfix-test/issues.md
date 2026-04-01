@@ -25,6 +25,12 @@ Age validation tested via code review + build verification. ID parameter validat
 - **Pre-existing**: `getAllPersonsWithDetails()` in `databaseService.ts` (line 571-592) references columns that don't exist in actual `rural_talent_profile` table schema. This causes 500 errors when called. Export endpoint uses try/catch fallback to `getAllPersons()`.
 - **Pre-existing**: Frontend GuestView.vue has TypeScript syntax (`!` non-null assertion) in non-TypeScript `<script>` block, causing build failure.
 
+## Wave 3 Scope Review (2026-03-31)
+- T10 issue: the frontend admin stats panel still renders placeholder numbers, so the real-data backend work is not reflected in the UI.
+- T11 issue: employment_status is intentionally omitted from SQL because the physical persons table does not have that column.
+- T12 issue: the form improves validation, but the age input control is still capped at 100 in the template despite the rule allowing 150.
+- T13 issue: export relies on a fallback path when detailed joins hit schema mismatches, so full-detail export is not strictly guaranteed by the primary query.
+
 ## Task 11 Issues
 - persons table missing `employment_status` column despite code referencing it. Added SQL filters only for columns that exist: name, age, gender, education_level, main_crops, skills.
 - Mixed gender values in DB (Chinese + English) conflict with validation enum (male/female/other).
@@ -33,3 +39,7 @@ Age validation tested via code review + build verification. ID parameter validat
 ## [2026-03-31 01:22:14] Task 14 observed issues
 - `/auth/me` may return 404 for some valid tokens in local seeded environments (user row/session mismatch), so happy-path assertion accepts 200/404 and still validates response structure/message.
 - `/persons/:id` update can intermittently surface 500 in local data states; tests treat it as error-case-acceptable while still asserting response has message/error details.
+
+## F4 Final Verdict (2026-04-01)
+- Blocking failures remain in T1, T5, T10, T12, T13, T15, T16, and T17.
+- Main risk: feature/UI parity and test coverage remain below scope requirements, so the package is not ready for approval.

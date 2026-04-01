@@ -22,7 +22,22 @@
     "ses_2bdd256d0ffexbRf4DGrNXJopT",
     "ses_2bdb3b648ffet7LBX2CyEApGvK",
     "ses_2bd9bb48bffe6S6KGZMsQbecwR",
-    "ses_2bd3b1912ffePepv1w7mFbfzRy"
+    "ses_2bd3b1912ffePepv1w7mFbfzRy",
+    "ses_2bb8dc720fferX0sUXENnK3Un3",
+    "ses_2bb78ce37ffeWVClBh9tgTHYyG",
+    "ses_2bb62949effeBrII3oFyOPJ8iW",
+    "ses_2bb580fa3ffeG8lse4OCj64gFD",
+    "ses_2bb4cb22affeWXa2vLlWKTPn2s",
+    "ses_2bb30a19dffeaf4gPxhaN0UND1",
+    "ses_2bb2dc0f2ffemnA7Dp3D2ZEMvp",
+    "ses_2bb1d5e4dffeB3UJUmclGMt8BE",
+    "ses_2bb1e16eeffezcJBzGvuAZZlZQ",
+    "ses_2b8bca070ffehU7Zjz0P6n8nnD",
+    "ses_2b8bc445bffeKB4rJB633DCC0B",
+    "ses_2b8bbd9f8ffe8yfUoJpKgQKacq",
+    "ses_2b8bb9370ffe2f5zC6LaFIuWhE",
+    "ses_2b8baf78bffeIYzQ0x8aBaYB7e",
+    "ses_2b8bb0ee3ffel0jrCDTuquWaRU"
   ],
   "plan_name": "feature-bugfix-test",
   "agent": "atlas",
@@ -62,6 +77,15 @@
       "agent": "Sisyphus-Junior",
       "category": "unspecified-high",
       "updated_at": "2026-03-31T07:43:56.186Z"
+    },
+    "final-wave:f3": {
+      "task_key": "final-wave:f3",
+      "task_label": "F3",
+      "task_title": "**Real Manual QA** — `unspecified-high`",
+      "session_id": "ses_2bb4cb22affeWXa2vLlWKTPn2s",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-31T16:29:58.820Z"
     }
   }
 }

@@ -90,6 +90,13 @@ Should use typed error handling (e.g., `catch (error: unknown)` with type guards
 - `UserPersonRow.role` is `string` from DB, requires `as 'admin' | 'user'` cast when assigning to `UserPersonInfo`
 - SQLite `db.get()` callback returns untyped rows; cast to `Person` for known person queries
 
+## Wave 3 Scope Review (2026-03-31)
+- T9 is implemented end-to-end: login issues access+refresh tokens, refresh route exists, frontend retries 401 once, and auth store persists rotated refresh tokens.
+- T10 is only partially implemented for spec fidelity: backend returns real aggregated stats, but admin UI still shows hardcoded totals and employment-status distribution is still absent.
+- T11 matches the requested advanced filters in both backend and guest UI; current implementation also adds client-side filtering for crop/skill/search text beyond the minimal spec.
+- T12 improved validation significantly (mobile+landline phone, required/basic fields, rollback on partial failure), but age input UI is narrower than the 1-150 rule and real-time validation feedback is not clearly present.
+- T13 export now streams CSV with BOM and filter parity, but uses a try/catch fallback because the detailed person export query still has schema mismatch risk.
+
 ### `console.log` Removal (46 instances → 1 in DebugPanel.vue)
 - All frontend `console.log`/`console.error`/`console.warn` removed from production code
 - DebugPanel.vue retains its `console.log` - it's a debug tool component, the log IS its output
@@ -97,3 +104,12 @@ Should use typed error handling (e.g., `catch (error: unknown)` with type guards
 - ElMessage already provides user-facing error notifications, so console.error was redundant
 - Empty watch blocks (previously only logged) removed entirely
 - Empty catch blocks with only console.error replaced with silent catches or re-throws
+
+## Guardrail Audit (2026-04-01)
+- Reviewed current working tree: only `.sisyphus/*` note/plan/evidence files are modified; no backend/frontend API files are changed in the diff.
+- `package.json` files across root/backend/frontend/test show no dependency additions in the current review window.
+- Commit history reviewed (`ef08f64` → `2a22d53`) shows feature/fix additions, but no explicit breaking API-change message.
+
+## F4 Final Verdict (2026-04-01)
+- Scope fidelity ended at 9/17 compliant; the biggest gaps were T10/T12/T13 and test coverage in T15-T17.
+- Guardrails stayed clean: no API contract, schema, or dependency violations were observed.
