@@ -4,9 +4,14 @@
   "description": "数字乡村人才信息系统 - 测试套件",
   "scripts": {
     "test": "./run-tests.sh all",
-    "test:health": "./run-tests.sh health",
-    "test:integration": "./run-tests.sh integration",
-    "test:permissions": "./run-tests.sh permissions",
+    "test:health": "node simple-verification.js",
+    "test:integration": "node test_system_integration.js",
+    "test:permissions": "node test_dual_user_features.js",
+    "test:endpoints": "node test_all_endpoints.js",
+    "test:errors": "node test_error_handling.js",
+    "test:edge": "node test_edge_cases.js",
+    "test:auth": "node test_auth_permissions.js",
+    "test:search": "node test_search_pagination.js",
     "test:all": "./run-tests.sh all"
   },
   "dependencies": {
