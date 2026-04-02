@@ -52,8 +52,8 @@
         </div>
         
         <div class="search-form">
-          <el-row :gutter="20" align="middle">
-            <el-col :span="6">
+          <el-row :gutter="16" align="middle">
+            <el-col :xs="24" :sm="12" :md="8">
               <el-input
                 v-model="searchKeyword"
                 placeholder="搜索姓名、技能、地区"
@@ -68,7 +68,7 @@
                 </template>
               </el-input>
             </el-col>
-            <el-col :span="3">
+            <el-col :xs="12" :sm="6" :md="4">
               <el-input-number
                 v-model="filterMinAge"
                 :min="1"
@@ -77,10 +77,11 @@
                 size="large"
                 controls-position="right"
                 clearable
+                style="width: 100%"
                 @change="debouncedSearch"
               />
             </el-col>
-            <el-col :span="3">
+            <el-col :xs="12" :sm="6" :md="4">
               <el-input-number
                 v-model="filterMaxAge"
                 :min="1"
@@ -89,15 +90,17 @@
                 size="large"
                 controls-position="right"
                 clearable
+                style="width: 100%"
                 @change="debouncedSearch"
               />
             </el-col>
-            <el-col :span="4">
+            <el-col :xs="12" :sm="6" :md="4">
               <el-select 
                 v-model="filterEducation" 
                 placeholder="学历筛选" 
                 size="large" 
                 clearable
+                style="width: 100%"
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
               >
@@ -107,12 +110,13 @@
                 <el-option label="硕士及以上" value="硕士及以上" />
               </el-select>
             </el-col>
-            <el-col :span="4">
+            <el-col :xs="12" :sm="6" :md="4">
               <el-select 
                 v-model="filterStatus" 
                 placeholder="就业状态" 
                 size="large" 
                 clearable
+                style="width: 100%"
                 @change="debouncedSearch"
                 @clear="debouncedSearch"
               >
@@ -121,16 +125,9 @@
                 <el-option label="已退休" value="已退休" />
               </el-select>
             </el-col>
-            <el-col :span="4">
-              <el-button type="primary" size="large" @click="handleSearch">
-                <el-icon><Search /></el-icon>
-                搜索
-              </el-button>
-              <el-button size="large" @click="resetFilters">重置</el-button>
-            </el-col>
           </el-row>
-          <el-row :gutter="20" align="middle" style="margin-top: 12px;">
-            <el-col :span="6">
+          <el-row :gutter="16" align="middle" style="margin-top: 12px;">
+            <el-col :xs="24" :sm="8">
               <el-input
                 v-model="filterSkill"
                 placeholder="技能关键词"
@@ -144,7 +141,7 @@
                 </template>
               </el-input>
             </el-col>
-            <el-col :span="6">
+            <el-col :xs="24" :sm="8">
               <el-input
                 v-model="filterCrop"
                 placeholder="作物筛选（如：水稻、小麦）"
@@ -157,6 +154,15 @@
                   <el-icon><Location /></el-icon>
                 </template>
               </el-input>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <div class="search-buttons">
+                <el-button type="primary" size="large" @click="handleSearch">
+                  <el-icon><Search /></el-icon>
+                  搜索
+                </el-button>
+                <el-button size="large" @click="resetFilters">重置</el-button>
+              </div>
             </el-col>
           </el-row>
         </div>
@@ -338,8 +344,8 @@ export default {
     const searchKeyword = ref('')
     const filterEducation = ref('')
     const filterStatus = ref('')
-    const filterMinAge = ref<number | undefined>(undefined)
-    const filterMaxAge = ref<number | undefined>(undefined)
+    const filterMinAge = ref(undefined)
+    const filterMaxAge = ref(undefined)
     const filterSkill = ref('')
     const filterCrop = ref('')
     const searchTrigger = ref(0) // 用于手动触发搜索
@@ -618,12 +624,21 @@ export default {
 
 /* 欢迎横幅 */
 .welcome-banner {
-  background: linear-gradient(135deg, #409EFF 0%, #67C23A 100%);
+  background: linear-gradient(135deg, #0d2137 0%, #1a5276 30%, #2e86c1 60%, #27ae60 100%);
   color: white;
-  padding: 60px 20px;
+  padding: 80px 20px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
+  margin: -24px -24px 0 -24px;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .welcome-banner::before {
@@ -633,14 +648,15 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>') repeat;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.05"/></svg>') repeat;
   background-size: 50px 50px;
 }
 
 .banner-content {
   position: relative;
   z-index: 1;
-  max-width: 1300px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -649,12 +665,13 @@ export default {
   font-size: 48px;
   margin-bottom: 16px;
   font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .banner-content p {
-  font-size: 20px;
+  font-size: 22px;
   margin-bottom: 40px;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .banner-actions {
@@ -668,12 +685,17 @@ export default {
 .banner-stats {
   display: flex;
   justify-content: center;
-  gap: 60px;
+  gap: 40px;
   margin-top: 40px;
 }
 
 .stat-item {
   text-align: center;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 20px 30px;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .stat-number {
@@ -690,7 +712,8 @@ export default {
 /* 主要内容 */
 .main-content {
   padding: 40px 20px;
-  max-width: 1300px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -719,8 +742,10 @@ export default {
 
 .search-form {
   padding: 20px;
-  background-color: #f8f9fa;
+  background: linear-gradient(to right, #ffffff, #f8f9fa);
   border-radius: 8px;
+  border-left: 4px solid #2e86c1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .talents-card {
@@ -746,6 +771,7 @@ export default {
 
 .talent-card {
   border: 1px solid #e4e7ed;
+  border-left: 3px solid #e4e7ed;
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
@@ -758,25 +784,40 @@ export default {
   height: auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.talent-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #0d2137 0%, #1a5276 30%, #2e86c1 60%, #27ae60 100%);
+  z-index: 1;
 }
 
 .talent-card:hover {
-  border-color: #409EFF;
-  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.15);
-  transform: translateY(-4px);
+  border-color: #e4e7ed;
+  border-left-color: #2e86c1;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .talent-header {
   display: flex;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .talent-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background-color: #409EFF;
+  background: linear-gradient(135deg, #2e86c1 0%, #27ae60 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -791,6 +832,8 @@ export default {
 
 .talent-basic {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .talent-basic h4 {
@@ -798,6 +841,9 @@ export default {
   color: #333;
   font-size: 18px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .talent-meta {
@@ -820,7 +866,8 @@ export default {
 }
 
 .status-tag {
-  margin-left: auto;
+  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .talent-location {
@@ -890,6 +937,18 @@ export default {
 
 .login-prompt-card {
   margin-top: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-prompt-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #2e86c1, #27ae60);
 }
 
 .login-prompt {
@@ -901,9 +960,17 @@ export default {
 }
 
 .prompt-icon {
-  font-size: 48px;
-  color: #409EFF;
+  font-size: 32px;
+  color: #fff;
+  background: linear-gradient(135deg, #2e86c1 0%, #27ae60 100%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(46, 134, 193, 0.3);
 }
 
 .prompt-content h3 {
@@ -915,6 +982,20 @@ export default {
   margin: 0 0 16px 0;
   color: #666;
   line-height: 1.5;
+}
+
+.prompt-content .el-button {
+  background: linear-gradient(135deg, #2e86c1 0%, #27ae60 100%);
+  border: none;
+  padding: 12px 24px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(46, 134, 193, 0.2);
+  transition: all 0.3s ease;
+}
+
+.prompt-content .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 134, 193, 0.3);
 }
 
 .pagination-wrapper {

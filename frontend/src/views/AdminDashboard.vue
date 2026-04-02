@@ -13,26 +13,38 @@
       <!-- 统计卡片 -->
       <el-row :gutter="20" class="stats-row">
         <el-col :xs="24" :sm="12" :md="8">
-          <el-card class="stats-card">
+          <el-card class="stats-card stats-blue">
+            <el-icon class="bg-icon"><User /></el-icon>
             <div class="stats-item">
-              <div class="stats-number">{{ totalPersons }}</div>
-              <div class="stats-label">总人数</div>
+              <el-icon class="stats-icon"><User /></el-icon>
+              <div class="stats-info">
+                <div class="stats-number">{{ totalPersons }}</div>
+                <div class="stats-label">总人数</div>
+              </div>
             </div>
           </el-card>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8">
-          <el-card class="stats-card">
+          <el-card class="stats-card stats-green">
+            <el-icon class="bg-icon"><UserFilled /></el-icon>
             <div class="stats-item">
-              <div class="stats-number">{{ totalUsers }}</div>
-              <div class="stats-label">注册用户</div>
+              <el-icon class="stats-icon"><UserFilled /></el-icon>
+              <div class="stats-info">
+                <div class="stats-number">{{ totalUsers }}</div>
+                <div class="stats-label">注册用户</div>
+              </div>
             </div>
           </el-card>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8">
-          <el-card class="stats-card">
+          <el-card class="stats-card stats-orange">
+            <el-icon class="bg-icon"><Timer /></el-icon>
             <div class="stats-item">
-              <div class="stats-number">{{ onlineToday }}</div>
-              <div class="stats-label">今日活跃</div>
+              <el-icon class="stats-icon"><Timer /></el-icon>
+              <div class="stats-info">
+                <div class="stats-number">{{ onlineToday }}</div>
+                <div class="stats-label">今日活跃</div>
+              </div>
             </div>
           </el-card>
         </el-col>
@@ -306,7 +318,7 @@
 <script>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Download, Refresh, Edit, Delete, View as ViewIcon, DocumentRemove, MoreFilled } from '@element-plus/icons-vue'
+import { Plus, Search, Download, Refresh, Edit, Delete, View as ViewIcon, DocumentRemove, MoreFilled, User, UserFilled, Timer } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import PersonFormDialog from '../components/PersonFormDialog.vue'
@@ -325,7 +337,10 @@ export default {
     Delete,
     ViewIcon,
     DocumentRemove,
-    MoreFilled
+    MoreFilled,
+    User,
+    UserFilled,
+    Timer
   },
   setup() {
     const router = useRouter()
@@ -665,7 +680,7 @@ export default {
 /* 优化容器宽度和布局，与用户界面保持一致 */
 .admin-dashboard {
   width: 100%;
-  max-width: 1400px; /* 限制最大宽度 */
+  max-width: 1400px;
   margin: 0 auto; /* 居中对齐 */
   padding: 20px;
 }
@@ -687,33 +702,84 @@ export default {
 }
 
 .stats-card {
-  text-align: center;
-  transition: transform 0.2s ease-in-out;
+  text-align: left;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .stats-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
+.stats-blue { border-left: 4px solid #409EFF; }
+.stats-green { border-left: 4px solid #67C23A; }
+.stats-orange { border-left: 4px solid #E6A23C; }
+
 .stats-item {
-  padding: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.stats-icon {
+  font-size: 48px;
+  margin-right: 16px;
+  opacity: 0.9;
+}
+
+.stats-blue .stats-icon { color: #409EFF; }
+.stats-green .stats-icon { color: #67C23A; }
+.stats-orange .stats-icon { color: #E6A23C; }
+
+.stats-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .stats-number {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: bold;
-  color: #409EFF;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   line-height: 1;
 }
 
+.stats-blue .stats-number { color: #409EFF; }
+.stats-green .stats-number { color: #67C23A; }
+.stats-orange .stats-number { color: #E6A23C; }
+
 .stats-label {
-  font-size: 14px;
-  color: #666;
+  font-size: 15px;
+  color: #606266;
+  font-weight: 500;
 }
+
+.bg-icon {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  font-size: 140px;
+  opacity: 0.05;
+  z-index: 0;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+.stats-blue .bg-icon { color: #409EFF; }
+.stats-green .bg-icon { color: #67C23A; }
+.stats-orange .bg-icon { color: #E6A23C; }
 
 .search-card {
   margin-bottom: 20px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 }
 
 .search-form {
@@ -788,6 +854,14 @@ export default {
 
 .table-card {
   margin-bottom: 20px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.table-card :deep(.el-card__header) {
+  background-color: #fcfcfd;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .card-header {
@@ -810,6 +884,10 @@ export default {
 
 :deep(.odd-row) {
   background-color: #ffffff;
+}
+
+:deep(.el-table__body tr:hover > td.el-table__cell) {
+  background-color: #ecf5ff !important;
 }
 
 /* 操作按钮样式 */
@@ -854,15 +932,17 @@ export default {
 
 /* 表格展开行样式 */
 .expand-content {
-  padding: 15px;
-  background-color: #f9f9f9;
+  padding: 16px 20px;
+  background-color: #f8fbff;
   border-radius: 4px;
-  margin: 10px;
+  margin: 12px;
+  border-left: 4px solid #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.08);
 }
 
 .expand-row {
   display: flex;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   align-items: center;
 }
 
@@ -903,7 +983,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 300px;
+  min-height: 350px;
   padding: 40px 20px;
   margin: 20px 0;
 }
@@ -911,24 +991,37 @@ export default {
 .no-results-content {
   text-align: center;
   max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .no-results-icon {
   font-size: 64px;
-  color: #c0c4cc;
-  margin-bottom: 20px;
+  color: #a0cfff;
+  margin-bottom: 24px;
+  background: #f4f9ff;
+  width: 120px;
+  height: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
 }
 
 .no-results h3 {
-  color: #606266;
-  margin-bottom: 12px;
-  font-size: 18px;
+  color: #303133;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .no-results p {
   color: #909399;
-  margin-bottom: 20px;
-  line-height: 1.5;
+  margin-bottom: 24px;
+  line-height: 1.6;
+  font-size: 15px;
 }
 
 .no-results-actions {

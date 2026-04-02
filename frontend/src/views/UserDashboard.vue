@@ -114,8 +114,8 @@
 
         <!-- 搜索栏 -->
         <div class="search-section">
-          <el-row :gutter="20" align="middle">
-            <el-col :span="6">
+          <el-row :gutter="16" align="middle">
+            <el-col :xs="24" :sm="12" :md="8">
               <el-input
                 v-model="searchKeyword"
                 placeholder="搜索姓名、技能、地区"
@@ -129,7 +129,7 @@
                 </template>
               </el-input>
             </el-col>
-            <el-col :span="5">
+            <el-col :xs="12" :sm="6" :md="4">
               <el-select 
                 v-model="filterEducation" 
                 placeholder="学历筛选" 
@@ -145,7 +145,7 @@
                 <el-option label="硕士及以上" value="硕士及以上" />
               </el-select>
             </el-col>
-            <el-col :span="5">
+            <el-col :xs="12" :sm="6" :md="4">
               <el-select 
                 v-model="filterStatus" 
                 placeholder="就业状态" 
@@ -160,7 +160,7 @@
                 <el-option label="已退休" value="已退休" />
               </el-select>
             </el-col>
-            <el-col :span="8">
+            <el-col :xs="24" :sm="24" :md="8">
               <div class="search-buttons">
                 <el-button type="primary" @click="handleSearch">
                   <el-icon><Search /></el-icon>
@@ -522,7 +522,7 @@ export default {
 /* 优化容器宽度和布局 */
 .user-dashboard {
   width: 100%;
-  max-width: 1400px; /* 限制最大宽度 */
+  max-width: 1400px;
   margin: 0 auto; /* 居中对齐 */
 }
 
@@ -540,6 +540,15 @@ export default {
 
 .profile-card {
   margin-bottom: 24px;
+  border-radius: 12px;
+  border-left: 4px solid #67C23A;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.profile-card :deep(.el-card__header) {
+  padding: 0;
+  border-bottom: none;
 }
 
 .card-header {
@@ -549,6 +558,15 @@ export default {
   margin-bottom: 0;
   font-size: 16px;
   font-weight: 500;
+}
+
+.profile-card .card-header {
+  padding: 16px 20px;
+  background: linear-gradient(to right, #f0f9eb, #ffffff);
+  border-bottom: 1px solid #e1f3d8;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .profile-item {
@@ -589,31 +607,67 @@ export default {
 }
 
 .welcome-card {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .welcome-content {
   text-align: center;
-  padding: 40px 20px;
+  padding: 48px 24px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0f9eb 100%);
+  position: relative;
 }
 
 .welcome-icon {
-  font-size: 64px;
+  font-size: 56px;
   color: #409EFF;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  background: #fff;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.welcome-icon:hover {
+  transform: scale(1.05);
 }
 
 .welcome-content h3 {
-  color: #333;
+  color: #303133;
   margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 600;
 }
 
 .welcome-content p {
-  color: #666;
-  margin-bottom: 30px;
-  max-width: 500px;
+  color: #606266;
+  margin-bottom: 32px;
+  max-width: 540px;
   margin-left: auto;
   margin-right: auto;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.welcome-content .el-button {
+  padding: 12px 32px;
+  font-size: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.welcome-content .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
 }
 
 .browse-card {
@@ -622,23 +676,31 @@ export default {
 }
 
 .search-section {
-  margin-bottom: 20px;
-  padding: 16px;
-  background-color: #f8f9fa;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
   border-radius: 8px;
-  width: 100%; /* 确保搜索区域占满宽度 */
-  box-sizing: border-box; /* 包含padding在宽度计算内 */
+  border: 1px solid #ebeef5;
+  border-left: 4px solid #409EFF;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.search-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .persons-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
-  margin-bottom: 20px;
-  min-height: 400px; /* 确保始终有最小高度 */
-  width: 100%; /* 确保占满容器宽度 */
-  align-items: start; /* 防止卡片被拉伸 */
-  grid-auto-rows: min-content; /* 行高自适应内容 */
+  margin-bottom: 24px;
+  min-height: 400px;
+  width: 100%;
+  align-items: start;
+  grid-auto-rows: min-content;
 }
 
 /* 确保移动端适配 */
@@ -656,10 +718,11 @@ export default {
 
 .person-card {
   border: 1px solid #e4e7ed;
+  border-top: 3px solid #409EFF;
   border-radius: 8px;
   padding: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   background-color: #fff;
   align-self: start;
   min-height: 140px;
@@ -667,12 +730,25 @@ export default {
   height: auto;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.person-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #409EFF, #67C23A);
+  opacity: 0.7;
 }
 
 .person-card:hover {
   border-color: #409EFF;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
+  transform: translateY(-4px);
 }
 
 .person-header {
@@ -681,7 +757,7 @@ export default {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(64, 158, 255, 0.15);
 }
 
 .person-header h4 {
@@ -716,14 +792,20 @@ export default {
 }
 
 .pagination-wrapper {
-  margin-top: 20px;
+  margin-top: 32px;
   text-align: center;
+  padding: 24px;
+  background: #fafafa;
+  border-radius: 8px;
+  border-top: 1px solid #ebeef5;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .search-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .search-buttons .el-button {
@@ -748,7 +830,17 @@ export default {
 .no-results-icon {
   font-size: 64px;
   color: #c0c4cc;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  background: #f4f4f5;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .no-results h3 {
