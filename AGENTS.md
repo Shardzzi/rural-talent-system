@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2025-03-30  
+**Generated:** 2026-03-30  
 **Project:** 数字乡村人才信息系统 (Rural Talent System)  
 **Version:** v3.1
 
@@ -18,7 +18,7 @@ rural-talent-system/
 │   ├── middleware/      # Auth, validation, errors
 │   ├── routes/          # API endpoint definitions
 │   └── types/           # TypeScript interfaces
-├── frontend/src/        # Vue 3 SPA (11 Vue + 6 TS)
+├── frontend/src/        # Vue 3 SPA (7 Vue + 5 TS + 1 d.ts)
 │   ├── views/           # Page-level components
 │   ├── components/      # Reusable UI components
 │   ├── stores/          # Pinia state management
@@ -53,15 +53,18 @@ rural-talent-system/
 | `app` | Express | `backend/src/app.ts` | Server bootstrap, middleware chain |
 | `authController` | Controller | `controllers/authController.ts` | Login/register/logout |
 | `refresh` | Controller | `controllers/authController.ts` | Token refresh endpoint (7d expiry) |
-| `personController` | Controller | `controllers/personController.ts` | CRUD ops (791 lines) |
+| `personController` | Controller | `controllers/personController.ts` | CRUD ops |
 | `getStatistics` | Controller | `controllers/personController.ts` | Real statistics from DB |
 | `exportPersons` | Controller | `controllers/personController.ts` | CSV export with filters |
-| `databaseService` | Service | `services/databaseService.ts` | SQLite ops (2253 lines) |
+| `databaseService` | Service | `services/databaseService.ts` | SQLite ops |
 | `searchTalents` | Service | `services/databaseService.ts` | Advanced search with multi-filters |
-| `mysqlService` | Service | `services/mysqlService.ts` | MySQL ops (641 lines) |
+| `mysqlService` | Service | `services/mysqlService.ts` | MySQL ops |
+| `dbServiceFactory` | Service | `services/dbServiceFactory.ts` | DB service factory (sqlite/mysql) |
 | `auth` | Middleware | `middleware/auth.ts` | JWT verification |
 | `validation` | Middleware | `middleware/validation.ts` | Input validation |
 | `validateComprehensivePerson` | Middleware | `middleware/validation.ts` | Full person validation |
+| `errorHandler` | Middleware | `middleware/errorHandler.ts` | Centralized error handling |
+| `logger` | Config | `config/logger.ts` | Winston logger |
 
 ### Frontend Entry Points
 | Symbol | Type | Location | Purpose |
@@ -70,10 +73,14 @@ rural-talent-system/
 | `router` | Router | `router/index.ts` | Route definitions |
 | `useAuthStore` | Pinia | `stores/auth.ts` | Auth state management |
 | `personsApi` | API | `api/persons.ts` | Backend API client |
-| `AdminDashboard` | View | `views/AdminDashboard.vue` | Admin UI (878 lines) |
-| `UserDashboard` | View | `views/UserDashboard.vue` | User UI (783 lines) |
-| `GuestView` | View | `views/GuestView.vue` | Read-only UI (860 lines) |
-| `PersonFormDialog` | Component | `components/PersonFormDialog.vue` | Edit form (1024 lines) |
+| `AdminDashboard` | View | `views/AdminDashboard.vue` | Admin UI |
+| `UserDashboard` | View | `views/UserDashboard.vue` | User UI |
+| `GuestView` | View | `views/GuestView.vue` | Read-only UI |
+| `PersonFormDialog` | Component | `components/PersonFormDialog.vue` | Edit form |
+| `PersonDetailDialog` | Component | `components/PersonDetailDialog.vue` | Detail view dialog |
+| `LoginForm` | Component | `components/LoginForm.vue` | Login/register form |
+| `DebugPanel` | Component | `components/DebugPanel.vue` | Dev debug panel (dev-only) |
+| `AuthDebugPanel` | Component | `components/AuthDebugPanel.vue` | Guest auth debug panel |
 
 ## CONVENTIONS
 
@@ -83,13 +90,15 @@ rural-talent-system/
 - **Error handling:** Centralized in `middleware/errorHandler.ts`
 - **Logging:** Winston logger via `config/logger.ts`
 - **DB choice:** Environment-driven (DB_TYPE=sqlite|mysql)
+- **Data locale:** Gender values in Chinese (男/女/其他), skill proficiency as integer (1-5)
 
 ### Frontend
 - **UI:** Element Plus with on-demand imports (main.ts lists all components)
 - **State:** Pinia stores for auth/user state
 - **HTTP:** Axios with request/response interceptors for logging
 - **Error handling:** Global handlers in main.ts for ResizeObserver/Element Plus quirks
-- **Responsive:** PC-optimized only (not mobile)
+- **Responsive:** PC-optimized, responsive search grids via Element Plus breakpoints
+- **Layout:** max-width 1400px centered on PC, form inputs max-width 280px
 
 ### Monorepo
 - **Package manager:** pnpm with workspaces (backend, frontend, test)
@@ -111,10 +120,12 @@ rural-talent-system/
 ## UNIQUE STYLES
 
 ### Large File Pattern
-Several key files exceed 500+ lines by design:
-- `databaseService.ts` (2253 lines) - All SQLite operations in one service
-- `PersonFormDialog.vue` (1024 lines) - Complex multi-tab form component
-- `AdminDashboard.vue` (878 lines) - Feature-rich admin interface
+Several key files are large by design:
+- `databaseService.ts` - All SQLite operations in one service
+- `mysqlService.ts` - All MySQL operations in one service
+- `PersonFormDialog.vue` - Complex multi-tab form component
+- `AdminDashboard.vue` - Feature-rich admin interface
+- `GuestView.vue` - Feature-rich guest browsing interface
 
 ### Chinese-First UI
 - All UI text in Chinese
@@ -171,8 +182,8 @@ pnpm security:check       # Audit dependencies
 
 - **Database:** SQLite default at `backend/data/persons.db`, MySQL optional via env
 - **Test accounts:** admin/admin123 (full), testuser/test123 (limited)
-- **Logs:** `logs/backend.log` and `logs/frontend.log`
-- **Performance:** v2.2.1 reduced bundle by 98% (1.17MB → 22.7KB) via code splitting
+- **Logs:** `backend/logs/combined.log` and `backend/logs/error.log`
+- **Performance:** v2.2.1 reduced bundle by 98% via code splitting; v3.1 added UI overhaul
 - **Browser quirks:** main.ts contains ResizeObserver error suppression for Element Plus compatibility
 - **Rate limiting:** Per-IP with configurable windows
 - **Security:** JWT format validation (3-part structure), XSS sanitization via `sanitizeString`
