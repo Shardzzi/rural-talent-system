@@ -1,63 +1,88 @@
 <template>
   <el-config-provider :locale="locale">
     <div id="app">
-      <el-container>
-        <el-header>
+      <!-- 登录页面：全屏显示，不包含 header 和 main 容器 -->
+      <template v-if="isLoginPage">
+        <router-view />
+      </template>
+
+      <!-- 其他页面：带 header 和 main 容器 -->
+      <el-container v-else>
+        <el-header class="app-header">
           <div class="header-content">
-            <h1>数字乡村人才信息系统</h1>
+            <div class="header-left">
+              <div class="app-logo">
+                <el-icon :size="24"><HomeFilled /></el-icon>
+              </div>
+              <h1 class="app-title">数字乡村人才信息系统</h1>
+            </div>
             <div class="header-actions" v-if="authStore.isAuthenticated">
               <span class="user-info">
-                欢迎，{{ authStore.user.username }}
-                <el-tag :type="authStore.user.role === 'admin' ? 'danger' : 'primary'" size="small">
+                <el-icon><User /></el-icon>
+                <span class="user-name">{{ authStore.user.username }}</span>
+                <el-tag :type="authStore.user.role === 'admin' ? 'danger' : 'primary'" size="small" effect="dark">
                   {{ authStore.user.role === 'admin' ? '管理员' : '用户' }}
                 </el-tag>
               </span>
-              <el-button @click="handleLogout" type="danger" size="small">
+              <el-button @click="handleLogout" type="danger" size="small" plain>
                 <el-icon><SwitchIcon /></el-icon>
                 退出登录
+              </el-button>
+            </div>
+            <div class="header-actions" v-else>
+              <el-button type="primary" size="small" @click="$router.push('/login')">
+                <el-icon><User /></el-icon>
+                登录
               </el-button>
             </div>
           </div>
         </el-header>
         <el-main>
           <!-- 调试面板切换按钮 -->
-          <div class="debug-toggle">
-            <el-button @click="showDebug = !showDebug" type="info" size="small">
+          <div class="debug-toggle" v-if="isDev">
+            <el-button @click="showDebug = !showDebug" type="info" size="small" plain>
               {{ showDebug ? '隐藏调试面板' : '显示调试面板' }}
             </el-button>
           </div>
           
           <!-- 调试面板 -->
-          <DebugPanel v-if="showDebug" />
+          <DebugPanel v-if="showDebug && isDev" />
         
-        <!-- 路由视图 -->
-        <router-view v-if="!showDebug" />
-      </el-main>
-    </el-container>
-  </div>
+          <!-- 路由视图 -->
+          <router-view v-if="!showDebug" />
+        </el-main>
+      </el-container>
+    </div>
   </el-config-provider>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { Switch as SwitchIcon } from '@element-plus/icons-vue'
+import { Switch as SwitchIcon, HomeFilled, User } from '@element-plus/icons-vue'
 import { useAuthStore } from './stores/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import DebugPanel from './components/DebugPanel.vue'
 
 export default {
   name: 'App',
   components: {
     DebugPanel,
-    SwitchIcon
+    SwitchIcon,
+    HomeFilled,
+    User
   },
   setup() {
     const showDebug = ref(false)
     const authStore = useAuthStore()
     const router = useRouter()
+    const route = useRoute()
     const locale = zhCn
+    const isDev = import.meta.env.DEV
+    
+    // 判断是否为登录页面
+    const isLoginPage = computed(() => route.name === 'Login')
     
     // 初始化认证状态
     authStore.initializeAuth()
@@ -66,12 +91,10 @@ export default {
       try {
         await authStore.logout()
         ElMessage.success('退出登录成功')
-        // 强制刷新页面确保游客状态正确显示
         window.location.href = '/'
       } catch (error) {
         console.error('退出登录失败:', error)
         ElMessage.error('退出登录失败')
-        // 即使退出失败也刷新页面，确保清除可能的状态残留
         window.location.href = '/'
       }
     }
@@ -80,18 +103,25 @@ export default {
       showDebug,
       authStore,
       handleLogout,
-      locale
+      locale,
+      isLoginPage,
+      isDev
     }
   }
 }
 </script>
 
 <style>
-/* 全局应用样式 */
-.el-header {
-  background-color: #409EFF;
+/* ===== 全局应用样式 ===== */
+
+/* Header 样式 - 渐变设计 */
+.app-header {
+  background: linear-gradient(135deg, #1a3a5c 0%, #2c5f8a 50%, #3b8ccb 100%);
   color: white;
-  padding: 0 20px;
+  padding: 0 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 100;
 }
 
 .header-content {
@@ -101,9 +131,29 @@ export default {
   height: 100%;
 }
 
-.header-content h1 {
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-logo {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.app-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .header-actions {
@@ -117,6 +167,14 @@ export default {
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.user-name {
+  font-weight: 500;
 }
 
 .debug-toggle {
@@ -132,22 +190,22 @@ export default {
   padding: 0;
 }
 
-.el-header h1 {
-  margin: 0;
-  padding: 15px 0;
-  width: 100%;
-}
-
 .el-main {
-  padding: 20px;
-  max-width: 1440px;
+  padding: 24px;
+  width: 100%;
   margin: 0 auto;
 }
 
 /* 移动端响应式适配 */
 @media screen and (max-width: 768px) {
   .el-main {
-    padding: 10px;
+    padding: 12px;
+  }
+  .app-title {
+    font-size: 15px;
+  }
+  .user-info {
+    display: none;
   }
 }
 
@@ -161,7 +219,7 @@ export default {
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background-color: #ffffff;
+  background-color: #f5f7fa;
   color: #333333;
   overflow-x: hidden;
   overflow-y: auto;
@@ -203,17 +261,16 @@ html, body {
 
 /* 滚动条样式 */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #c1c1c1;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -233,6 +290,23 @@ html, body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* 卡片通用动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.el-card {
+  border-radius: 10px;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 /* 通用工具类 */

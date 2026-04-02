@@ -2,6 +2,9 @@
   <div class="login-container">
     <div class="login-form">
       <div class="form-header">
+        <div class="brand-icon">
+          <el-icon :size="48"><HomeFilled /></el-icon>
+        </div>
         <h2>{{ isRegister ? '用户注册' : '用户登录' }}</h2>
         <p class="subtitle">数字乡村人才信息系统</p>
       </div>
@@ -19,6 +22,7 @@
             placeholder="请输入用户名"
             prefix-icon="el-icon-user"
             :disabled="loading"
+            size="large"
           />
         </el-form-item>
 
@@ -28,6 +32,7 @@
             placeholder="请输入邮箱地址"
             prefix-icon="el-icon-message"
             :disabled="loading"
+            size="large"
           />
         </el-form-item>
 
@@ -39,6 +44,7 @@
             prefix-icon="el-icon-lock"
             :disabled="loading"
             show-password
+            size="large"
           />
         </el-form-item>
 
@@ -50,6 +56,7 @@
             prefix-icon="el-icon-lock"
             :disabled="loading"
             show-password
+            size="large"
           />
         </el-form-item>
 
@@ -58,7 +65,8 @@
             type="primary" 
             :loading="loading" 
             @click="handleSubmit"
-            style="width: 100%"
+            size="large"
+            class="submit-btn"
           >
             {{ isRegister ? '注册' : '登录' }}
           </el-button>
@@ -80,7 +88,8 @@
             plain 
             @click="enterAsGuest"
             :disabled="loading"
-            style="width: 100%"
+            size="large"
+            class="guest-btn"
           >
             游客浏览
           </el-button>
@@ -104,11 +113,15 @@
 <script>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { HomeFilled } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
 export default {
   name: 'LoginForm',
+  components: {
+    HomeFilled
+  },
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
@@ -233,35 +246,86 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a3a5c 0%, #2c5f8a 40%, #3b8ccb 70%, #67C23A 100%);
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 背景装饰 */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
+              radial-gradient(ellipse at 60% 80%, rgba(255,255,255,0.06) 0%, transparent 45%);
+  animation: bgFloat 20s ease-in-out infinite alternate;
+}
+
+@keyframes bgFloat {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-30px, -20px); }
 }
 
 .login-form {
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 48px 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.2);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   margin-bottom: 20px;
+  backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 1;
+  animation: formAppear 0.6s ease-out;
+}
+
+@keyframes formAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 36px;
+}
+
+.brand-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #1a3a5c, #3b8ccb);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(59, 140, 203, 0.3);
 }
 
 .form-header h2 {
-  color: #333;
-  margin-bottom: 10px;
-  font-weight: 500;
+  color: #1a3a5c;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 22px;
 }
 
 .subtitle {
-  color: #666;
+  color: #8c939d;
   font-size: 14px;
   margin: 0;
+  letter-spacing: 2px;
 }
 
 .form-footer {
@@ -269,9 +333,29 @@ export default {
   margin-top: 20px;
 }
 
+.submit-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  border-radius: 8px;
+  letter-spacing: 2px;
+}
+
+.guest-btn {
+  width: 100%;
+}
+
 .admin-notice {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-notice :deep(.el-alert) {
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.9);
 }
 
 .el-divider {
@@ -279,14 +363,6 @@ export default {
 }
 
 .el-form-item {
-  margin-bottom: 20px;
-}
-
-.el-input {
-  height: 40px;
-}
-
-.el-button {
-  height: 40px;
+  margin-bottom: 22px;
 }
 </style>
