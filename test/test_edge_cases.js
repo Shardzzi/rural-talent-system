@@ -67,7 +67,7 @@ async function testSQLInjection() {
   // 1. name字段SQL注入 - OR 1=1
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: "OR 1=1--", age: 25, gender: 'male'
+      name: "OR 1=1--", age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(true, 'SQL注入 OR 1=1-- 未导致服务器错误');
   } catch (error) {
@@ -78,7 +78,7 @@ async function testSQLInjection() {
   // 2. name字段SQL注入 - DROP TABLE
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: "'; DROP TABLE persons;--", age: 25, gender: 'male'
+      name: "'; DROP TABLE persons;--", age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(true, 'SQL注入 DROP TABLE 未导致服务器错误');
   } catch (error) {
@@ -144,7 +144,7 @@ async function testXSSProtection() {
   // 1. name字段script标签 - sanitizer剥离HTML后name为空
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '<script>alert(1)</script>', age: 25, gender: 'male'
+      name: '<script>alert(1)</script>', age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(true, 'XSS script标签未导致服务器错误');
   } catch (error) {
@@ -156,7 +156,7 @@ async function testXSSProtection() {
   try {
     const ts = Date.now();
     const res = await axios.post(`${API_BASE}/persons`, {
-      name: 'XSSImgTest' + ts, age: 25, gender: 'male',
+      name: 'XSSImgTest' + ts, age: 25, gender: '男',
       email: 'xss_' + ts + '@test.com', phone: '138' + String(ts).slice(-8)
     }, { headers: authHeaders(token) });
     const personId = res.data?.data?.id || res.data?.id;
@@ -190,7 +190,7 @@ async function testXSSProtection() {
   // 3. name字段带事件处理器 - sanitizer剥离HTML
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '<div onmouseover="alert(1)">test</div>', age: 25, gender: 'male'
+      name: '<div onmouseover="alert(1)">test</div>', age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(true, 'XSS事件处理器未导致服务器错误');
   } catch (error) {
@@ -212,7 +212,7 @@ async function testOversizedInputs() {
   // 1. 超长name - 验证拒绝（400）
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: longString, age: 25, gender: 'male'
+      name: longString, age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, '10000字符name应被拒绝');
   } catch (error) {
@@ -223,7 +223,7 @@ async function testOversizedInputs() {
   // 2. 超大age - 验证拒绝（400）
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '测试用户', age: 999999, gender: 'male'
+      name: '测试用户', age: 999999, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'age=999999应被拒绝');
   } catch (error) {
@@ -234,7 +234,7 @@ async function testOversizedInputs() {
   // 3. 超大age（负数极端值）
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '测试用户', age: -999999, gender: 'male'
+      name: '测试用户', age: -999999, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'age=-999999应被拒绝');
   } catch (error) {
@@ -246,7 +246,7 @@ async function testOversizedInputs() {
   try {
     const ts = Date.now();
     const createRes = await axios.post(`${API_BASE}/persons`, {
-      name: 'NotesTest' + ts, age: 25, gender: 'male',
+      name: 'NotesTest' + ts, age: 25, gender: '男',
       email: 'notes_' + ts + '@test.com', phone: '138' + String(ts).slice(-8)
     }, { headers: authHeaders(token) });
     const personId = createRes.data?.data?.id || createRes.data?.id;
@@ -267,7 +267,7 @@ async function testOversizedInputs() {
   try {
     const ts2 = Date.now();
     const createRes2 = await axios.post(`${API_BASE}/persons`, {
-      name: 'SalaryTest' + ts2, age: 25, gender: 'male',
+      name: 'SalaryTest' + ts2, age: 25, gender: '男',
       email: 'salary_' + ts2 + '@test.com', phone: '139' + String(ts2).slice(-8)
     }, { headers: authHeaders(token) });
     const personId2 = createRes2.data?.data?.id || createRes2.data?.id;
@@ -336,7 +336,7 @@ async function testDataTypeBoundaries() {
   // 1. age为字符串而非数字
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '类型测试1', age: 'twenty-five', gender: 'male'
+      name: '类型测试1', age: 'twenty-five', gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'age为字符串应被拒绝');
   } catch (error) {
@@ -347,7 +347,7 @@ async function testDataTypeBoundaries() {
   // 2. age为浮点数 - isInt应拒绝
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '类型测试2', age: 25.5, gender: 'male'
+      name: '类型测试2', age: 25.5, gender: '男'
     }, { headers: authHeaders(token) });
     assert(true, 'age=25.5被处理');
   } catch (error) {
@@ -358,7 +358,7 @@ async function testDataTypeBoundaries() {
   // 3. age为null
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '类型测试3', age: null, gender: 'male'
+      name: '类型测试3', age: null, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'age=null应被拒绝');
   } catch (error) {
@@ -380,7 +380,7 @@ async function testDataTypeBoundaries() {
   // 5. 空字符串name
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '', age: 25, gender: 'male'
+      name: '', age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'name=空字符串应被拒绝');
   } catch (error) {
@@ -391,7 +391,7 @@ async function testDataTypeBoundaries() {
   // 6. 特殊字符name（正常Unicode）
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: '测试★用户♡', age: 25, gender: 'male'
+      name: '测试★用户♡', age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(true, 'Unicode特殊字符name被接受');
   } catch (error) {
@@ -476,7 +476,7 @@ async function testUnicodeAndEmoji() {
   try {
     const ts1 = Date.now();
     const res1 = await axios.post(`${API_BASE}/persons`, {
-      name: '测试用户🌸', age: 25, gender: 'male', email: `unicode_${ts1}@test.com`
+      name: '测试用户🌸', age: 25, gender: '男', email: `unicode_${ts1}@test.com`
     }, { headers: authHeaders(token) });
     const id1 = res1.data?.data?.id || res1.data?.id;
     if (id1) createdIds.push(id1);
@@ -490,7 +490,7 @@ async function testUnicodeAndEmoji() {
   try {
     const ts2 = Date.now() + 1;
     const res2 = await axios.post(`${API_BASE}/persons`, {
-      name: '日本語テスト', age: 26, gender: 'female', email: `jp_${ts2}@test.com`
+      name: '日本語テスト', age: 26, gender: '女', email: `jp_${ts2}@test.com`
     }, { headers: authHeaders(token) });
     const id2 = res2.data?.data?.id || res2.data?.id;
     if (id2) createdIds.push(id2);
@@ -503,7 +503,7 @@ async function testUnicodeAndEmoji() {
 
   try {
     await axios.post(`${API_BASE}/persons`, {
-      name: 'EmojiEmailTest', age: 27, gender: 'male', email: 'emoji🌸@example.com'
+      name: 'EmojiEmailTest', age: 27, gender: '男', email: 'emoji🌸@example.com'
     }, { headers: authHeaders(token) });
     assert(false, 'emoji邮箱应触发验证失败');
   } catch (error) {
@@ -545,7 +545,7 @@ async function testBoundaryValues() {
   try {
     const ts = Date.now();
     const res = await axios.post(`${API_BASE}/persons`, {
-      name: `AgeMin${ts}`, age: 1, gender: 'male', email: `age1_${ts}@test.com`
+      name: `AgeMin${ts}`, age: 1, gender: '男', email: `age1_${ts}@test.com`
     }, { headers: authHeaders(token) });
     const id = res.data?.data?.id || res.data?.id;
     if (id) createdIds.push(id);
@@ -558,7 +558,7 @@ async function testBoundaryValues() {
   try {
     const ts = Date.now() + 1;
     const res = await axios.post(`${API_BASE}/persons`, {
-      name: `AgeMax${ts}`, age: 150, gender: 'female', email: `age150_${ts}@test.com`
+      name: `AgeMax${ts}`, age: 150, gender: '女', email: `age150_${ts}@test.com`
     }, { headers: authHeaders(token) });
     const id = res.data?.data?.id || res.data?.id;
     if (id) createdIds.push(id);
@@ -571,7 +571,7 @@ async function testBoundaryValues() {
   try {
     const ts = Date.now() + 2;
     const res = await axios.post(`${API_BASE}/persons`, {
-      name: 'AB', age: 25, gender: 'male', email: `name2_${ts}@test.com`
+      name: 'AB', age: 25, gender: '男', email: `name2_${ts}@test.com`
     }, { headers: authHeaders(token) });
     const id = res.data?.data?.id || res.data?.id;
     if (id) createdIds.push(id);
@@ -585,7 +585,7 @@ async function testBoundaryValues() {
     const ts = Date.now() + 3;
     const name50 = 'A'.repeat(50);
     const res = await axios.post(`${API_BASE}/persons`, {
-      name: name50, age: 25, gender: 'female', email: `name50_${ts}@test.com`
+      name: name50, age: 25, gender: '女', email: `name50_${ts}@test.com`
     }, { headers: authHeaders(token) });
     const id = res.data?.data?.id || res.data?.id;
     if (id) createdIds.push(id);
@@ -598,7 +598,7 @@ async function testBoundaryValues() {
   try {
     const name51 = 'A'.repeat(51);
     await axios.post(`${API_BASE}/persons`, {
-      name: name51, age: 25, gender: 'male'
+      name: name51, age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'name长度=51 应失败');
   } catch (error) {
@@ -632,7 +632,7 @@ async function testNullHandling() {
     const res = await axios.post(`${API_BASE}/persons`, {
       name: `NullTest${ts}`,
       age: 25,
-      gender: 'male',
+      gender: '男',
       email: null,
       phone: null
     }, { headers: authHeaders(token) });
@@ -650,7 +650,7 @@ async function testNullHandling() {
     const res = await axios.post(`${API_BASE}/persons`, {
       name: `UndefinedTest${ts}`,
       age: 25,
-      gender: 'male',
+      gender: '男',
       address: '',
       notes: ''
     }, { headers: authHeaders(token) });
@@ -669,7 +669,7 @@ async function testNullHandling() {
       const res = await axios.put(`${API_BASE}/persons/${createdIds[0]}`, {
         name: 'NullUpdate',
         age: 26,
-        gender: 'male',
+        gender: '男',
         email: '',
         phone: '',
         address: '',

@@ -171,7 +171,7 @@ async function createTestPersonsForScenarios() {
   const basePersonPayload = {
     name: `全端点测试${suffix}`,
     age: 31,
-    gender: 'male',
+    gender: '男',
     email: `all-endpoint-${suffix}@example.com`,
     phone: `1381111${suffix.slice(-4)}`,
     address: '测试地址',
@@ -543,7 +543,7 @@ async function testPersonEndpoints() {
   endpoint('POST /persons');
   await runCase('POST /persons missing auth -> 401', async () => {
     const res = await request('POST', '/persons', {
-      data: { name: 'NoAuth', age: 20, gender: 'male' }
+      data: { name: 'NoAuth', age: 20, gender: '男' }
     });
     expectStatus(res, 401, 'create person missing auth');
     bodyHasMessage(res);
@@ -563,7 +563,7 @@ async function testPersonEndpoints() {
       data: {
         name: `新增人员${suffix}`,
         age: 28,
-        gender: 'female',
+        gender: '女',
         email: `created-${suffix}@example.com`,
         phone: `1383333${suffix.slice(-4)}`,
         address: '测试地址2',
@@ -581,7 +581,7 @@ async function testPersonEndpoints() {
   endpoint('POST /persons/comprehensive');
   await runCase('POST /persons/comprehensive missing auth -> 401', async () => {
     const res = await request('POST', '/persons/comprehensive', {
-      data: { person: { name: 'x', age: 20, gender: 'male' } }
+      data: { person: { name: 'x', age: 20, gender: '男' } }
     });
     expectStatus(res, 401, 'create comprehensive missing auth');
     bodyHasMessage(res);
@@ -599,13 +599,13 @@ async function testPersonEndpoints() {
     const payload = {
       name: `综合人才${suffix}`,
       age: 29,
-      gender: 'male',
+      gender: '男',
       email: `comprehensive-${suffix}@example.com`,
       phone: `1384444${suffix.slice(-4)}`,
       person: {
         name: `综合人才${suffix}`,
         age: 29,
-        gender: 'male',
+        gender: '男',
         email: `comprehensive-${suffix}@example.com`,
         phone: `1384444${suffix.slice(-4)}`,
         address: '综合地址',
@@ -621,7 +621,7 @@ async function testPersonEndpoints() {
         storage_facilities: '仓库'
       },
       skills: [
-        { skill_name: '种植管理', skill_category: '农业', proficiency_level: 'advanced' }
+        { skill_name: '种植管理', skill_category: '农业', proficiency_level: 4 }
       ]
     };
 
@@ -641,7 +641,7 @@ async function testPersonEndpoints() {
   endpoint('PUT /persons/:id');
   await runCase('PUT /persons/:id missing auth -> 401', async () => {
     const res = await request('PUT', `/persons/${state.createdPersonId}`, {
-      data: { name: '未授权', age: 30, gender: 'male' }
+      data: { name: '未授权', age: 30, gender: '男' }
     });
     expectStatus(res, 401, 'update person missing auth');
     bodyHasMessage(res);
@@ -649,7 +649,7 @@ async function testPersonEndpoints() {
   await runCase('PUT /persons/:id wrong role -> 403', async () => {
     const res = await request('PUT', `/persons/${state.createdPersonId}`, {
       token: state.userToken,
-      data: { name: '普通用户越权', age: 30, gender: 'male' }
+      data: { name: '普通用户越权', age: 30, gender: '男' }
     });
     expectStatus(res, [403, 400], 'update person wrong role');
     bodyHasMessage(res);
@@ -668,7 +668,7 @@ async function testPersonEndpoints() {
       data: {
         name: '更新后人才',
         age: 36,
-        gender: 'female',
+        gender: '女',
         address: '更新地址',
         education_level: '硕士',
         political_status: '群众'
@@ -691,7 +691,11 @@ async function testPersonEndpoints() {
   await runCase('PUT /persons/:id/comprehensive wrong role -> 403', async () => {
     const res = await request('PUT', `/persons/${state.createdPersonId}/comprehensive`, {
       token: state.userToken,
-      data: { person: { name: '越权更新', age: 22, gender: 'male' } }
+      data: {
+        person: { name: '越权更新', age: 22, gender: '男' },
+        ruralProfile: { farming_years: 5, planting_scale: 10, main_crops: '小麦' },
+        skills: [{ skill_name: '测试技能', skill_category: '测试分类' }]
+      }
     });
     expectStatus(res, [403, 500], 'update comprehensive wrong role');
     bodyHasMessage(res);
@@ -711,7 +715,7 @@ async function testPersonEndpoints() {
         person: {
           name: '综合更新后人才',
           age: 35,
-          gender: 'male',
+          gender: '男',
           email: `comp-update-${Date.now().toString().slice(-6)}@example.com`,
           phone: `1386666${Date.now().toString().slice(-4)}`,
           address: '综合更新地址',
@@ -727,7 +731,7 @@ async function testPersonEndpoints() {
           storage_facilities: '冷库'
         },
         skills: [
-          { skill_name: '农机使用', skill_category: '农业', proficiency_level: 'intermediate' }
+          { skill_name: '农机使用', skill_category: '农业', proficiency_level: 3 }
         ]
       }
     });
@@ -823,7 +827,7 @@ async function testPersonEndpoints() {
       data: {
         skill_name: '农业技术推广',
         skill_category: '农业',
-        proficiency_level: 'advanced'
+        proficiency_level: 4
       }
     });
     expectStatus(res, 200, 'add skill happy path');
@@ -849,7 +853,7 @@ async function testPersonEndpoints() {
       data: {
         skill_name: '临时删除技能',
         skill_category: '农业',
-        proficiency_level: 'beginner'
+        proficiency_level: 1
       }
     });
     expectStatus(createForDelete, 200, 'create skill for delete');
@@ -889,7 +893,7 @@ async function testPersonEndpoints() {
       data: {
         name: `待删人员${suffix}`,
         age: 41,
-        gender: 'male',
+        gender: '男',
         email: `delete-target-${suffix}@example.com`,
         phone: `1387777${suffix.slice(-4)}`,
         address: '待删除',

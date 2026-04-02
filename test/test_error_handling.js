@@ -110,7 +110,7 @@ async function test401Errors() {
   colorLog('\n🔐 401 认证错误测试', 'cyan');
 
   try {
-    await axios.post(`${API_BASE}/persons`, { name: '测试', age: 25, gender: 'male' });
+    await axios.post(`${API_BASE}/persons`, { name: '测试', age: 25, gender: '男' });
     assert(false, '无token创建人员应返回401');
   } catch (error) {
     assert(error.response?.status === 401, '无token POST /api/persons 返回401', `实际状态: ${error.response?.status}`);
@@ -176,14 +176,14 @@ async function testValidationErrors() {
   }
 
   try {
-    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: 999, gender: 'male' }, { headers: authHeaders(token) });
+    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: 999, gender: '男' }, { headers: authHeaders(token) });
     assert(false, '年龄超出范围应返回400');
   } catch (error) {
     assert(error.response?.status === 400, '年龄999 POST /persons 返回400', `实际状态: ${error.response?.status}`);
   }
 
   try {
-    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: -5, gender: 'male' }, { headers: authHeaders(token) });
+    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: -5, gender: '男' }, { headers: authHeaders(token) });
     assert(false, '负数年龄应返回400');
   } catch (error) {
     assert(error.response?.status === 400, '年龄-5 POST /persons 返回400', `实际状态: ${error.response?.status}`);
@@ -197,21 +197,21 @@ async function testValidationErrors() {
   }
 
   try {
-    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: 25, gender: 'male', email: 'not-an-email' }, { headers: authHeaders(token) });
+    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: 25, gender: '男', email: 'not-an-email' }, { headers: authHeaders(token) });
     assert(false, '无效邮箱格式应返回400');
   } catch (error) {
     assert(error.response?.status === 400, '无效邮箱 POST /persons 返回400', `实际状态: ${error.response?.status}`);
   }
 
   try {
-    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: 25, gender: 'male', phone: '123' }, { headers: authHeaders(token) });
+    await axios.post(`${API_BASE}/persons`, { name: '测试用户', age: 25, gender: '男', phone: '123' }, { headers: authHeaders(token) });
     assert(false, '无效电话格式应返回400');
   } catch (error) {
     assert(error.response?.status === 400, '无效电话 POST /persons 返回400', `实际状态: ${error.response?.status}`);
   }
 
   try {
-    await axios.post(`${API_BASE}/persons`, { name: 'A', age: 25, gender: 'male' }, { headers: authHeaders(token) });
+    await axios.post(`${API_BASE}/persons`, { name: 'A', age: 25, gender: '男' }, { headers: authHeaders(token) });
     assert(false, '姓名太短应返回400');
   } catch (error) {
     assert(error.response?.status === 400, '姓名1字符 POST /persons 返回400', `实际状态: ${error.response?.status}`);
@@ -292,7 +292,7 @@ async function testMalformedRequests() {
   }
 
   await new Promise((resolve) => {
-    const data = JSON.stringify({ name: 'test', age: 25, gender: 'male' });
+    const data = JSON.stringify({ name: 'test', age: 25, gender: '男' });
     const options = {
       hostname: 'localhost', port: 8083, path: '/api/persons', method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Length': Buffer.byteLength(data) }
@@ -337,7 +337,7 @@ async function test500Errors() {
 
   try {
     await axios.put(`${API_BASE}/persons/notanumber`, {
-      name: 'test', age: 25, gender: 'male'
+      name: 'test', age: 25, gender: '男'
     }, { headers: authHeaders(token) });
     assert(false, 'PUT /persons/notanumber 应返回400或404');
   } catch (error) {

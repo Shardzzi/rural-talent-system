@@ -154,7 +154,7 @@ async function testSearchByAge(token) {
 async function testSearchByGender(token) {
   log('\n📋 测试3: 性别筛选', 'cyan');
 
-  const genders = ['male', 'female', 'other'];
+  const genders = ['男', '女', '其他'];
   for (const gender of genders) {
     const result = await apiRequest('GET', `/search?gender=${gender}`, null, token);
     assert(result.success, `性别筛选(${gender})返回成功`);
@@ -282,11 +282,11 @@ async function testCombinedFilters(token) {
   log('\n📋 测试8: 组合筛选测试', 'cyan');
 
   // 年龄 + 性别
-  const ageGender = await apiRequest('GET', '/search?minAge=20&maxAge=50&gender=male', null, token);
+  const ageGender = await apiRequest('GET', '/search?minAge=20&maxAge=50&gender=男', null, token);
   assert(ageGender.success, '年龄+性别组合筛选成功');
   if (ageGender.data?.data?.length > 0) {
     const allValid = ageGender.data.data.every(p =>
-      p.age >= 20 && p.age <= 50 && p.gender === 'male'
+      p.age >= 20 && p.age <= 50 && p.gender === '男'
     );
     assert(allValid, '组合筛选结果符合年龄和性别条件');
   } else {
@@ -298,11 +298,11 @@ async function testCombinedFilters(token) {
   assert(skillCrop.success, '技能+作物组合筛选成功');
 
   // 多条件组合
-  const multi = await apiRequest('GET', '/search?minAge=25&maxAge=45&gender=female&education_level=本科', null, token);
+  const multi = await apiRequest('GET', '/search?minAge=25&maxAge=45&gender=女&education_level=本科', null, token);
   assert(multi.success, '多条件组合筛选成功');
   if (multi.data?.data?.length > 0) {
     const allValid = multi.data.data.every(p =>
-      p.age >= 25 && p.age <= 45 && p.gender === 'female' && p.education_level === '本科'
+      p.age >= 25 && p.age <= 45 && p.gender === '女' && p.education_level === '本科'
     );
     assert(allValid, '多条件组合结果全部符合条件');
   } else {
@@ -350,7 +350,7 @@ async function testExactNameMatch(token) {
   const createResult = await apiRequest('POST', '/persons', {
     name: uniqueName,
     age: 30,
-    gender: 'male',
+    gender: '男',
     email: `exact_${ts}@test.com`,
     phone: '138' + String(ts).slice(-8)
   }, token);
@@ -411,7 +411,7 @@ async function testSearchWithPagination(token) {
   const beyondResults = beyondData.data?.data || [];
   assert(beyondResults.length >= 0, '高页码搜索返回空或少量结果');
 
-  const allCombined = await apiRequest('GET', '/search?name=测试&minAge=18&maxAge=60&gender=male&page=1&limit=5', null, token);
+  const allCombined = await apiRequest('GET', '/search?name=测试&minAge=18&maxAge=60&gender=男&page=1&limit=5', null, token);
   assert(allCombined.status === 200, '全参数组合搜索返回200');
   const allCombinedResults = allCombined.data?.data || [];
   if (allCombinedResults.length > 0) {
@@ -419,7 +419,7 @@ async function testSearchWithPagination(token) {
       String(p.name || '').includes('测试') &&
       p.age >= 18 &&
       p.age <= 60 &&
-      p.gender === 'male'
+      p.gender === '男'
     );
     assert(allValid, '全参数组合结果符合所有筛选条件');
   } else {
