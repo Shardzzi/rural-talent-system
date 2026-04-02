@@ -2,7 +2,7 @@
 
 **Generated:** 2025-03-30  
 **Project:** 数字乡村人才信息系统 (Rural Talent System)  
-**Version:** v2.2.1
+**Version:** v3.1
 
 ## OVERVIEW
 

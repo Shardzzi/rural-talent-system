@@ -466,6 +466,14 @@ const result = await dbService.getAllPersons();
 
 ## 📋 更新日志
 
+### v3.1 (UI 全面重构与数据本地化) - 2026年4月2日
+- ✅ **前端 UI 全面升级**: 渐变色 Header、品牌化登录页、统计卡片配色与背景装饰
+- ✅ **布局约束修复**: PC 端 max-width 居中策略、表单输入框 max-width 限制、全幅欢迎横幅
+- ✅ **响应式搜索网格**: Admin/User/Guest 搜索栏改为 xs/sm/md 响应式列布局
+- ✅ **数据本地化**: gender 字段统一为中文（男/女/其他），proficiency_level 改为 1-5 整数
+- ✅ **配置加固**: Vite strictPort、后端 EADDRINUSE 错误处理
+- ✅ **测试同步更新**: 全部测试用例同步适配中文 gender 和整数 proficiency
+
 ### v3.0 (安全加固与功能增强) - 2026年4月1日
 - ✅ **全方位安全加固**: 实现频率限制 (Rate Limiting)、JWT 强化验证、全端点 XSS 过滤
 - ✅ **增强版 API 端点**: 新增统计 API、CSV 导出、令牌刷新 (Refresh Token) 机制
@@ -492,5 +500,5 @@ const result = await dbService.getAllPersons();
 
 **项目团队**: 数字乡村人才信息系统项目团队
 **完成时间**: 2025年11月26日
-**版本**: v2.2.1 (生产就绪版本)
+**版本**: v3.1 (UI 重构与数据本地化)
 **状态**: ✅ 完成开发，待生产部署

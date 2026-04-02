@@ -22,6 +22,7 @@ export default defineConfig({
   // 开发服务器配置
   server: {
     port: 8081,
+    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8083',

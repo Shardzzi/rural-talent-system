@@ -1,6 +1,6 @@
 # 数字乡村人才信息系统
 
-[![Version](https://img.shields.io/badge/version-v3.0-blue.svg)](https://github.com/Shardzzi/rural-talent-system)
+[![Version](https://img.shields.io/badge/version-v3.1-blue.svg)](https://github.com/Shardzzi/rural-talent-system)
 [![Status](https://img.shields.io/badge/status-production--ready-green.svg)](https://github.com/Shardzzi/rural-talent-system)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](docs/LICENSE)
 [![Performance](https://img.shields.io/badge/performance-98%25_optimized-brightgreen.svg)](docs/PROJECT_SUMMARY.md)
@@ -27,8 +27,8 @@
 | **服务对象** | 农村居民、合作社、农业企业、政府部门 |
 | **核心价值** | 盘活农村人力资源，促进产业发展，助力乡村振兴 |
 | **技术特点** | 轻量化、易部署、本地化、可扩展 |
-| **项目版本** | v3.0 |
-| **项目状态** | 🟢 生产就绪 (已完成 v3.0 安全与功能增强) |
+| **项目版本** | v3.1 |
+| **项目状态** | 🟢 生产就绪 (已完成 v3.1 UI重构与数据本地化) |
 
 ## 🚀 快速开始
 
@@ -385,9 +385,9 @@ cd rural-talent-system
 
 | 项目信息 | 详情 |
 |---------|------|------|
-| **项目状态** | ✅ 生产就绪 - 已完成 v3.0 安全与功能增强 |
-| **文档更新** | 2026年4月1日 |
-| **版本** | v3.0 |
+| **项目状态** | ✅ 生产就绪 - 已完成 v3.1 UI重构与数据本地化 |
+| **文档更新** | 2026年4月2日 |
+| **版本** | v3.1 |
 | **性能提升** | 主包体积减少98%，加载速度提升62% |
 | **管理工具** | pnpm 工作区架构 |
 | **许可证** | MIT License |

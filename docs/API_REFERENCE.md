@@ -111,7 +111,8 @@
 
 ### POST /api/persons/:id/skills
 - **描述**: 为指定人员添加新技能
-- **请求体**: `{ "skill_name": "水稻种植", "skill_category": "农业技术", "proficiency_level": "advanced" }`
+- **请求体**: `{ "skill_name": "水稻种植", "skill_category": "农业技术", "proficiency_level": 4 }`
+- **说明**: `proficiency_level` 为 1-5 的整数（1=初级, 2=中级, 3=高级, 4=熟练, 5=专家）
 
 ### DELETE /api/skills/:skillId
 - **描述**: 删除指定的技能记录
@@ -133,7 +134,7 @@
 - **查询参数**:
   - `name`: 姓名模糊匹配
   - `minAge`, `maxAge`: 年龄范围
-  - `gender`: 性别 (male/female/other)
+  - `gender`: 性别 (男/女/其他)
   - `education_level`: 学历筛选
   - `skill`: 技能名称
   - `crop`: 种植作物
