@@ -178,13 +178,25 @@ const startServer = async (): Promise<void> => {
             app.set('dbService', databaseService);
         }
 
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             logger.info('Server started successfully', {
                 port: PORT,
                 url: `http://localhost:${PORT}`,
                 environment: process.env.NODE_ENV || 'development',
                 database: dbType
             });
+        });
+
+        server.on('error', (error: NodeJS.ErrnoException) => {
+            if (error.code === 'EADDRINUSE') {
+                logger.error(`Port ${PORT} is already in use`, {
+                    port: PORT,
+                    error: error.message
+                });
+                process.exit(1);
+            } else {
+                throw error;
+            }
         });
     } catch (error) {
         const err = error as Error;
