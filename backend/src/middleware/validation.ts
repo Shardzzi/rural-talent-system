@@ -4,8 +4,8 @@ import logger from '../config/logger';
 import { ApiResponse } from '../types/index';
 
 const EDUCATION_LEVELS = ['无', '小学', '初中', '高中', '专科', '本科', '硕士', '博士'];
-const CURRENT_STATUS_VALUES = ['employed', 'unemployed', 'seeking', 'retired', 'student', 'other'];
-const GENDER_VALUES = ['male', 'female', 'other'];
+const CURRENT_STATUS_VALUES = ['已就业', '未就业', '求职中', '退休', '学生', '其他'];
+const GENDER_VALUES = ['男', '女', '其他'];
 
 const sanitizeString = (value: string): string => {
     if (typeof value !== 'string') return value as unknown as string;
@@ -29,7 +29,7 @@ export const validatePerson = [
         .notEmpty()
         .withMessage('性别不能为空')
         .isIn(GENDER_VALUES)
-        .withMessage('性别必须是 male、female 或 other'),
+        .withMessage('性别必须是 男、女 或 其他'),
     body('email')
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
@@ -58,7 +58,7 @@ export const validateCreatePerson = [
         .notEmpty()
         .withMessage('性别不能为空')
         .isIn(GENDER_VALUES)
-        .withMessage('性别必须是 male、female 或 other'),
+        .withMessage('性别必须是 男、女 或 其他'),
     body('email')
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
@@ -138,7 +138,7 @@ export const validateUpdatePerson = [
     body('gender')
         .optional({ nullable: true, checkFalsy: true })
         .isIn(GENDER_VALUES)
-        .withMessage('性别必须是 male、female 或 other'),
+        .withMessage('性别必须是 男、女 或 其他'),
     body('email')
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
@@ -314,9 +314,8 @@ export const validateSkill = [
         .withMessage('技能分类长度必须在1-50个字符之间'),
     body('proficiency_level')
         .optional({ nullable: true, checkFalsy: true })
-        .customSanitizer(sanitizeString)
-        .isIn(['beginner', 'intermediate', 'advanced', 'expert'])
-        .withMessage('熟练度必须是 beginner、intermediate、advanced 或 expert'),
+        .isInt({ min: 1, max: 5 })
+        .withMessage('熟练度必须是1-5之间的整数'),
     body('certification')
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)

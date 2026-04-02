@@ -18,7 +18,7 @@ export interface Person {
   id: number;
   name: string;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: '男' | '女' | '其他';
   phone?: string;
   email?: string;
   address?: string;
@@ -142,7 +142,7 @@ export interface DatabaseConfig {
 export interface PersonCreateRequest {
   name: string;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: '男' | '女' | '其他';
   phone?: string;
   email?: string;
   address?: string;

@@ -1456,11 +1456,11 @@ const getCooperationStats = () => {
                 
                 rows.forEach((row: any) => {
                     const willingness = row.cooperation_willingness.toLowerCase();
-                    if (willingness.includes('强') || willingness.includes('high') || willingness.includes('积极')) {
+                    if (willingness.includes('强') || willingness.includes('积极')) {
                         stats.strong += row.count;
-                    } else if (willingness.includes('中') || willingness.includes('medium') || willingness.includes('一般')) {
+                    } else if (willingness.includes('中') || willingness.includes('一般')) {
                         stats.moderate += row.count;
-                    } else if (willingness.includes('弱') || willingness.includes('low') || willingness.includes('不太')) {
+                    } else if (willingness.includes('弱') || willingness.includes('不太')) {
                         stats.weak += row.count;
                     }
                     stats.total += row.count;
