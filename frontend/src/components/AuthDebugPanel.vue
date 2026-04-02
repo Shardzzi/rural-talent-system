@@ -201,8 +201,9 @@ export default {
   border: 1px solid #e4e7ed;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  z-index: 9999;
+  z-index: 2000;
   font-size: 12px;
+  opacity: 0.95;
 }
 
 .debug-header {

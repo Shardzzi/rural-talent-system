@@ -4,6 +4,8 @@
     title="人员详情"
     width="700px"
     @close="handleClose"
+    :append-to-body="true"
+    class="person-detail-dialog"
   >
     <div class="person-detail" v-if="currentPerson">
       <!-- 基本信息卡片 -->
@@ -502,6 +504,10 @@ export default {
 </script>
 
 <style scoped>
+:deep(.person-detail-dialog) {
+  width: min(700px, 92vw) !important;
+}
+
 .person-detail {
   max-height: 70vh;
   overflow-y: auto;
@@ -519,6 +525,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .person-title h3 {
@@ -551,11 +559,14 @@ export default {
   min-width: 80px;
   color: #666;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .info-item span {
   color: #333;
   flex: 1;
+  min-width: 0;
+  word-break: break-all;
 }
 
 .masked-info {

@@ -33,7 +33,7 @@
                 v-model="form.age" 
                 :min="1" 
                 :max="150" 
-                style="width: 100%"
+                style="width: 100%; max-width: 280px;"
               />
             </el-form-item>
           </el-col>
@@ -121,7 +121,7 @@
                 v-model="form.farming_years" 
                 :min="0" 
                 :max="100" 
-                style="width: 100%"
+                style="width: 100%; max-width: 280px;"
                 placeholder="请输入从业年限"
               />
             </el-form-item>
@@ -132,7 +132,7 @@
                 v-model="form.planting_scale" 
                 :min="0" 
                 :precision="1"
-                style="width: 100%"
+                style="width: 100%; max-width: 280px;"
                 placeholder="请输入种植规模"
               />
             </el-form-item>
@@ -274,7 +274,7 @@
                   <el-select 
                     v-model="skill.category" 
                     placeholder="请选择技能分类"
-                    style="width: 100%" 
+                    style="width: 100%; max-width: 280px;" 
                     :teleported="true"
                   >
                     <el-option label="农业种植" value="农业种植" />
@@ -301,7 +301,7 @@
                   <el-select 
                     v-model="skill.proficiency" 
                     placeholder="请选择熟练度"
-                    style="width: 100%" 
+                    style="width: 100%; max-width: 280px;" 
                     :teleported="true"
                   >
                     <el-option label="初级(1级)" :value="1" />
@@ -319,7 +319,7 @@
                     :min="0" 
                     :max="50"
                     placeholder="年"
-                    style="width: 100%"
+                    style="width: 100%; max-width: 280px;"
                     controls-position="right"
                   />
                   <div class="form-tip">从事该技能的年数</div>
@@ -356,7 +356,7 @@
               <el-select 
                 v-model="form.cooperation_type" 
                 placeholder="请选择合作类型"
-                style="width: 100%" 
+                style="width: 100%; max-width: 280px;" 
                 :teleported="true"
               >
                 <el-option label="技术合作" value="技术合作" />
@@ -375,7 +375,7 @@
               <el-select 
                 v-model="form.preferred_scale" 
                 placeholder="请选择偏好规模"
-                style="width: 100%" 
+                style="width: 100%; max-width: 280px;" 
                 :teleported="true"
               >
                 <el-option label="小规模(1-10亩)" value="小规模" />
@@ -394,7 +394,7 @@
                 v-model="form.investment_capacity" 
                 :min="0" 
                 :precision="1"
-                style="width: 100%"
+                style="width: 100%; max-width: 280px;"
                 placeholder="请输入投资能力"
               />
             </el-form-item>
@@ -404,7 +404,7 @@
               <el-select 
                 v-model="form.time_availability" 
                 placeholder="请选择时间可用性"
-                style="width: 100%" 
+                style="width: 100%; max-width: 280px;" 
                 :teleported="true"
               >
                 <el-option label="全职" value="全职" />
@@ -956,6 +956,8 @@ export default {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  margin: 5vh auto;
+  max-width: 92vw;
 }
 
 :deep(.person-form-dialog .el-dialog__body) {
