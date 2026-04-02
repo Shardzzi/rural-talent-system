@@ -160,72 +160,44 @@ interface SearchCriteria {
 class PersonService {
   // 获取所有人员
   async getPersons(): Promise<Person[]> {
-    try {
-      const response = await axios.get('/api/persons')
-      return response.data.data || response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.get('/api/persons')
+    return response.data.data || response.data
   }
 
   // 创建新人员
   async createPerson(personData: Omit<Person, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Person>> {
-    try {
-      const response = await axios.post('/api/persons', personData)
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.post('/api/persons', personData)
+    return response.data
   }
 
   // 更新人员信息
   async updatePerson(id: number, personData: Partial<Person>): Promise<ApiResponse<Person>> {
-    try {
-      const response = await axios.put(`/api/persons/${id}`, personData)
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.put(`/api/persons/${id}`, personData)
+    return response.data
   }
 
   // 删除人员
   async deletePerson(id: number): Promise<ApiResponse<{ message: string }>> {
-    try {
-      const response = await axios.delete(`/api/persons/${id}`)
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.delete(`/api/persons/${id}`)
+    return response.data
   }
 
   // 获取数据统计
   async getStatistics(): Promise<Statistics> {
-    try {
-      const response = await axios.get('/api/statistics')
-      return response.data.data || response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.get('/api/statistics')
+    return response.data.data || response.data
   }
 
   // 获取技能库统计
   async getSkillsLibraryStats(): Promise<any> {
-    try {
-      const response = await axios.get('/api/skills-library-stats')
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.get('/api/skills-library-stats')
+    return response.data
   }
 
   // 获取人员详细信息
   async getPersonDetails(id: number): Promise<ApiResponse<Person>> {
-    try {
-      const response = await axios.get(`/api/persons/${id}/details`)
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.get(`/api/persons/${id}/details`)
+    return response.data
   }
 
   // 搜索人才
@@ -236,22 +208,14 @@ class PersonService {
 
   // 用户登录
   async login(loginData: LoginData): Promise<AuthResponse> {
-    try {
-      const response = await axios.post('/api/auth/login', loginData)
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.post('/api/auth/login', loginData)
+    return response.data
   }
 
   // 用户注册
   async register(userData: LoginData): Promise<AuthResponse> {
-    try {
-      const response = await axios.post('/api/auth/register', userData)
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await axios.post('/api/auth/register', userData)
+    return response.data
   }
 
   // 验证token

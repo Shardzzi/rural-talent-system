@@ -145,16 +145,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     token.value = result.data.token
     refreshToken.value = result.data.refreshToken || refreshToken.value
-    localStorage.setItem('token', token.value)
+    localStorage.setItem('token', token.value!)
     if (refreshToken.value) {
       localStorage.setItem('refreshToken', refreshToken.value)
     }
 
     if (axios.defaults) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value!}`
     }
 
-    return token.value
+    return token.value!
   }
 
   const handleRefreshFailure = () => {
@@ -211,23 +211,19 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 将person与用户关联
   const linkPersonToUser = async (personId: any) => {
-    try {
-      const response = await axios.put('/api/auth/link-person', { personId })
-      const result = response.data
-      
-      if (!result.success) {
-        throw new Error(result.message || '关联个人信息失败')
-      }
-      
-      if (user.value) {
-        user.value.person_id = personId
-        localStorage.setItem('user', JSON.stringify(user.value))
-      }
-      
-      return result
-    } catch (error) {
-      throw error
+    const response = await axios.put('/api/auth/link-person', { personId })
+    const result = response.data
+
+    if (!result.success) {
+      throw new Error(result.message || '关联个人信息失败')
     }
+
+    if (user.value) {
+      user.value.person_id = personId
+      localStorage.setItem('user', JSON.stringify(user.value))
+    }
+
+    return result
   }
 
   // 初始化（检查token有效性）
