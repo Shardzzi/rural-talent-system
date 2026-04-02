@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-jspm_packages/
 
 # pnpm
 .pnpm-store/
@@ -17,18 +16,20 @@ logs/
 # Build outputs
 dist/
 build/
-build/Release/
-.next/
-.out/
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
 
 # Cache directories
-.npm
 .eslintcache
 .nyc_output/
 .cache/
-.parcel-cache/
 
-# Coverage directory used by tools like istanbul
+# TypeScript
+*.tsbuildinfo
+
+# Coverage directory
 coverage/
 
 # Runtime data
@@ -37,21 +38,6 @@ pids/
 *.seed
 *.pid.lock
 
-# Optional REPL history
-.repl_history
-
-# Grunt intermediate storage
-.grunt
-
-# Bower dependency directory
-bower_components/
-
-# node-waf configuration
-.node-waf/
-
-# TypeScript v1 declaration files
-typings/
-
 # IDE and editors
 .DS_Store
 .idea/
@@ -59,11 +45,7 @@ typings/
 *.swp
 *.swo
 *.code-workspace
-.vscode/settings.json
 *.sublime-*
-
-# Latex (keep this exclusion)
-latex/
 
 # Environment files
 .env
@@ -82,6 +64,17 @@ data/
 ssl/
 backups/
 .docker/
+
+# Playwright
+.playwright/
+.playwright-cli/
+test-results/
+playwright-report/
+blob-report/
+
+# Agent tooling
+.claude/
+.sisyphus/
 
 # System files
 Thumbs.db
