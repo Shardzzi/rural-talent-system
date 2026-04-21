@@ -1,24 +1,24 @@
 # 多阶段构建：构建阶段
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
 
 # 安装 pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.33.0
 
-# 复制 package.json 和 pnpm-lock.yaml
-COPY frontend/package*.json ./
-COPY pnpm-lock.yaml ./
+# 复制 workspace 配置和依赖文件
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY frontend/package.json ./frontend/
 
 # 安装依赖
-RUN pnpm install --prefer-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
-# 复制源代码
-COPY frontend/ ./
+# 复制前端源代码
+COPY frontend/ ./frontend/
 
 # 构建前端应用
-RUN pnpm build
+RUN pnpm --filter rural-talent-system-frontend build
 
 # 生产阶段：使用 Nginx 提供静态文件服务
 FROM nginx:alpine
@@ -27,7 +27,7 @@ FROM nginx:alpine
 COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
 # 从构建阶段复制构建结果到 nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S nginx && \

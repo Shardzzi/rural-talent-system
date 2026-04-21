@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.33.0
 
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -25,7 +25,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.33.0
 
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
