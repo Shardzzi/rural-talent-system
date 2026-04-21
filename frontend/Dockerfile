@@ -31,18 +31,12 @@ COPY frontend/nginx.conf /etc/nginx/nginx.conf
 # 从构建阶段复制构建结果到 nginx
 COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 
-# 创建非 root 用户
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 -G nginx
-
-# 设置权限
+# 设置权限 (nginx:alpine 已包含 nginx 用户)
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d
-
-# 创建 nginx 运行时需要的目录
-RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid
 
 # 切换到非 root 用户
