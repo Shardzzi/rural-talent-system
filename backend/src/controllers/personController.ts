@@ -16,11 +16,15 @@ const isDuplicateEntryError = (error: unknown): boolean => {
 };
 
 // ID参数验证：必须是正整数
-const validateIdParam = (idStr: string | undefined, paramName: string = 'id'): number => {
+const validateIdParam = (idStr: string | string[] | undefined, paramName: string = 'id'): number => {
     if (!idStr) {
         throw new Error(`缺少${paramName}参数`);
     }
-    const id = parseInt(idStr, 10);
+    const resolved = Array.isArray(idStr) ? idStr[0] : idStr;
+    if (!resolved) {
+        throw new Error(`缺少${paramName}参数`);
+    }
+    const id = parseInt(resolved, 10);
     if (isNaN(id) || id < 1 || !Number.isInteger(id)) {
         throw new Error('无效的ID参数');
     }
