@@ -7,8 +7,10 @@ WORKDIR /app
 RUN npm install -g pnpm@10.33.0
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+COPY test/package.json ./test/
 
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --frozen-lockfile
@@ -28,8 +30,10 @@ WORKDIR /app
 RUN npm install -g pnpm@10.33.0
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+COPY test/package.json ./test/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
