@@ -6,14 +6,14 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm@10.33.0
 
-# Copy workspace files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
+# Copy workspace files (no .npmrc - use default registry in Docker)
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 COPY test/package.json ./test/
 
-# Install all dependencies (including devDependencies for build)
-RUN pnpm install --frozen-lockfile
+# Install all dependencies
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
 COPY backend/ ./backend/
@@ -30,13 +30,13 @@ WORKDIR /app
 RUN npm install -g pnpm@10.33.0
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 COPY test/package.json ./test/
 
 # Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --no-frozen-lockfile --prod
 
 # Copy built files from builder
 COPY --from=builder /app/backend/dist ./dist

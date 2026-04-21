@@ -8,13 +8,13 @@ WORKDIR /app
 RUN npm install -g pnpm@10.33.0
 
 # 复制 workspace 配置和依赖文件
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY frontend/package.json ./frontend/
 COPY backend/package.json ./backend/
 COPY test/package.json ./test/
 
 # 安装依赖
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # 复制前端源代码
 COPY frontend/ ./frontend/
