@@ -1,7 +1,7 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import logger from '../config/logger';
 import { getDbService } from '../services/dbServiceFactory';
-import { AuthenticatedRequest, Person, ApiResponse } from '../types/index';
+import { AuthenticatedRequest, Person, PaginationParams, SearchParams } from '../types/index';
 
 const isDuplicateEntryError = (error: unknown): boolean => {
     const err = error as Record<string, unknown>;
@@ -43,14 +43,88 @@ const validateAge = (age: unknown): number => {
     return parsed;
 };
 
+const getQueryValue = (value: unknown): string | undefined => {
+    if (Array.isArray(value)) {
+        return value[0] !== undefined ? String(value[0]) : undefined;
+    }
+    if (value === undefined || value === null) {
+        return undefined;
+    }
+    return String(value);
+};
+
+const parsePaginationQuery = (query: Record<string, unknown>): {
+    hasPaginationParams: boolean;
+    paginationParams: PaginationParams;
+} => {
+    const pageRaw = getQueryValue(query.page);
+    const limitRaw = getQueryValue(query.limit);
+    const sortByRaw = getQueryValue(query.sortBy);
+    const sortOrderRaw = getQueryValue(query.sortOrder);
+
+    const hasPaginationParams = pageRaw !== undefined || limitRaw !== undefined;
+
+    return {
+        hasPaginationParams,
+        paginationParams: {
+            page: pageRaw !== undefined ? parseInt(pageRaw, 10) : undefined,
+            limit: limitRaw !== undefined ? parseInt(limitRaw, 10) : undefined,
+            sortBy: sortByRaw,
+            sortOrder: sortOrderRaw === 'desc' ? 'desc' : sortOrderRaw === 'asc' ? 'asc' : undefined
+        }
+    };
+};
+
+const sanitizePersonForGuest = (person: Person): Partial<Person> & { id: number; name: string; age: number; gender: Person['gender']; created_at: string; updated_at: string } => ({
+    id: person.id,
+    name: person.name,
+    age: person.age,
+    gender: person.gender,
+    education_level: person.education_level,
+    address: person.address ? person.address.split('省')[0] + '省...' : '',
+    created_at: person.created_at,
+    updated_at: person.updated_at
+});
+
 // 获取所有人员信息
 const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // 获取数据库服务
     
     try {
+        const parsedPagination = parsePaginationQuery(req.query as Record<string, unknown>);
+
         logger.info('Getting all persons', { 
-            user: req.user ? { id: req.user.userId, role: req.user.role } : 'anonymous'
+            user: req.user ? { id: req.user.userId, role: req.user.role } : 'anonymous',
+            pagination: parsedPagination.hasPaginationParams ? parsedPagination.paginationParams : undefined
         });
+
+        if (parsedPagination.hasPaginationParams) {
+            const result = await getDbService(req).getAllPersonsPaginated(parsedPagination.paginationParams);
+            const rawData = Array.isArray(result.data) ? (result.data as Person[]) : [];
+            const responseData = req.user
+                ? rawData
+                : rawData.map((person: Person) => sanitizePersonForGuest(person));
+
+            logger.info('Retrieved paginated persons successfully', {
+                count: responseData.length,
+                total: result.total,
+                page: result.page,
+                limit: result.limit,
+                userRole: req.user?.role || 'anonymous'
+            });
+
+            res.json({
+                success: true,
+                data: responseData,
+                pagination: {
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages
+                }
+            });
+            return;
+        }
         
         let persons: Person[];
         
@@ -59,16 +133,7 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
             const rawPersons = await getDbService(req).getAllPersons();
             persons = Array.isArray(rawPersons) ? rawPersons : [];
             // 过滤敏感信息
-            const sanitizedPersons = persons.map(person => ({
-                id: person.id,
-                name: person.name,
-                age: person.age,
-                gender: person.gender,
-                education_level: person.education_level,
-                address: person.address ? person.address.split('省')[0] + '省...' : '',
-                created_at: person.created_at,
-                updated_at: person.updated_at
-            }));
+            const sanitizedPersons = persons.map(person => sanitizePersonForGuest(person));
             
             res.json({
                 success: true,
@@ -480,7 +545,7 @@ const deletePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
 };
 
 // 健康检查
-const healthCheck = (req: AuthenticatedRequest, res: Response): void => {
+const healthCheck = (_req: AuthenticatedRequest, res: Response): void => {
     res.json({
         success: true,
         message: 'Server is running',
@@ -652,9 +717,41 @@ const deleteSkill = async (req: AuthenticatedRequest, res: Response): Promise<vo
 // 搜索人才
 const searchTalents = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const searchCriteria = req.query;
+        const searchCriteria = req.query as SearchParams;
+        const parsedPagination = parsePaginationQuery(req.query as Record<string, unknown>);
         
-        logger.info('Searching talents', { searchCriteria });
+        logger.info('Searching talents', {
+            searchCriteria,
+            pagination: parsedPagination.hasPaginationParams ? parsedPagination.paginationParams : undefined
+        });
+
+        if (parsedPagination.hasPaginationParams) {
+            const paginatedCriteria: SearchParams = {
+                ...(req.query as SearchParams),
+                ...parsedPagination.paginationParams
+            };
+            const result = await getDbService(req).searchTalentsPaginated(paginatedCriteria);
+            const validatedResults = Array.isArray(result.data) ? result.data : [];
+
+            logger.info('Paginated talent search completed', {
+                resultCount: validatedResults.length,
+                total: result.total,
+                page: result.page,
+                limit: result.limit
+            });
+
+            res.json({
+                success: true,
+                data: validatedResults,
+                pagination: {
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages
+                }
+            });
+            return;
+        }
         
         const results = await getDbService(req).searchTalents(searchCriteria);
         const validatedResults = Array.isArray(results) ? results : [];
@@ -693,12 +790,60 @@ const escapeCsvField = (value: unknown): string => {
 const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const filters: Record<string, unknown> = {};
+        const queryFilters: Record<string, unknown> = {};
         const filterKeys = ['name', 'skill', 'crop', 'minAge', 'maxAge', 'gender', 'education_level', 'employment_status'];
         let hasFilters = false;
+
+        const normalizeEducationLevelForExport = (educationLevel: unknown): string => {
+            if (educationLevel === null || educationLevel === undefined) {
+                return '';
+            }
+
+            const value = String(educationLevel).trim();
+            if (!value) {
+                return '';
+            }
+
+            if (['无', '小学', '初中', '高中', '高中及以下'].includes(value)) {
+                return '高中及以下';
+            }
+
+            if (['专科', '大专'].includes(value)) {
+                return '专科';
+            }
+
+            if (value === '本科') {
+                return '本科';
+            }
+
+            if (['硕士', '博士', '硕士及以上'].includes(value)) {
+                return '硕士及以上';
+            }
+
+            return value;
+        };
+
+        const matchesEducationFilter = (educationLevel: unknown, filterValue: unknown): boolean => {
+            const filter = filterValue === null || filterValue === undefined ? '' : String(filterValue).trim();
+            if (!filter) {
+                return true;
+            }
+
+            if (['高中及以下', '硕士及以上'].includes(filter)) {
+                return normalizeEducationLevelForExport(educationLevel) === filter;
+            }
+
+            return (educationLevel === null || educationLevel === undefined)
+                ? filter === ''
+                : String(educationLevel).trim() === filter;
+        };
         
         for (const key of filterKeys) {
             if (req.query[key] !== undefined && req.query[key] !== '') {
                 filters[key] = req.query[key];
+                if (key !== 'education_level') {
+                    queryFilters[key] = req.query[key];
+                }
                 hasFilters = true;
             }
         }
@@ -709,10 +854,13 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
             filters: hasFilters ? filters : undefined
         });
 
-        const persons = hasFilters
-            ? await getDbService(req).getAllPersonsWithDetails(filters)
+        const persons = Object.keys(queryFilters).length > 0
+            ? await getDbService(req).getAllPersonsWithDetails(queryFilters)
             : await getDbService(req).getAllPersonsWithDetails();
         const validatedPersons = Array.isArray(persons) ? persons : [];
+        const exportedPersons = filters.education_level
+            ? validatedPersons.filter(person => matchesEducationFilter(person.education_level, filters.education_level))
+            : validatedPersons;
 
         const columns = [
             { key: 'id', header: 'ID' },
@@ -762,8 +910,13 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
 
         const BOM = '\uFEFF';
         const headerRow = columns.map(col => escapeCsvField(col.header)).join(',');
-        const dataRows = validatedPersons.map(person =>
-            columns.map(col => escapeCsvField(getNestedValue(person, col.key))).join(',')
+        const dataRows = exportedPersons.map(person =>
+            columns.map(col => {
+                const value = col.key === 'education_level'
+                    ? normalizeEducationLevelForExport(getNestedValue(person, col.key))
+                    : getNestedValue(person, col.key);
+                return escapeCsvField(value);
+            }).join(',')
         );
         const csvContent = BOM + headerRow + '\n' + dataRows.join('\n');
 
@@ -775,7 +928,7 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         res.send(csvContent);
 
         logger.info('CSV export completed', {
-            count: validatedPersons.length,
+            count: exportedPersons.length,
             filename
         });
     } catch (err) {

@@ -8,6 +8,11 @@ import mysqlService from './services/mysqlService';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import personRoutes from './routes/personRoutes';
 import authRoutes from './routes/authRoutes';
+import batchRoutes from './routes/batchRoutes';
+import favoriteRoutes from './routes/favoriteRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import auditRoutes from './routes/auditRoutes';
+import { auditMiddleware } from './middleware/auditLogger';
 
 interface RateLimitState {
     count: number;
@@ -150,9 +155,18 @@ app.use(morgan('combined', {
 
 app.set('authRateLimiters', authRateLimiters);
 
+// 审计日志中间件
+app.use('/api/persons', auditMiddleware);
+app.use('/api/batch', auditMiddleware);
+app.use('/api/import', auditMiddleware);
+
 // API路由
 app.use('/api/auth', authRoutes);  // 认证相关路由
 app.use('/api', personRoutes);     // 人员信息相关路由
+app.use('/api', batchRoutes);      // 批量操作和导入相关路由
+app.use('/api', favoriteRoutes);   // 收藏相关路由
+app.use('/api', notificationRoutes); // 通知相关路由
+app.use('/api', auditRoutes);      // 审计日志相关路由
 
 // 错误处理中间件
 app.use(errorHandler);

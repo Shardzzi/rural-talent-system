@@ -107,6 +107,17 @@ interface ApiResponse<T> {
   message?: string
 }
 
+interface PaginatedResponse<T> {
+  success: boolean
+  data: T[]
+  pagination: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
+
 interface LoginData {
   username: string
   password: string
@@ -121,29 +132,63 @@ interface AuthResponse {
   }
 }
 
-interface Statistics {
-  totalPersons: number
-  skillCategories: number
-  averageAge: number
-  educationDistribution: Record<string, number>
-  skillsDistribution: Record<string, number>
+interface EducationStat {
+  education_level: string
+  count: number
 }
 
-interface SearchCriteria {
-  skills?: string
-  education?: string
-  minAge?: number
-  maxAge?: number
-  gender?: string
-  address?: string
-  employment_status?: string
+interface AgeDistStat {
+  age_range: string
+  count: number
+}
+
+interface GenderDistStat {
+  gender: string
+  count: number
+}
+
+interface TopSkillStat {
+  skill_name: string
+  count: number
+}
+
+interface SkillCategoryStat {
+  category: string
+  count: number
+}
+
+interface CooperationStat {
+  strong: number
+  moderate: number
+  weak: number
+  total: number
+}
+
+interface RecentRegistrationStat {
+  last7Days: number
+  last30Days: number
+  total: number
+}
+
+interface AgricultureStat {
+  avgFarmingYears: number
+  totalCrops: number
+  popularCrops: unknown[]
+  breedingTypes: unknown[]
 }
 
 interface Statistics {
-  totalPersons: number
+  totalTalents: number
+  avgAge: number
   totalSkills: number
-  totalExperience: number
-  [key: string]: any
+  cooperation: CooperationStat
+  skillsCategory: SkillCategoryStat[]
+  topSkills: TopSkillStat[]
+  agriculture: AgricultureStat
+  education: EducationStat[]
+  ageDistribution: AgeDistStat[]
+  genderDistribution: GenderDistStat[]
+  recentRegistrations: RecentRegistrationStat
 }
 
 interface SearchCriteria {
@@ -162,6 +207,12 @@ class PersonService {
   async getPersons(): Promise<Person[]> {
     const response = await axios.get('/api/persons')
     return response.data.data || response.data
+  }
+
+  // 分页获取人员
+  async getPersonsPaginated(params: { page: number; limit: number; sortBy?: string; sortOrder?: string }): Promise<PaginatedResponse<Person>> {
+    const response = await axios.get('/api/persons', { params })
+    return response.data
   }
 
   // 创建新人员
@@ -206,6 +257,52 @@ class PersonService {
     return response.data
   }
 
+  // 分页搜索人才
+  async searchTalentsPaginated(searchCriteria: SearchCriteria & { page: number; limit: number }): Promise<PaginatedResponse<Person>> {
+    const response = await axios.get('/api/search', { params: searchCriteria })
+    return response.data
+  }
+
+  // 批量删除
+  async batchDelete(ids: number[]): Promise<{ success: boolean; data: { deletedCount: number }; message?: string }> {
+    const response = await axios.post('/api/batch/delete', { ids })
+    return response.data
+  }
+
+  // 批量更新
+  async batchUpdate(ids: number[], updates: Record<string, unknown>): Promise<{ success: boolean; data: { updatedCount: number }; message?: string }> {
+    const response = await axios.put('/api/batch/update', { ids, updates })
+    return response.data
+  }
+
+  // 上传导入文件
+  async uploadImport(file: File): Promise<{ success: boolean; data: { sessionId: string; totalRows: number; validRows: number; invalidRows: number } }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await axios.post('/api/import/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  }
+
+  // 获取导入预览
+  async previewImport(sessionId: string): Promise<{ success: boolean; data: { totalRows: number; validRows: number; invalidRows: number; previews: Array<{ rowIndex: number; data: Record<string, unknown>; errors: string[]; valid: boolean }> } }> {
+    const response = await axios.post('/api/import/preview', { sessionId })
+    return response.data
+  }
+
+  // 确认导入
+  async confirmImport(sessionId: string): Promise<{ success: boolean; data: { success: number; failed: number; errors?: Array<{ row: number; field: string; message: string }> }; message?: string }> {
+    const response = await axios.post('/api/import/confirm', { sessionId })
+    return response.data
+  }
+
+  // 下载导入模板
+  async downloadTemplate(): Promise<Blob> {
+    const response = await axios.get('/api/import/template', { responseType: 'blob' })
+    return response.data as Blob
+  }
+
   // 用户登录
   async login(loginData: LoginData): Promise<AuthResponse> {
     const response = await axios.post('/api/auth/login', loginData)
@@ -218,8 +315,55 @@ class PersonService {
     return response.data
   }
 
+  // === 收藏相关 API ===
+  async getFavorites(): Promise<unknown> {
+    const response = await axios.get('/api/favorites')
+    return response.data
+  }
+
+  async addFavorite(personId: number, notes?: string): Promise<unknown> {
+    const response = await axios.post(`/api/favorites/${personId}`, { notes })
+    return response.data
+  }
+
+  async removeFavorite(personId: number): Promise<unknown> {
+    const response = await axios.delete(`/api/favorites/${personId}`)
+    return response.data
+  }
+
+  async updateFavoriteNotes(personId: number, notes: string): Promise<unknown> {
+    const response = await axios.put(`/api/favorites/${personId}`, { notes })
+    return response.data
+  }
+
+  // === 通知相关 API ===
+  async getNotifications(params?: { page?: number; limit?: number }): Promise<unknown> {
+    const response = await axios.get('/api/notifications', { params })
+    return response.data
+  }
+
+  async getUnreadNotificationCount(): Promise<unknown> {
+    const response = await axios.get('/api/notifications/unread-count')
+    return response.data
+  }
+
+  async markNotificationRead(id: number): Promise<unknown> {
+    const response = await axios.put(`/api/notifications/${id}/read`)
+    return response.data
+  }
+
+  async markAllNotificationsRead(): Promise<unknown> {
+    const response = await axios.put('/api/notifications/read-all')
+    return response.data
+  }
+
+  async deleteNotification(id: number): Promise<unknown> {
+    const response = await axios.delete(`/api/notifications/${id}`)
+    return response.data
+  }
+
   // 验证token
-  async verifyToken(): Promise<{ valid: boolean; user?: any }> {
+  async verifyToken(): Promise<{ valid: boolean; user?: unknown }> {
     try {
       const response = await axios.get('/api/auth/verify')
       return response.data

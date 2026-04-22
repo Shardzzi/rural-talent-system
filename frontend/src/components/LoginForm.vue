@@ -20,7 +20,7 @@
           <el-input 
             v-model="formData.username" 
             placeholder="请输入用户名"
-            prefix-icon="el-icon-user"
+            :prefix-icon="User"
             :disabled="loading"
             size="large"
           />
@@ -30,7 +30,7 @@
           <el-input 
             v-model="formData.email" 
             placeholder="请输入邮箱地址"
-            prefix-icon="el-icon-message"
+            :prefix-icon="Message"
             :disabled="loading"
             size="large"
           />
@@ -41,7 +41,7 @@
             v-model="formData.password" 
             type="password" 
             placeholder="请输入密码"
-            prefix-icon="el-icon-lock"
+            :prefix-icon="Lock"
             :disabled="loading"
             show-password
             size="large"
@@ -53,7 +53,7 @@
             v-model="formData.confirmPassword" 
             type="password" 
             placeholder="请再次输入密码"
-            prefix-icon="el-icon-lock"
+            :prefix-icon="Lock"
             :disabled="loading"
             show-password
             size="large"
@@ -113,15 +113,12 @@
 <script>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { HomeFilled } from '@element-plus/icons-vue'
+import { HomeFilled, User, Message, Lock } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
 export default {
   name: 'LoginForm',
-  components: {
-    HomeFilled
-  },
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()

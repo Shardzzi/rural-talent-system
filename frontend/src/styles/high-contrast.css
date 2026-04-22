@@ -1,0 +1,26 @@
+html.high-contrast {
+  --color-bg-rice: #000000;
+  --color-bg-page: #000000;
+  --color-text-primary: #ffffff;
+  --color-text-regular: #f0f0f0;
+  --color-text-secondary: #e0e0e0;
+  --color-border: #ffffff;
+  --color-border-light: #cccccc;
+}
+
+html.high-contrast .el-button {
+  border-width: 2px;
+  font-weight: bold;
+}
+
+html.high-contrast .el-input__inner {
+  border-width: 2px;
+}
+
+html.high-contrast .el-table {
+  --el-table-border-color: #666666;
+}
+
+html.high-contrast .el-card {
+  border-width: 2px;
+}

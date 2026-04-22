@@ -177,79 +177,26 @@
         </div>
 
         <!-- 人员列表 -->
-        <div class="persons-grid" v-loading="loading">
-          <!-- 无结果提示 -->
-          <div v-if="!loading && filteredPersons.length === 0" class="no-results">
-            <div class="no-results-content">
-              <el-icon class="no-results-icon"><DocumentRemove /></el-icon>
-              <h3>暂无匹配结果</h3>
-              <p v-if="hasActiveFilters">没有找到符合当前筛选条件的人员信息</p>
-              <p v-else>暂时还没有其他人员信息</p>
-              <div class="no-results-actions" v-if="hasActiveFilters">
-                <el-button type="primary" @click="resetFilters">
-                  <el-icon><Refresh /></el-icon>
-                  清空筛选条件
-                </el-button>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 人员卡片列表 -->
-          <div
-            v-for="person in paginatedPersons"
-            :key="person.id"
-            class="person-card"
-            @click="viewPersonDetail(person)"
-          >
-            <div class="person-header">
-              <h4>{{ person.name }}</h4>
-              <el-tag size="small" :type="getStatusTagType(person.employment_status)">
-                {{ person.employment_status || '未知' }}
-              </el-tag>
-            </div>
-            
-            <div class="person-info">
-              <p><strong>年龄：</strong>{{ person.age }}岁 | <strong>性别：</strong>{{ person.gender }}</p>
-              <p><strong>学历：</strong>{{ person.education_level || '未设置' }}</p>
-              <p><strong>地区：</strong>{{ person.address || '未设置地区' }}</p>
-              <p v-if="person.phone"><strong>电话：</strong>{{ person.phone }}</p>
-            </div>
-            
-            <div class="person-skills" v-if="person.skills">
-              <p><strong>技能：</strong></p>
-              <div class="skills-preview">
-                <el-tag
-                  v-for="skill in getSkillsPreview(person.skills)"
-                  :key="skill"
-                  size="small"
-                  type="info"
-                  style="margin-right: 4px; margin-bottom: 2px;"
-                >
-                  {{ skill }}
-                </el-tag>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 分页 -->
-        <div class="pagination-wrapper" v-if="filteredPersons.length > pageSize">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[6, 12, 24, 48]"
-            layout="total, sizes, prev, pager, next"
-            :total="filteredPersons.length"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
+        <PersonTable
+          :data="paginatedPersons"
+          role="user"
+          :loading="loading"
+          :total="totalCount"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :page-sizes="[6, 12, 24, 48]"
+          pagination-layout="total, sizes, prev, pager, next"
+          @page-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+          @row-click="viewPersonDetail"
+        />
       </el-card>
     </div>
 
     <!-- 添加/编辑个人信息对话框 -->
-    <PersonFormDialog
-      v-model="showAddDialog"
+    <PersonFormWizard
+      :visible="showAddDialog"
+      @update:visible="showAddDialog = $event"
       :person="currentPerson"
       :is-edit="isEdit"
       :is-user-mode="true"
@@ -267,24 +214,25 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Edit, User, Search, Refresh, DocumentRemove } from '@element-plus/icons-vue'
+import { Plus, Edit, User, Search, Refresh } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
-import PersonFormDialog from '../components/PersonFormDialog.vue'
+import PersonFormWizard from '../components/person-form/PersonFormWizard.vue'
 import PersonDetailDialog from '../components/PersonDetailDialog.vue'
+import PersonTable from '../components/person-table/PersonTable.vue'
 
 export default {
   name: 'UserDashboard',
   components: {
-    PersonFormDialog,
+    PersonFormWizard,
     PersonDetailDialog,
+    PersonTable,
     Plus,
     Edit,
     User,
     Search,
-    Refresh,
-    DocumentRemove
+    Refresh
   },
   setup() {
     const router = useRouter()
@@ -304,11 +252,11 @@ export default {
     const searchKeyword = ref('')
     const filterEducation = ref('')
     const filterStatus = ref('')
-    const searchTrigger = ref(0) // 用于手动触发搜索
     
     // 分页
     const currentPage = ref(1)
     const pageSize = ref(12)
+    const totalCount = ref(0)
     
     // 计算属性
     const skillsArray = computed(() => {
@@ -316,55 +264,12 @@ export default {
       return userPerson.value.skills.split(/[,，、]/).map(s => s.trim()).filter(s => s)
     })
     
-    const filteredPersons = computed(() => {
-      // 依赖searchTrigger来手动控制重新计算
-      searchTrigger.value // 这行确保当searchTrigger变化时重新计算
-      
-      let result = persons.value.filter(person => 
-        // 过滤掉自己的信息，避免重复显示
-        person.id !== userPerson.value?.id
-      )
-      
-      if (searchKeyword.value) {
-        const keyword = searchKeyword.value.toLowerCase()
-        result = result.filter(person => 
-          person.name?.toLowerCase().includes(keyword) ||
-          person.skills?.toLowerCase().includes(keyword) ||
-          person.address?.toLowerCase().includes(keyword)
-        )
-      }
-      
-      if (filterEducation.value) {
-        result = result.filter(person => {
-          const education = person.education_level
-          if (filterEducation.value === '高中及以下') {
-            return ['无', '小学', '初中', '高中'].includes(education)
-          } else if (filterEducation.value === '专科') {
-            return education === '专科'
-          } else if (filterEducation.value === '本科') {
-            return education === '本科'
-          } else if (filterEducation.value === '硕士及以上') {
-            return ['硕士', '博士'].includes(education)
-          }
-          return true
-        })
-      }
-      
-      if (filterStatus.value) {
-        result = result.filter(person => person.employment_status === filterStatus.value)
-      }
-      
-      return result
+    const hasActiveFilters = computed(() => {
+      return searchKeyword.value || filterEducation.value || filterStatus.value
     })
     
     const paginatedPersons = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value
-      const end = start + pageSize.value
-      return filteredPersons.value.slice(start, end)
-    })
-    
-    const hasActiveFilters = computed(() => {
-      return searchKeyword.value || filterEducation.value || filterStatus.value
+      return persons.value.filter(person => person.id !== userPerson.value?.id)
     })
     
     // 方法
@@ -375,8 +280,39 @@ export default {
     const loadPersons = async () => {
       loading.value = true
       try {
-        const response = await axios.get('/api/persons')
-        persons.value = response.data.data || []
+        let response
+        if (hasActiveFilters.value) {
+          const params = {
+            page: currentPage.value,
+            limit: pageSize.value,
+          }
+          if (searchKeyword.value) params.keyword = searchKeyword.value
+          if (filterStatus.value) params.employment_status = filterStatus.value
+          if (filterEducation.value) {
+            if (['专科', '本科'].includes(filterEducation.value)) {
+              params.education_level = filterEducation.value
+            }
+          }
+          response = await axios.get('/api/search', { params })
+        } else {
+          response = await axios.get('/api/persons', {
+            params: {
+              page: currentPage.value,
+              limit: pageSize.value,
+              sortBy: 'created_at',
+              sortOrder: 'desc'
+            }
+          })
+        }
+        
+        const responseData = response.data || {}
+        persons.value = responseData.data || []
+        
+        if (responseData.pagination) {
+          totalCount.value = responseData.pagination.total
+        } else {
+          totalCount.value = responseData.total ?? responseData.totalCount ?? persons.value.length
+        }
       } catch (error) {
         ElMessage.error('加载人员列表失败')
       } finally {
@@ -423,13 +359,14 @@ export default {
         clearTimeout(searchTimeout)
       }
       searchTimeout = setTimeout(() => {
-        searchTrigger.value++
+        currentPage.value = 1
+        loadPersons()
       }, 500)
     }
     
     const handleSearch = () => {
       currentPage.value = 1
-      searchTrigger.value++
+      loadPersons()
     }
     
     const resetFilters = () => {
@@ -437,6 +374,7 @@ export default {
       filterEducation.value = ''
       filterStatus.value = ''
       currentPage.value = 1
+      loadPersons()
     }
     
     const handlePersonSaved = () => {
@@ -445,7 +383,7 @@ export default {
       isEdit.value = false
       loadUserPerson()
       loadPersons()
-      // 移除重复的成功消息，因为PersonFormDialog组件内部已经显示了
+      // 移除重复的成功消息，因为PersonFormWizard组件内部已经显示了
     }
     
     const viewPersonDetail = (person) => {
@@ -453,28 +391,15 @@ export default {
       showDetailDialog.value = true
     }
     
-    const getStatusTagType = (status) => {
-      switch (status) {
-        case '在岗': return 'success'
-        case '求职中': return 'warning'
-        case '已退休': return 'info'
-        default: return 'info'
-      }
-    }
-    
-    const getSkillsPreview = (skillsStr) => {
-      if (!skillsStr) return []
-      const skills = skillsStr.split(/[,，、]/).map(s => s.trim()).filter(s => s)
-      return skills.slice(0, 3) // 只显示前3个技能
-    }
-    
     const handleSizeChange = (newSize) => {
       pageSize.value = newSize
       currentPage.value = 1
+      loadPersons()
     }
     
     const handleCurrentChange = (newPage) => {
       currentPage.value = newPage
+      loadPersons()
     }
     
     // 生命周期
@@ -498,7 +423,6 @@ export default {
       currentPage,
       pageSize,
       skillsArray,
-      filteredPersons,
       paginatedPersons,
       hasActiveFilters,
       goBack,
@@ -509,8 +433,6 @@ export default {
       resetFilters,
       handlePersonSaved,
       viewPersonDetail,
-      getStatusTagType,
-      getSkillsPreview,
       handleSizeChange,
       handleCurrentChange
     }
@@ -692,115 +614,6 @@ export default {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.persons-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
-  min-height: 400px;
-  width: 100%;
-  align-items: start;
-  grid-auto-rows: min-content;
-}
-
-/* 确保移动端适配 */
-@media screen and (max-width: 1200px) {
-  .persons-grid {
-    grid-template-columns: repeat(2, minmax(280px, 1fr));
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .persons-grid {
-    grid-template-columns: minmax(250px, 1fr);
-  }
-}
-
-.person-card {
-  border: 1px solid #e4e7ed;
-  border-top: 3px solid #409EFF;
-  border-radius: 8px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  background-color: #fff;
-  align-self: start;
-  min-height: 140px;
-  max-height: 200px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
-
-.person-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(to bottom, #409EFF, #67C23A);
-  opacity: 0.7;
-}
-
-.person-card:hover {
-  border-color: #409EFF;
-  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
-  transform: translateY(-4px);
-}
-
-.person-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(64, 158, 255, 0.15);
-}
-
-.person-header h4 {
-  margin: 0;
-  color: #333;
-  font-size: 16px;
-}
-
-.person-info {
-  margin-bottom: 12px;
-}
-
-.person-info p {
-  margin: 4px 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.person-skills {
-  margin-top: 12px;
-}
-
-.person-skills p {
-  margin: 0 0 6px 0;
-  font-size: 14px;
-  color: #333;
-  font-weight: bold;
-}
-
-.skills-preview {
-  min-height: 24px;
-}
-
-.pagination-wrapper {
-  margin-top: 32px;
-  text-align: center;
-  padding: 24px;
-  background: #fafafa;
-  border-radius: 8px;
-  border-top: 1px solid #ebeef5;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
-}
-
 .search-buttons {
   display: flex;
   gap: 8px;
@@ -810,52 +623,5 @@ export default {
 
 .search-buttons .el-button {
   margin: 0;
-}
-
-/* 无结果提示样式 */
-.no-results {
-  grid-column: 1 / -1; /* 占满整个网格宽度 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  padding: 40px 20px;
-}
-
-.no-results-content {
-  text-align: center;
-  max-width: 400px;
-}
-
-.no-results-icon {
-  font-size: 64px;
-  color: #c0c4cc;
-  margin-bottom: 24px;
-  background: #f4f4f5;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: auto;
-  margin-right: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.no-results h3 {
-  color: #606266;
-  margin-bottom: 12px;
-  font-size: 18px;
-}
-
-.no-results p {
-  color: #909399;
-  margin-bottom: 20px;
-  line-height: 1.5;
-}
-
-.no-results-actions {
-  margin-top: 20px;
 }
 </style>

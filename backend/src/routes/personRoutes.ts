@@ -1,9 +1,8 @@
 import express, { Router } from 'express';
 import {
     validatePerson,
-    validateCreatePerson,
-    validateUpdatePerson,
     validateSearch,
+    validatePagination,
     validateRuralProfile,
     validateSkill,
     validateComprehensivePerson,
@@ -18,7 +17,7 @@ const router: Router = express.Router();
 router.get('/health', personController.healthCheck);
 
 // 搜索人才（可选认证，影响返回数据详细程度）
-router.get('/search', validateSearch, handleValidationErrors, optionalAuth, personController.searchTalents);
+router.get('/search', validateSearch, validatePagination, handleValidationErrors, optionalAuth, personController.searchTalents);
 
 // 获取数据统计分析（管理员权限）
 router.get('/statistics', authenticateToken, requireAdmin, personController.getStatistics);
@@ -27,7 +26,7 @@ router.get('/statistics', authenticateToken, requireAdmin, personController.getS
 router.get('/skills-library-stats', optionalAuth, personController.getSkillsLibraryStats);
 
 // 获取所有人员信息（可选认证，影响返回数据详细程度）
-router.get('/persons', optionalAuth, personController.getAllPersons);
+router.get('/persons', validatePagination, handleValidationErrors, optionalAuth, personController.getAllPersons);
 
 router.get('/persons/export', authenticateToken, requireAdmin, personController.exportPersons);
 

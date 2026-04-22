@@ -6,6 +6,7 @@ import mysqlService from './mysqlService';
 interface DatabaseService {
     initDatabase(): Promise<void>;
     getAllPersons(): Promise<any[]>;
+    getAllPersonsPaginated(params: any): Promise<any>;
     getAllPersonsWithDetails(filters?: Record<string, unknown>): Promise<any[]>;
     getPersonById(id: number): Promise<any>;
     getPersonWithDetails(id: number): Promise<any>;
@@ -16,6 +17,7 @@ interface DatabaseService {
     addSkill(personId: number, skillData: any): Promise<any>;
     deleteSkill(skillId: number): Promise<boolean>;
     searchTalents(searchCriteria: any): Promise<any[]>;
+    searchTalentsPaginated(searchCriteria: any): Promise<any>;
     createUser(userData: any): Promise<any>;
     getUserByUsername(username: string): Promise<any>;
     getUserByEmail(email: string): Promise<any>;
@@ -42,6 +44,28 @@ interface DatabaseService {
     getRecentRegistrations(): Promise<any>;
     createComprehensivePerson(data: any): Promise<any>;
     updateComprehensivePerson(personId: number, data: any): Promise<any>;
+    batchDeletePersons(ids: number[]): Promise<number>;
+    batchUpdatePersons(ids: number[], updates: Record<string, unknown>): Promise<number>;
+    importPersons(personDataArray: Record<string, unknown>[]): Promise<import('../types').ImportResult>;
+    getExistingPersonIds(ids: number[]): Promise<number[]>;
+    validatePersonData(data: Record<string, unknown>, rowIndex: number): Array<import('../types').ImportError>;
+    // Favorites methods
+    addFavorite(userId: number, personId: number, notes?: string): Promise<any>;
+    removeFavorite(userId: number, personId: number): Promise<boolean>;
+    getUserFavorites(userId: number): Promise<any[]>;
+    updateFavoriteNotes(userId: number, personId: number, notes: string): Promise<boolean>;
+    isFavorite(userId: number, personId: number): Promise<boolean>;
+    // Notification methods
+    createNotification(userId: number, type: string, title: string, content?: string, link?: string): Promise<any>;
+    getUserNotifications(userId: number, page?: number, limit?: number): Promise<any[]>;
+    getUnreadNotificationCount(userId: number): Promise<number>;
+    markNotificationRead(userId: number, notificationId: number): Promise<boolean>;
+    markAllNotificationsRead(userId: number): Promise<number>;
+    deleteNotification(userId: number, notificationId: number): Promise<boolean>;
+    // Audit methods
+    logAudit(userId: number | null, username: string | null, action: string, resourceType: string, resourceId: number | null, details: string, ip: string | null, userAgent: string | null): Promise<void>;
+    getAuditLogs(filters: any): Promise<any>;
+    getAuditStats(): Promise<any>;
 }
 
 // 获取数据库服务实例

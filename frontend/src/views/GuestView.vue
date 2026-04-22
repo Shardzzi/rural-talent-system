@@ -175,7 +175,7 @@
             <span>
               <el-icon><User /></el-icon>
               人才信息 
-              <el-tag type="info" size="small">共 {{ filteredPersons.length }} 人</el-tag>
+              <el-tag type="info" size="small">共 {{ totalCount }} 人</el-tag>
             </span>
             <el-button type="text" @click="loadPersons">
               <el-icon><Refresh /></el-icon>
@@ -184,91 +184,19 @@
           </div>
         </template>
 
-        <div class="talents-grid" v-loading="loading">
-          <div
-            v-for="person in paginatedPersons"
-            :key="person.id"
-            class="talent-card"
-            @click="viewTalentDetail(person)"
-          >
-            <div class="talent-header">
-              <div class="talent-avatar">
-                <el-icon><User /></el-icon>
-              </div>
-              <div class="talent-basic">
-                <h4>{{ person.name }}</h4>
-                <div class="talent-meta">
-                  <span class="meta-item">{{ person.age }}岁</span>
-                  <span class="meta-item">{{ person.gender }}</span>
-                  <span class="meta-item education">{{ person.education_level || '未设置' }}</span>
-                </div>
-              </div>
-              <el-tag 
-                size="small" 
-                :type="getStatusTagType(person.employment_status)"
-                class="status-tag"
-              >
-                {{ person.employment_status || '未知' }}
-              </el-tag>
-            </div>
-            
-            <div class="talent-location">
-              <el-icon><Location /></el-icon>
-              <span>{{ person.address || '未设置地区' }}</span>
-            </div>
-            
-            <div class="talent-skills" v-if="person.skills">
-              <div class="skills-label">
-                <el-icon><Star /></el-icon>
-                <span>技能专长</span>
-              </div>
-              <div class="skills-tags">
-                <el-tag
-                  v-for="skill in getSkillsPreview(person.skills)"
-                  :key="skill"
-                  size="small"
-                  type="primary"
-                  effect="plain"
-                  class="skill-tag"
-                >
-                  {{ skill }}
-                </el-tag>
-                <span v-if="getSkillsCount(person.skills) > 3" class="more-skills">
-                  +{{ getSkillsCount(person.skills) - 3 }}
-                </span>
-              </div>
-            </div>
-
-            <div class="talent-footer">
-              <span class="view-hint">点击查看详情</span>
-              <el-icon><ArrowRight /></el-icon>
-            </div>
-          </div>
-        </div>
-
-        <!-- 空状态 -->
-        <div v-if="!loading && filteredPersons.length === 0" class="empty-state">
-          <el-icon class="empty-icon"><Search /></el-icon>
-          <h3>暂无匹配结果</h3>
-          <p v-if="hasActiveFilters">没有找到符合当前筛选条件的人才信息</p>
-          <p v-else>暂时还没有人才信息</p>
-          <div v-if="hasActiveFilters">
-            <el-button type="primary" @click="resetFilters">清除筛选条件</el-button>
-          </div>
-        </div>
-
-        <!-- 分页 -->
-        <div class="pagination-wrapper" v-if="filteredPersons.length > pageSize">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[9, 18, 36, 72]"
-            layout="total, sizes, prev, pager, next"
-            :total="filteredPersons.length"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
+        <PersonTable
+          :data="paginatedPersons"
+          role="guest"
+          :loading="loading"
+          :total="totalCount"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :page-sizes="[9, 18, 36, 72]"
+          pagination-layout="total, sizes, prev, pager, next"
+          @page-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+          @row-click="viewTalentDetail"
+        />
       </el-card>
 
       <!-- 登录提示卡片 - 只在游客模式下显示 -->
@@ -302,9 +230,8 @@ import { ElMessage } from 'element-plus'
 import { 
   User, 
   Search, 
-  ArrowDown, 
-  ArrowRight, 
-  Location, 
+  ArrowDown,
+  Location,
   Star, 
   Lock, 
   Refresh 
@@ -314,16 +241,17 @@ import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
 import PersonDetailDialog from '../components/PersonDetailDialog.vue'
 import AuthDebugPanel from '../components/AuthDebugPanel.vue'
+import PersonTable from '../components/person-table/PersonTable.vue'
 
 export default {
   name: 'GuestView',
   components: {
     PersonDetailDialog,
     AuthDebugPanel,
+    PersonTable,
     User,
     Search,
     ArrowDown,
-    ArrowRight,
     Location,
     Star,
     Lock,
@@ -339,6 +267,7 @@ export default {
     const persons = ref([])
     const showDetailDialog = ref(false)
     const selectedPerson = ref(null)
+    const globalStats = ref({ skills: 0, locations: 0 })
     
     // 搜索和筛选
     const searchKeyword = ref('')
@@ -348,16 +277,17 @@ export default {
     const filterMaxAge = ref(undefined)
     const filterSkill = ref('')
     const filterCrop = ref('')
-    const searchTrigger = ref(0) // 用于手动触发搜索
-    
     // 分页
     const currentPage = ref(1)
     const pageSize = ref(9)
+    const totalCount = ref(0)
     
     // 计算属性
-    const totalPersons = computed(() => persons.value.length)
+    const totalPersons = computed(() => totalCount.value)
     
     const skillCategories = computed(() => {
+      // 如果后端没有返回统计数据，就从当前列表计算
+      if (globalStats.value.skills > 0) return globalStats.value.skills
       const skills = new Set()
       persons.value.forEach(person => {
         if (person.skills) {
@@ -370,6 +300,7 @@ export default {
     })
     
     const locations = computed(() => {
+      if (globalStats.value.locations > 0) return globalStats.value.locations
       const locs = new Set()
       persons.value.forEach(person => {
         if (person.address) {
@@ -379,76 +310,8 @@ export default {
       return locs.size
     })
     
-    const filteredPersons = computed(() => {
-      // 依赖searchTrigger来手动控制重新计算
-      searchTrigger.value // 这行确保当searchTrigger变化时重新计算
-      
-      let result = persons.value
-      
-      if (searchKeyword.value) {
-        const keyword = searchKeyword.value.toLowerCase()
-        result = result.filter(person => 
-          person.name?.toLowerCase().includes(keyword) ||
-          person.skills?.toLowerCase().includes(keyword) ||
-          person.address?.toLowerCase().includes(keyword)
-        )
-      }
-      
-      if (filterMinAge.value) {
-        const minAge = filterMinAge.value
-        result = result.filter(person => person.age >= minAge)
-      }
-      
-      if (filterMaxAge.value) {
-        const maxAge = filterMaxAge.value
-        result = result.filter(person => person.age <= maxAge)
-      }
-      
-      if (filterEducation.value) {
-        result = result.filter(person => {
-          const education = person.education_level
-          if (filterEducation.value === '高中及以下') {
-            return ['无', '小学', '初中', '高中'].includes(education)
-          } else if (filterEducation.value === '专科') {
-            return education === '专科'
-          } else if (filterEducation.value === '本科') {
-            return education === '本科'
-          } else if (filterEducation.value === '硕士及以上') {
-            return ['硕士', '博士'].includes(education)
-          }
-          return true
-        })
-      }
-      
-      if (filterStatus.value) {
-        result = result.filter(person => person.employment_status === filterStatus.value)
-      }
-      
-      if (filterSkill.value) {
-        const skillKeyword = filterSkill.value.toLowerCase()
-        result = result.filter(person =>
-          person.skills?.toLowerCase().includes(skillKeyword)
-        )
-      }
-      
-      if (filterCrop.value) {
-        const cropKeyword = filterCrop.value.toLowerCase()
-        result = result.filter(person =>
-          person.main_crops?.toLowerCase().includes(cropKeyword)
-        )
-      }
-      
-      return result
-    })
-    
     const paginatedPersons = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value
-      const end = start + pageSize.value
-      return filteredPersons.value.slice(start, end)
-    })
-    
-    const hasActiveFilters = computed(() => {
-      return searchKeyword.value || filterEducation.value || filterStatus.value || filterMinAge.value || filterMaxAge.value || filterSkill.value || filterCrop.value
+      return persons.value
     })
     
     // 方法
@@ -472,8 +335,11 @@ export default {
       loading.value = true
       try {
         // 构建搜索参数
-        const params = {}
-        if (searchKeyword.value) params.name = searchKeyword.value
+        const params = {
+          page: currentPage.value,
+          limit: pageSize.value
+        }
+        if (searchKeyword.value) params.keyword = searchKeyword.value
         if (filterStatus.value) params.employment_status = filterStatus.value
         if (filterMinAge.value) params.minAge = filterMinAge.value
         if (filterMaxAge.value) params.maxAge = filterMaxAge.value
@@ -488,7 +354,24 @@ export default {
 
         // 游客模式访问，会返回脱敏数据，使用搜索接口
         const response = await axios.get('/api/search', { params })
-        persons.value = response.data.data || []
+        const responseData = response.data || {}
+        persons.value = responseData.data || []
+        
+        if (responseData.pagination) {
+          totalCount.value = responseData.pagination.total
+        } else {
+          totalCount.value = responseData.total ?? responseData.totalCount ?? persons.value.length
+        }
+        
+        try {
+          const statsResponse = await axios.get('/api/statistics')
+          if (statsResponse.data && statsResponse.data.data) {
+            globalStats.value.skills = statsResponse.data.data.skillCategories || 0
+            // locations 不是默认统计项，可以留空或尝试获取
+          }
+        } catch (e) {
+          // guest might not have access to statistics, ignore silently
+        }
       } catch (error) {
         ElMessage.error('加载人员列表失败')
       } finally {
@@ -503,15 +386,14 @@ export default {
         clearTimeout(searchTimeout)
       }
       searchTimeout = setTimeout(() => {
-        searchTrigger.value++
+        currentPage.value = 1
         loadPersons()
       }, 500)
     }
-    
+
     const handleSearch = () => {
       currentPage.value = 1
-      searchTrigger.value++
-      loadPersons()
+       loadPersons()
     }
     
     const resetFilters = () => {
@@ -531,33 +413,15 @@ export default {
       showDetailDialog.value = true
     }
     
-    const getStatusTagType = (status) => {
-      switch (status) {
-        case '在岗': return 'success'
-        case '求职中': return 'warning'
-        case '已退休': return 'info'
-        default: return 'info'
-      }
-    }
-    
-    const getSkillsPreview = (skillsStr) => {
-      if (!skillsStr) return []
-      const skills = skillsStr.split(/[,，、]/).map(s => s.trim()).filter(s => s)
-      return skills.slice(0, 3)
-    }
-    
-    const getSkillsCount = (skillsStr) => {
-      if (!skillsStr) return 0
-      return skillsStr.split(/[,，、]/).map(s => s.trim()).filter(s => s).length
-    }
-    
     const handleSizeChange = (newSize) => {
       pageSize.value = newSize
       currentPage.value = 1
+      loadPersons()
     }
     
     const handleCurrentChange = (newPage) => {
       currentPage.value = newPage
+      loadPersons()
     }
     
     // 生命周期
@@ -584,14 +448,14 @@ export default {
       filterMaxAge,
       filterSkill,
       filterCrop,
+      globalStats,
       currentPage,
       pageSize,
+      totalCount,
       totalPersons,
       skillCategories,
       locations,
-      filteredPersons,
       paginatedPersons,
-      hasActiveFilters,
       goToLogin,
       goToDashboard,
       scrollToContent,
@@ -600,11 +464,8 @@ export default {
       debouncedSearch,
       resetFilters,
       viewTalentDetail,
-      getStatusTagType,
       // 状态
       authStore,
-      getSkillsPreview,
-      getSkillsCount,
       handleSizeChange,
       handleCurrentChange
     }
@@ -758,183 +619,6 @@ export default {
   align-items: center;
 }
 
-.talents-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 20px;
-  min-height: 400px; /* 确保始终有最小高度 */
-  width: 100%; /* 确保占满容器宽度 */
-  align-items: start; /* 防止卡片被拉伸 */
-  grid-auto-rows: min-content; /* 行高自适应内容 */
-}
-
-.talent-card {
-  border: 1px solid #e4e7ed;
-  border-left: 3px solid #e4e7ed;
-  border-radius: 12px;
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: #fff;
-  position: relative;
-  align-self: start; /* 防止卡片被拉伸 */
-  min-height: 180px;
-  max-height: 280px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.talent-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(135deg, #0d2137 0%, #1a5276 30%, #2e86c1 60%, #27ae60 100%);
-  z-index: 1;
-}
-
-.talent-card:hover {
-  border-color: #e4e7ed;
-  border-left-color: #2e86c1;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  transform: translateY(-4px) scale(1.02);
-}
-
-.talent-header {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  gap: 8px;
-  min-width: 0;
-}
-
-.talent-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2e86c1 0%, #27ae60 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.talent-avatar .el-icon {
-  font-size: 24px;
-  color: white;
-}
-
-.talent-basic {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.talent-basic h4 {
-  margin: 0 0 6px 0;
-  color: #333;
-  font-size: 18px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.talent-meta {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-  color: #666;
-}
-
-.talent-meta span {
-  padding: 2px 8px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-}
-
-.meta-item.education {
-  background-color: #e1f3ff;
-  color: #409EFF;
-  font-weight: 500;
-}
-
-.status-tag {
-  margin-left: 8px;
-  flex-shrink: 0;
-}
-
-.talent-location {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
-  color: #666;
-  font-size: 14px;
-}
-
-.talent-skills {
-  margin-bottom: 16px;
-}
-
-.skills-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-}
-
-.skills-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.skill-tag {
-  margin: 0;
-}
-
-.more-skills {
-  color: #666;
-  font-size: 12px;
-  margin-left: 4px;
-}
-
-.talent-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-  color: #409EFF;
-  font-size: 14px;
-}
-
-.view-hint {
-  font-weight: 500;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #999;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-}
-
 .login-prompt-card {
   margin-top: 40px;
   position: relative;
@@ -998,11 +682,6 @@ export default {
   box-shadow: 0 6px 16px rgba(46, 134, 193, 0.3);
 }
 
-.pagination-wrapper {
-  margin-top: 30px;
-  text-align: center;
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .banner-content h1 {
@@ -1019,10 +698,6 @@ export default {
   
   .stat-number {
     font-size: 28px;
-  }
-  
-  .talents-grid {
-    grid-template-columns: 1fr;
   }
   
   .login-prompt {

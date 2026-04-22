@@ -6,6 +6,7 @@ import { ApiResponse } from '../types/index';
 const EDUCATION_LEVELS = ['无', '小学', '初中', '高中', '专科', '本科', '硕士', '博士'];
 const CURRENT_STATUS_VALUES = ['已就业', '未就业', '求职中', '退休', '学生', '其他'];
 const GENDER_VALUES = ['男', '女', '其他'];
+const PAGINATION_SORT_FIELDS = ['name', 'age', 'education_level', 'created_at'];
 
 const sanitizeString = (value: string): string => {
     if (typeof value !== 'string') return value as unknown as string;
@@ -238,15 +239,28 @@ export const validateSearch = [
         .optional({ nullable: true, checkFalsy: true })
         .customSanitizer(sanitizeString)
         .isLength({ max: 100 })
-        .withMessage('作物搜索条件长度不能超过100个字符'),
+        .withMessage('作物搜索条件长度不能超过100个字符')
+];
+
+export const validatePagination = [
     query('page')
         .optional({ nullable: true, checkFalsy: true })
         .isInt({ min: 1 })
-        .withMessage('页码必须是大于0的整数'),
+        .withMessage('页码必须是大于等于1的整数'),
     query('limit')
         .optional({ nullable: true, checkFalsy: true })
         .isInt({ min: 1, max: 100 })
-        .withMessage('每页条数必须是1-100之间的整数')
+        .withMessage('每页条数必须是1-100之间的整数'),
+    query('sortBy')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isIn(PAGINATION_SORT_FIELDS)
+        .withMessage('排序字段必须是 name、age、education_level 或 created_at'),
+    query('sortOrder')
+        .optional({ nullable: true, checkFalsy: true })
+        .customSanitizer(sanitizeString)
+        .isIn(['asc', 'desc'])
+        .withMessage('排序方向必须是 asc 或 desc')
 ];
 
 export const validateRuralProfile = [
@@ -334,7 +348,7 @@ export const validateComprehensivePerson = [
     body('skills')
         .isArray({ min: 1 })
         .withMessage('skills 必须是非空数组'),
-    (req: Request, res: Response, next: NextFunction): void => {
+    (req: Request, _res: Response, next: NextFunction): void => {
         if (req.body?.person && typeof req.body.person === 'object') {
             req.body = {
                 ...req.body,
@@ -481,6 +495,7 @@ export default {
     validateCreatePerson,
     validateUpdatePerson,
     validateSearch,
+    validatePagination,
     validateRuralProfile,
     validateSkill,
     validateComprehensivePerson,

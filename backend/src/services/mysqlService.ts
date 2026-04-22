@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
 import logger from '../config/logger';
-import { DatabaseResult, User, Person, SearchParams, ResultSetHeader } from '../types';
+import { DatabaseResult, User, Person, SearchParams, ResultSetHeader, PaginationParams, PaginatedResult, ImportResult, ImportError } from '../types';
 
 // MySQL 数据库配置
 const MYSQL_CONFIG = {
@@ -58,6 +58,27 @@ const executeQuery = async (sql: string, params: any[] = []): Promise<any> => {
     }
 };
 
+const PAGINATION_SORT_WHITELIST = ['name', 'age', 'education_level', 'created_at'] as const;
+type PaginationSortColumn = typeof PAGINATION_SORT_WHITELIST[number];
+
+const normalizePaginationParams = (params: PaginationParams = {}) => {
+    const parsedPage = Number(params.page);
+    const parsedLimit = Number(params.limit);
+
+    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+    const limitRaw = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 20;
+    const limit = Math.min(limitRaw, 100);
+    const offset = (page - 1) * limit;
+
+    const sortByInput = typeof params.sortBy === 'string' ? params.sortBy : '';
+    const sortBy = (PAGINATION_SORT_WHITELIST as readonly string[]).includes(sortByInput)
+        ? (sortByInput as PaginationSortColumn)
+        : 'created_at';
+    const sortOrder = params.sortOrder?.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+
+    return { page, limit, offset, sortBy, sortOrder };
+};
+
 // 初始化数据库（检查连接）
 const initDatabase = async (): Promise<void> => {
     try {
@@ -74,7 +95,8 @@ const initDatabase = async (): Promise<void> => {
 
         const requiredTables = [
             'persons', 'rural_talent_profile', 'talent_skills',
-            'cooperation_intentions', 'training_records', 'users', 'user_sessions'
+            'cooperation_intentions', 'training_records', 'users', 'user_sessions',
+            'favorites', 'notifications', 'audit_logs'
         ];
 
         const missingTables = requiredTables.filter(table => !tableNames.includes(table));
@@ -102,6 +124,34 @@ const getAllPersons = async () => {
         return rows;
     } catch (error: any) {
         logger.error('Error getting all persons', { error: error.message });
+        throw error;
+    }
+};
+
+// 获取所有人员信息（分页）
+const getAllPersonsPaginated = async (params: PaginationParams = {}): Promise<PaginatedResult<Person>> => {
+    try {
+        const { page, limit, offset, sortBy, sortOrder } = normalizePaginationParams(params);
+
+        const countRows = await executeQuery('SELECT COUNT(*) as total FROM persons');
+        const total = Number(countRows?.[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit);
+
+        const sql = `SELECT * FROM persons ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
+        const rows = await executeQuery(sql, [limit, offset]);
+
+        return {
+            data: rows || [],
+            total,
+            page,
+            limit,
+            totalPages
+        };
+    } catch (error: any) {
+        logger.error('Error getting paginated persons from MySQL', {
+            error: error.message,
+            params
+        });
         throw error;
     }
 };
@@ -994,10 +1044,579 @@ const searchTalents = async (searchCriteria: any): Promise<any[]> => {
     }
 };
 
+// 搜索人才（高级筛选 + 分页）
+const searchTalentsPaginated = async (searchCriteria: SearchParams & PaginationParams): Promise<PaginatedResult<Person>> => {
+    try {
+        const { page, limit, offset, sortBy, sortOrder } = normalizePaginationParams(searchCriteria);
+        const conditions: string[] = [];
+        const params: any[] = [];
+
+        if (searchCriteria.name) {
+            conditions.push('p.name LIKE ?');
+            params.push('%' + searchCriteria.name + '%');
+        }
+        if (searchCriteria.skill) {
+            conditions.push('(ts.skill_name LIKE ? OR ts.skill_category LIKE ?)');
+            params.push('%' + searchCriteria.skill + '%', '%' + searchCriteria.skill + '%');
+        }
+        if (searchCriteria.crop) {
+            conditions.push('rtp.main_crops LIKE ?');
+            params.push('%' + searchCriteria.crop + '%');
+        }
+
+        const minAgeValue = searchCriteria.minAge ?? searchCriteria.age_min;
+        const maxAgeValue = searchCriteria.maxAge ?? searchCriteria.age_max;
+
+        if (minAgeValue !== undefined) {
+            conditions.push('p.age >= ?');
+            params.push(parseInt(String(minAgeValue), 10));
+        }
+        if (maxAgeValue !== undefined) {
+            conditions.push('p.age <= ?');
+            params.push(parseInt(String(maxAgeValue), 10));
+        }
+        if (searchCriteria.gender) {
+            conditions.push('p.gender = ?');
+            params.push(searchCriteria.gender);
+        }
+        if (searchCriteria.education_level) {
+            conditions.push('p.education_level = ?');
+            params.push(searchCriteria.education_level);
+        }
+
+        const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+        const countSql = `
+            SELECT COUNT(DISTINCT p.id) as total
+            FROM persons p
+            LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
+            LEFT JOIN talent_skills ts ON p.id = ts.person_id
+            ${whereClause}
+        `;
+
+        const dataSql = `
+            SELECT DISTINCT p.*,
+                   rtp.main_crops,
+                   rtp.farming_years,
+                   rtp.cooperation_willingness,
+                   GROUP_CONCAT(DISTINCT ts.skill_name) as skills
+            FROM persons p
+            LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
+            LEFT JOIN talent_skills ts ON p.id = ts.person_id
+            ${whereClause}
+            GROUP BY p.id
+            ORDER BY p.${sortBy} ${sortOrder}
+            LIMIT ? OFFSET ?
+        `;
+
+        const countRows = await executeQuery(countSql, params);
+        const total = Number(countRows?.[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit);
+
+        const rows = await executeQuery(dataSql, [...params, limit, offset]);
+
+        return {
+            data: rows || [],
+            total,
+            page,
+            limit,
+            totalPages
+        };
+    } catch (error: any) {
+        logger.error('Error searching paginated talents in MySQL', {
+            searchCriteria,
+            error: error.message
+        });
+        throw error;
+    }
+};
+
+// ==================== 批量操作方法 ====================
+
+const BATCH_UPDATE_ALLOWED_FIELDS = ['education_level', 'employment_status', 'political_status', 'address', 'phone'] as const;
+type BatchUpdateField = typeof BATCH_UPDATE_ALLOWED_FIELDS[number];
+
+const batchDeletePersons = async (ids: number[]): Promise<number> => {
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        const placeholders = ids.map(() => '?').join(',');
+
+        const [countRows] = await conn.execute(
+            `SELECT COUNT(*) as count FROM persons WHERE id IN (${placeholders})`,
+            ids
+        );
+        const existingCount = (countRows as Array<{ count: number }>)[0]?.count ?? 0;
+
+        if (existingCount === 0) {
+            throw new Error('未找到指定的人员信息');
+        }
+
+        await conn.execute(`DELETE FROM cooperation_intentions WHERE person_id IN (${placeholders})`, ids);
+        await conn.execute(`DELETE FROM talent_skills WHERE person_id IN (${placeholders})`, ids);
+        await conn.execute(`DELETE FROM rural_talent_profile WHERE person_id IN (${placeholders})`, ids);
+
+        const [result] = await conn.execute(`DELETE FROM persons WHERE id IN (${placeholders})`, ids);
+        const deletedCount = (result as ResultSetHeader).affectedRows;
+
+        await conn.commit();
+
+        logger.info('Batch delete completed (MySQL)', { requestedIds: ids.length, deletedCount });
+        return deletedCount;
+    } catch (error: any) {
+        await conn.rollback();
+        logger.error('Error in batch delete (MySQL)', { ids, error: error.message });
+        throw error;
+    } finally {
+        conn.release();
+    }
+};
+
+const batchUpdatePersons = async (ids: number[], updates: Record<string, unknown>): Promise<number> => {
+    const conn = await pool.getConnection();
+    try {
+        const filteredUpdates: Partial<Record<BatchUpdateField, unknown>> = {};
+        for (const key of Object.keys(updates)) {
+            if ((BATCH_UPDATE_ALLOWED_FIELDS as readonly string[]).includes(key)) {
+                filteredUpdates[key as BatchUpdateField] = updates[key];
+            }
+        }
+
+        if (Object.keys(filteredUpdates).length === 0) {
+            throw new Error('没有可更新的有效字段');
+        }
+
+        await conn.beginTransaction();
+
+        const placeholders = ids.map(() => '?').join(',');
+
+        const [countRows] = await conn.execute(
+            `SELECT COUNT(*) as count FROM persons WHERE id IN (${placeholders})`,
+            ids
+        );
+        const existingCount = (countRows as Array<{ count: number }>)[0]?.count ?? 0;
+
+        if (existingCount === 0) {
+            throw new Error('未找到指定的人员信息');
+        }
+
+        const setClauses: string[] = [];
+        const setParams: (string | number | null)[] = [];
+
+        for (const [field, value] of Object.entries(filteredUpdates)) {
+            setClauses.push(`${field} = ?`);
+            setParams.push(value as string | number | null);
+        }
+
+        setClauses.push('updated_at = CURRENT_TIMESTAMP');
+
+        const sql = `UPDATE persons SET ${setClauses.join(', ')} WHERE id IN (${placeholders})`;
+        const [result] = await conn.execute(sql, [...setParams, ...ids]);
+        const updatedCount = (result as ResultSetHeader).affectedRows;
+
+        await conn.commit();
+
+        logger.info('Batch update completed (MySQL)', { requestedIds: ids.length, updatedCount, fields: Object.keys(filteredUpdates) });
+        return updatedCount;
+    } catch (error: any) {
+        await conn.rollback();
+        logger.error('Error in batch update (MySQL)', { ids, updates, error: error.message });
+        throw error;
+    } finally {
+        conn.release();
+    }
+};
+
+const validatePersonData = (data: Record<string, unknown>, rowIndex: number): ImportError[] => {
+    const errors: ImportError[] = [];
+
+    if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
+        errors.push({ row: rowIndex, field: 'name', message: '姓名不能为空' });
+    }
+
+    const age = Number(data.age);
+    if (isNaN(age) || !Number.isInteger(age) || age < 1 || age > 150) {
+        errors.push({ row: rowIndex, field: 'age', message: '年龄必须是1-150之间的整数' });
+    }
+
+    if (data.email && typeof data.email === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        errors.push({ row: rowIndex, field: 'email', message: '邮箱格式不正确' });
+    }
+
+    if (data.phone && typeof data.phone === 'string' && !/^1[3-9]\d{9}$/.test(data.phone)) {
+        errors.push({ row: rowIndex, field: 'phone', message: '手机号格式不正确' });
+    }
+
+    return errors;
+};
+
+const importPersons = async (personDataArray: Record<string, unknown>[]): Promise<ImportResult> => {
+    const result: ImportResult = {
+        total: personDataArray.length,
+        success: 0,
+        failed: 0,
+        errors: []
+    };
+
+    const BATCH_SIZE = 50;
+
+    for (let batchStart = 0; batchStart < personDataArray.length; batchStart += BATCH_SIZE) {
+        const batch = personDataArray.slice(batchStart, batchStart + BATCH_SIZE);
+        const conn = await pool.getConnection();
+
+        try {
+            await conn.beginTransaction();
+
+            for (let i = 0; i < batch.length; i++) {
+                const rowIndex = batchStart + i + 1;
+                const data = batch[i];
+
+                const validationErrors = validatePersonData(data, rowIndex);
+                if (validationErrors.length > 0) {
+                    result.errors.push(...validationErrors);
+                    result.failed++;
+                    continue;
+                }
+
+                try {
+                    const email = data.email as string || `import_${Date.now()}_${rowIndex}@temp.local`;
+                    const phone = data.phone as string || `0000000${rowIndex}`;
+
+                    await conn.execute(
+                        `INSERT INTO persons
+                            (name, age, gender, email, phone, address, education_level, political_status, employment_status)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            data.name as string,
+                            Number(data.age),
+                            (data.gender as string) || '其他',
+                            email,
+                            phone,
+                            (data.address as string) || null,
+                            (data.education_level as string) || null,
+                            (data.political_status as string) || null,
+                            (data.employment_status as string) || null
+                        ]
+                    );
+                    result.success++;
+                } catch (insertErr: any) {
+                    const errCode = insertErr?.code;
+                    if (errCode === 'ER_DUP_ENTRY') {
+                        result.errors.push({
+                            row: rowIndex,
+                            field: 'email_or_phone',
+                            message: '邮箱或手机号已存在'
+                        });
+                    } else {
+                        result.errors.push({
+                            row: rowIndex,
+                            field: 'unknown',
+                            message: insertErr.message
+                        });
+                    }
+                    result.failed++;
+                }
+            }
+
+            await conn.commit();
+        } catch (txErr: any) {
+            await conn.rollback();
+            logger.error('Import batch transaction failed (MySQL)', {
+                batchStart,
+                batchSize: batch.length,
+                error: txErr.message
+            });
+            for (let i = 0; i < batch.length; i++) {
+                const alreadyProcessed = result.success + result.failed;
+                if (i >= alreadyProcessed - batchStart) {
+                    result.errors.push({
+                        row: batchStart + i + 1,
+                        field: 'transaction',
+                        message: '事务失败: ' + txErr.message
+                    });
+                    result.failed++;
+                }
+            }
+        } finally {
+            conn.release();
+        }
+    }
+
+    logger.info('Import completed (MySQL)', {
+        total: result.total,
+        success: result.success,
+        failed: result.failed
+    });
+
+    return result;
+};
+
+const getExistingPersonIds = async (ids: number[]): Promise<number[]> => {
+    try {
+        const placeholders = ids.map(() => '?').join(',');
+        const rows = await executeQuery(
+            `SELECT id FROM persons WHERE id IN (${placeholders})`,
+            ids
+        );
+        return (rows || []).map((r: { id: number }) => r.id);
+    } catch (error: any) {
+        logger.error('Error checking existing person IDs (MySQL)', { error: error.message });
+        throw error;
+    }
+};
+
+// ==================== 收藏方法 ====================
+
+const addFavorite = async (userId: number, personId: number, notes?: string): Promise<any> => {
+    try {
+        const sql = 'INSERT INTO favorites (user_id, person_id, notes) VALUES (?, ?, ?)';
+        const result = await executeQuery(sql, [userId, personId, notes || '']);
+        const insertId = (result as ResultSetHeader).insertId;
+        logger.info('Favorite added (MySQL)', { userId, personId, insertId });
+        return { id: insertId, user_id: userId, person_id: personId, notes: notes || '' };
+    } catch (error: any) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            throw new Error('已收藏该人才');
+        }
+        logger.error('Error adding favorite (MySQL)', { error: error.message, userId, personId });
+        throw error;
+    }
+};
+
+const removeFavorite = async (userId: number, personId: number): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'DELETE FROM favorites WHERE user_id = ? AND person_id = ?',
+            [userId, personId]
+        );
+        return (result as ResultSetHeader).affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error removing favorite (MySQL)', { error: error.message, userId, personId });
+        throw error;
+    }
+};
+
+const getUserFavorites = async (userId: number): Promise<any[]> => {
+    try {
+        const sql = `
+            SELECT f.*, p.name as person_name, p.age as person_age, p.gender as person_gender,
+                   p.education_level as person_education_level, p.address as person_address
+            FROM favorites f
+            LEFT JOIN persons p ON f.person_id = p.id
+            WHERE f.user_id = ?
+            ORDER BY f.created_at DESC
+        `;
+        return await executeQuery(sql, [userId]);
+    } catch (error: any) {
+        logger.error('Error getting user favorites (MySQL)', { error: error.message, userId });
+        throw error;
+    }
+};
+
+const updateFavoriteNotes = async (userId: number, personId: number, notes: string): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'UPDATE favorites SET notes = ? WHERE user_id = ? AND person_id = ?',
+            [notes, userId, personId]
+        );
+        return (result as ResultSetHeader).affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error updating favorite notes (MySQL)', { error: error.message, userId, personId });
+        throw error;
+    }
+};
+
+const isFavorite = async (userId: number, personId: number): Promise<boolean> => {
+    try {
+        const rows = await executeQuery(
+            'SELECT COUNT(*) as count FROM favorites WHERE user_id = ? AND person_id = ?',
+            [userId, personId]
+        );
+        return (rows?.[0]?.count ?? 0) > 0;
+    } catch (error: any) {
+        logger.error('Error checking favorite (MySQL)', { error: error.message, userId, personId });
+        throw error;
+    }
+};
+
+// ==================== 通知方法 ====================
+
+const createNotification = async (userId: number, type: string, title: string, content?: string, link?: string): Promise<any> => {
+    try {
+        const sql = 'INSERT INTO notifications (user_id, type, title, content, link) VALUES (?, ?, ?, ?, ?)';
+        const result = await executeQuery(sql, [userId, type, title, content || '', link || '']);
+        const insertId = (result as ResultSetHeader).insertId;
+        logger.info('Notification created (MySQL)', { userId, type, notificationId: insertId });
+        return { id: insertId, user_id: userId, type, title, content: content || '', link: link || '' };
+    } catch (error: any) {
+        logger.error('Error creating notification (MySQL)', { error: error.message, userId, type });
+        throw error;
+    }
+};
+
+const getUserNotifications = async (userId: number, page?: number, limit?: number): Promise<any[]> => {
+    try {
+        const actualPage = page || 1;
+        const actualLimit = Math.min(limit || 20, 100);
+        const offset = (actualPage - 1) * actualLimit;
+        const rows = await executeQuery(
+            'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            [userId, actualLimit, offset]
+        );
+        return (rows || []).map((n: any) => ({
+            ...n,
+            is_read: n.is_read === 1 || n.is_read === true
+        }));
+    } catch (error: any) {
+        logger.error('Error getting user notifications (MySQL)', { error: error.message, userId });
+        throw error;
+    }
+};
+
+const getUnreadNotificationCount = async (userId: number): Promise<number> => {
+    try {
+        const rows = await executeQuery(
+            'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
+            [userId]
+        );
+        return rows?.[0]?.count ?? 0;
+    } catch (error: any) {
+        logger.error('Error getting unread count (MySQL)', { error: error.message, userId });
+        throw error;
+    }
+};
+
+const markNotificationRead = async (userId: number, notificationId: number): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?',
+            [notificationId, userId]
+        );
+        return (result as ResultSetHeader).affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error marking notification read (MySQL)', { error: error.message });
+        throw error;
+    }
+};
+
+const markAllNotificationsRead = async (userId: number): Promise<number> => {
+    try {
+        const result = await executeQuery(
+            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0',
+            [userId]
+        );
+        return (result as ResultSetHeader).affectedRows;
+    } catch (error: any) {
+        logger.error('Error marking all notifications read (MySQL)', { error: error.message });
+        throw error;
+    }
+};
+
+const deleteNotification = async (userId: number, notificationId: number): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'DELETE FROM notifications WHERE id = ? AND user_id = ?',
+            [notificationId, userId]
+        );
+        return (result as ResultSetHeader).affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error deleting notification (MySQL)', { error: error.message });
+        throw error;
+    }
+};
+
+// ==================== 审计日志方法 ====================
+
+const logAudit = async (
+    userId: number | null, username: string | null, action: string,
+    resourceType: string, resourceId: number | null, details: string,
+    ip: string | null, userAgent: string | null
+): Promise<void> => {
+    try {
+        await executeQuery(
+            `INSERT INTO audit_logs (user_id, username, action, resource_type, resource_id, details, ip_address, user_agent)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, username, action, resourceType, resourceId, details, ip, userAgent]
+        );
+    } catch (error: any) {
+        logger.error('Error logging audit (MySQL)', { error: error.message, action, resourceType });
+    }
+};
+
+const getAuditLogs = async (filters: any): Promise<any> => {
+    try {
+        const conditions: string[] = [];
+        const params: any[] = [];
+
+        if (filters.action) {
+            conditions.push('action = ?');
+            params.push(filters.action);
+        }
+        if (filters.resource_type) {
+            conditions.push('resource_type = ?');
+            params.push(filters.resource_type);
+        }
+        if (filters.user_id) {
+            conditions.push('user_id = ?');
+            params.push(filters.user_id);
+        }
+        if (filters.date_from) {
+            conditions.push('created_at >= ?');
+            params.push(filters.date_from);
+        }
+        if (filters.date_to) {
+            conditions.push('created_at <= ?');
+            params.push(filters.date_to);
+        }
+
+        const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+        const page = filters.page || 1;
+        const limit = Math.min(filters.limit || 20, 100);
+        const offset = (page - 1) * limit;
+
+        const countRows = await executeQuery(`SELECT COUNT(*) as total FROM audit_logs ${whereClause}`, params);
+        const total = countRows?.[0]?.total || 0;
+
+        const rows = await executeQuery(
+            `SELECT * FROM audit_logs ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+            [...params, limit, offset]
+        );
+
+        return {
+            data: rows || [],
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
+    } catch (error: any) {
+        logger.error('Error getting audit logs (MySQL)', { error: error.message });
+        throw error;
+    }
+};
+
+const getAuditStats = async (): Promise<any> => {
+    try {
+        const rows = await executeQuery(
+            `SELECT action, resource_type, COUNT(*) as count
+             FROM audit_logs
+             GROUP BY action, resource_type
+             ORDER BY count DESC`,
+            []
+        );
+        return rows || [];
+    } catch (error: any) {
+        logger.error('Error getting audit stats (MySQL)', { error: error.message });
+        throw error;
+    }
+};
+
 export default {
     initDatabase,
     testConnection,
     getAllPersons,
+    getAllPersonsPaginated,
     getAllPersonsWithDetails,
     getPersonById,
     createPerson,
@@ -1028,6 +1647,34 @@ export default {
 
     // 搜索相关
     searchTalents,
+    searchTalentsPaginated,
+
+    // 批量操作
+    batchDeletePersons,
+    batchUpdatePersons,
+    importPersons,
+    getExistingPersonIds,
+    validatePersonData,
+
+    // 收藏方法
+    addFavorite,
+    removeFavorite,
+    getUserFavorites,
+    updateFavoriteNotes,
+    isFavorite,
+
+    // 通知方法
+    createNotification,
+    getUserNotifications,
+    getUnreadNotificationCount,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+
+    // 审计日志方法
+    logAudit,
+    getAuditLogs,
+    getAuditStats,
 
     // 工具方法
     closePool

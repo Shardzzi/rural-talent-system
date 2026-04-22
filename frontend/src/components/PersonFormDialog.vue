@@ -1,3 +1,5 @@
+<!-- DEPRECATED: This component is superseded by PersonFormWizard (person-form/PersonFormWizard.vue).
+     Kept for rollback purposes. Do not use in new code. -->
 <template>
   <el-dialog
     v-model="visible"
@@ -73,6 +75,14 @@
           <el-col :span="12">
             <el-form-item label="邮箱" prop="email">
               <el-input v-model="form.email" placeholder="请输入邮箱地址" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="身份证号" prop="id_card">
+              <el-input v-model="form.id_card" placeholder="请输入身份证号" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -504,6 +514,10 @@ export default {
       proficiency: null,
       experience_years: null
     }])
+
+    const isEmptySkillRow = (skill) => {
+      return !skill.category && !skill.name && skill.proficiency === null && skill.experience_years === null
+    }
     
     const visible = computed({
       get: () => props.modelValue,
@@ -519,7 +533,7 @@ export default {
       education_level: '',
       phone: '',
       email: '',
-      id_number: '',
+      id_card: '',
       address: '',
       employment_status: '',
       political_status: '',
@@ -569,7 +583,7 @@ export default {
       email: [
         { required: false, type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
       ],
-      id_number: [
+      id_card: [
         { required: false, pattern: /^\d{17}[\dXx]$/, message: '请输入18位有效身份证号', trigger: ['blur', 'change'] }
       ],
       address: [
@@ -739,6 +753,7 @@ export default {
           education_level: newPerson.education_level || '',
           phone: newPerson.phone || '',
           email: newPerson.email || '',
+          id_card: newPerson.id_card || newPerson.id_number || '',
           address: newPerson.address || '',
           employment_status: newPerson.employment_status || '',
           political_status: newPerson.political_status || '',
@@ -786,6 +801,7 @@ export default {
         education_level: '',
         phone: '',
         email: '',
+        id_card: '',
         address: '',
         employment_status: '',
         political_status: '',
@@ -844,6 +860,11 @@ export default {
         const formData = { ...form }
         
         // 处理技能数据
+        const emptySkillsCount = skillsList.value.filter(isEmptySkillRow).length
+        if (emptySkillsCount > 0) {
+          ElMessage.warning(`已移除 ${emptySkillsCount} 条未填写的技能记录`)
+        }
+
         const validSkills = skillsList.value.filter(skill => 
           skill.category && skill.name && skill.proficiency !== null && skill.experience_years !== null
         )
@@ -856,6 +877,7 @@ export default {
           education_level: formData.education_level,
           phone: formData.phone,
           email: formData.email,
+          id_card: formData.id_card,
           address: formData.address,
           employment_status: formData.employment_status,
           political_status: formData.political_status,

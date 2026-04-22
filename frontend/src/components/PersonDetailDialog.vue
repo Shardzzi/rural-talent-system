@@ -129,6 +129,17 @@
         </div>
       </el-card>
 
+      <!-- 技能雷达图 -->
+      <el-card class="radar-card" v-if="currentPerson.talent_skills && currentPerson.talent_skills.length > 1">
+        <template #header>
+          <h4>
+            <el-icon><TrendCharts /></el-icon>
+            技能画像
+          </h4>
+        </template>
+        <TalentRadarChart :skills="currentPerson.talent_skills" />
+      </el-card>
+
       <!-- 工作经验卡片 -->
       <el-card class="experience-card" v-if="currentPerson.experience">
         <template #header>
@@ -285,6 +296,7 @@
 <script>
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import TalentRadarChart from './charts/TalentRadarChart.vue'
 import { 
   Lock, 
   Star, 
@@ -293,7 +305,8 @@ import {
   User, 
   CopyDocument,
   Platform,
-  Connection
+  Connection,
+  TrendCharts
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -308,7 +321,9 @@ export default {
     User,
     CopyDocument,
     Platform,
-    Connection
+    Connection,
+    TrendCharts,
+    TalentRadarChart,
   },
   props: {
     modelValue: {
@@ -380,9 +395,9 @@ export default {
       }
     }
     
-    // 监听visible和person变化
-    watch([() => props.modelValue, () => props.person], ([newVisible, newPerson]) => {
-      if (newVisible && newPerson) {
+    // 仅在对话框打开时加载一次详情，避免 person 变更触发重复请求
+    watch(() => props.modelValue, (newVisible) => {
+      if (newVisible && props.person) {
         loadDetailedInfo()
       }
     })
@@ -580,13 +595,15 @@ export default {
 .skills-card, 
 .experience-card, 
 .meta-card, 
-.guest-tip-card {
+.guest-tip-card,
+.radar-card {
   margin-bottom: 20px;
 }
 
 .skills-card h4,
 .experience-card h4,
-.meta-card h4 {
+.meta-card h4,
+.radar-card h4 {
   margin: 0;
   color: #333;
   font-size: 16px;

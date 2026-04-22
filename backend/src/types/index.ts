@@ -82,10 +82,19 @@ export interface DatabaseResult {
 
 // 分页参数
 export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  page?: number; // default 1
+  limit?: number; // default 20, max 100
+  sortBy?: string; // whitelist: name, age, education_level, created_at
+  sortOrder?: 'asc' | 'desc'; // default 'asc'
+}
+
+// 分页结果
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 // 搜索参数
@@ -186,6 +195,36 @@ export interface PersonFullProfile {
   cooperation?: Record<string, unknown> | null;
 }
 
+// 批量操作类型
+export interface BatchDeleteRequest {
+  ids: number[];
+}
+
+export interface BatchUpdateRequest {
+  ids: number[];
+  updates: Record<string, unknown>;
+}
+
+export interface ImportError {
+  row: number;
+  field: string;
+  message: string;
+}
+
+export interface ImportPreviewRow {
+  rowIndex: number;
+  data: Record<string, unknown>;
+  errors: string[];
+  valid: boolean;
+}
+
+export interface ImportResult {
+  total: number;
+  success: number;
+  failed: number;
+  errors: ImportError[];
+}
+
 // 用户-人员关联查询结果
 export interface UserPersonRow {
   id: number;
@@ -206,4 +245,58 @@ export interface UserPersonRow {
   political_status?: string;
   employment_status?: string;
   [key: string]: unknown;
+}
+
+// 收藏相关类型
+export interface Favorite {
+  id: number;
+  user_id: number;
+  person_id: number;
+  notes: string;
+  created_at: string;
+  person?: Person;
+}
+
+export interface FavoriteWithPerson extends Favorite {
+  person_name: string;
+  person_age: number;
+  person_gender: string;
+  person_education_level?: string;
+  person_address?: string;
+}
+
+// 通知相关类型
+export interface NotificationItem {
+  id: number;
+  user_id: number;
+  type: 'system' | 'favorite' | 'import' | 'audit' | 'info';
+  title: string;
+  content: string;
+  is_read: boolean;
+  link: string;
+  created_at: string;
+}
+
+// 审计日志相关类型
+export interface AuditLog {
+  id: number;
+  user_id: number | null;
+  username: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: number | null;
+  details: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface AuditLogFilter {
+  action?: string;
+  resource_type?: string;
+  user_id?: number;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  limit?: number;
 }

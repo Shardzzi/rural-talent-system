@@ -16,6 +16,8 @@ import {
   ElTag,
   ElIcon,
   ElPageHeader,
+  ElBreadcrumb,
+  ElBreadcrumbItem,
   ElContainer,
   ElHeader,
   ElMain,
@@ -29,9 +31,27 @@ import {
   ElTimeline,
   ElTimelineItem,
   ElLoading,
-  ElConfigProvider
+  ElConfigProvider,
+  ElUpload,
+  ElSteps,
+  ElStep,
+  ElProgress,
+  ElResult,
+  ElCollapse,
+  ElCollapseItem,
+  ElDrawer,
+  ElSlider,
+  ElSwitch,
+  ElTabs,
+  ElTabPane,
+  ElBadge,
+  ElPopover,
+  ElScrollbar,
+  ElTooltip,
+  ElCheckbox
 } from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import './styles/index.css'
 import 'element-plus/dist/index.css'
 import axios from 'axios'
 import { createPinia } from 'pinia'
@@ -117,6 +137,8 @@ const components = [
   ElTag,
   ElIcon,
   ElPageHeader,
+  ElBreadcrumb,
+  ElBreadcrumbItem,
   ElContainer,
   ElHeader,
   ElMain,
@@ -128,7 +150,24 @@ const components = [
   ElEmpty,
   ElTimeline,
   ElTimelineItem,
-  ElConfigProvider
+  ElConfigProvider,
+  ElUpload,
+  ElSteps,
+  ElStep,
+  ElProgress,
+  ElResult,
+  ElCollapse,
+  ElCollapseItem,
+  ElDrawer,
+  ElSlider,
+  ElSwitch,
+  ElTabs,
+  ElTabPane,
+  ElBadge,
+  ElPopover,
+  ElScrollbar,
+  ElTooltip,
+  ElCheckbox
 ]
 
 components.forEach(component => {

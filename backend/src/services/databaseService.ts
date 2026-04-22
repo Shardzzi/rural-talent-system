@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs-extra';
 import logger from '../config/logger';
-import { DatabaseResult, User, Person, SearchParams } from '../types';
+import { DatabaseResult, User, Person, SearchParams, PaginationParams, PaginatedResult, ImportResult, ImportError } from '../types';
 
 const sqlite = sqlite3.verbose();
 // 使用相对路径，相对于项目根目录的data文件夹
@@ -79,6 +79,28 @@ const createValidationError = (message: string) => {
     const validationError = new Error(message) as Error & { code?: string };
     validationError.code = 'VALIDATION_ERROR';
     return validationError;
+};
+
+const PAGINATION_SORT_WHITELIST = ['name', 'age', 'education_level', 'created_at'] as const;
+type PaginationSortColumn = typeof PAGINATION_SORT_WHITELIST[number];
+
+const normalizePaginationParams = (params: PaginationParams = {}) => {
+    const parsedPage = Number(params.page);
+    const parsedLimit = Number(params.limit);
+
+    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+    const limitRaw = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.floor(parsedLimit) : 20;
+    const limit = Math.min(limitRaw, 100);
+    const offset = (page - 1) * limit;
+
+    const sortByInput = typeof params.sortBy === 'string' ? params.sortBy : '';
+    const sortBy = (PAGINATION_SORT_WHITELIST as readonly string[]).includes(sortByInput)
+        ? (sortByInput as PaginationSortColumn)
+        : 'created_at';
+
+    const sortOrder = params.sortOrder?.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+
+    return { page, limit, offset, sortBy, sortOrder };
 };
 
 const safeRollback = async (db: sqlite3.Database, context: string) => {
@@ -324,6 +346,66 @@ const initDatabase = async (): Promise<void> => {
                     logger.info('User sessions table created or already exists');
                 });
 
+                // 创建收藏表
+                db.run(`CREATE TABLE IF NOT EXISTS favorites (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    person_id INTEGER NOT NULL,
+                    notes TEXT DEFAULT '',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id),
+                    FOREIGN KEY (person_id) REFERENCES persons(id),
+                    UNIQUE(user_id, person_id)
+                )`, (err) => {
+                    if (err) {
+                        logger.error('Error creating favorites table', { error: err.message, stack: err.stack });
+                        reject(err);
+                        return;
+                    }
+                    logger.info('Favorites table created or already exists');
+                });
+
+                // 创建通知表
+                db.run(`CREATE TABLE IF NOT EXISTS notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    type TEXT NOT NULL DEFAULT 'system',
+                    title TEXT NOT NULL,
+                    content TEXT DEFAULT '',
+                    is_read INTEGER DEFAULT 0,
+                    link TEXT DEFAULT '',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )`, (err) => {
+                    if (err) {
+                        logger.error('Error creating notifications table', { error: err.message, stack: err.stack });
+                        reject(err);
+                        return;
+                    }
+                    logger.info('Notifications table created or already exists');
+                });
+
+                // 创建审计日志表
+                db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    username TEXT,
+                    action TEXT NOT NULL,
+                    resource_type TEXT NOT NULL,
+                    resource_id INTEGER,
+                    details TEXT DEFAULT '',
+                    ip_address TEXT,
+                    user_agent TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`, (err) => {
+                    if (err) {
+                        logger.error('Error creating audit_logs table', { error: err.message, stack: err.stack });
+                        reject(err);
+                        return;
+                    }
+                    logger.info('Audit logs table created or already exists');
+                });
+
                 // 检查是否有数据，如果没有则插入初始数据
                 db.get("SELECT COUNT(*) as count FROM persons", (err, row: any) => {
                     if (err) {
@@ -558,6 +640,55 @@ const getAllPersons = async () => {
             
             db.close();
             resolve(rows);
+        });
+    });
+};
+
+// 获取所有人员信息（分页）
+const getAllPersonsPaginated = async (params: PaginationParams = {}): Promise<PaginatedResult<Person>> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        const { page, limit, offset, sortBy, sortOrder } = normalizePaginationParams(params);
+
+        db.get('SELECT COUNT(*) as total FROM persons', (countErr, countRow: any) => {
+            if (countErr) {
+                logger.error('Error counting persons for pagination', {
+                    error: countErr.message,
+                    stack: countErr.stack
+                });
+                db.close();
+                reject(countErr);
+                return;
+            }
+
+            const total = Number(countRow?.total || 0);
+            const totalPages = Math.ceil(total / limit);
+            const query = `SELECT * FROM persons ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
+
+            db.all(query, [limit, offset], (listErr, rows: Person[]) => {
+                if (listErr) {
+                    logger.error('Error getting paginated persons', {
+                        error: listErr.message,
+                        stack: listErr.stack,
+                        page,
+                        limit,
+                        sortBy,
+                        sortOrder
+                    });
+                    db.close();
+                    reject(listErr);
+                    return;
+                }
+
+                db.close();
+                resolve({
+                    data: rows || [],
+                    total,
+                    page,
+                    limit,
+                    totalPages
+                });
+            });
         });
     });
 };
@@ -1378,6 +1509,114 @@ const searchTalents = async (searchCriteria) => {
             });
             db.close();
             resolve(rows || []);
+        });
+    });
+};
+
+// 搜索人才（分页）
+const searchTalentsPaginated = async (searchCriteria: SearchParams & PaginationParams): Promise<PaginatedResult<Person>> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        const { page, limit, offset, sortBy, sortOrder } = normalizePaginationParams(searchCriteria);
+
+        const nameLike = searchCriteria.name ? '%' + searchCriteria.name + '%' : null;
+        const skillLike = searchCriteria.skill ? '%' + searchCriteria.skill + '%' : null;
+        const cropLike = searchCriteria.crop ? '%' + searchCriteria.crop + '%' : null;
+        const minAgeValue = searchCriteria.minAge ?? searchCriteria.age_min;
+        const maxAgeValue = searchCriteria.maxAge ?? searchCriteria.age_max;
+        const minAge = minAgeValue !== undefined ? parseInt(String(minAgeValue), 10) : null;
+        const maxAge = maxAgeValue !== undefined ? parseInt(String(maxAgeValue), 10) : null;
+        const gender = searchCriteria.gender || null;
+        const educationLevel = searchCriteria.education_level || null;
+
+        const queryParams = [
+            searchCriteria.name ? 1 : 0,
+            nameLike,
+            searchCriteria.skill ? 1 : 0,
+            skillLike,
+            skillLike,
+            searchCriteria.crop ? 1 : 0,
+            cropLike,
+            minAgeValue !== undefined ? 1 : 0,
+            minAge,
+            maxAgeValue !== undefined ? 1 : 0,
+            maxAge,
+            searchCriteria.gender ? 1 : 0,
+            gender,
+            searchCriteria.education_level ? 1 : 0,
+            educationLevel
+        ];
+
+        const countQuery = `
+            SELECT COUNT(DISTINCT p.id) as total
+            FROM persons p
+            LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
+            LEFT JOIN talent_skills ts ON p.id = ts.person_id
+            WHERE (? = 0 OR p.name LIKE ?)
+              AND (? = 0 OR (ts.skill_name LIKE ? OR ts.skill_category LIKE ?))
+              AND (? = 0 OR rtp.main_crops LIKE ?)
+              AND (? = 0 OR p.age >= ?)
+              AND (? = 0 OR p.age <= ?)
+              AND (? = 0 OR p.gender = ?)
+              AND (? = 0 OR p.education_level = ?)
+        `;
+
+        const dataQuery = `
+            SELECT DISTINCT p.*, 
+                   rtp.main_crops, 
+                   rtp.farming_years, 
+                   rtp.cooperation_willingness,
+                   GROUP_CONCAT(DISTINCT ts.skill_name) as skills
+            FROM persons p
+            LEFT JOIN rural_talent_profile rtp ON p.id = rtp.person_id
+            LEFT JOIN talent_skills ts ON p.id = ts.person_id
+            WHERE (? = 0 OR p.name LIKE ?)
+              AND (? = 0 OR (ts.skill_name LIKE ? OR ts.skill_category LIKE ?))
+              AND (? = 0 OR rtp.main_crops LIKE ?)
+              AND (? = 0 OR p.age >= ?)
+              AND (? = 0 OR p.age <= ?)
+              AND (? = 0 OR p.gender = ?)
+              AND (? = 0 OR p.education_level = ?)
+            GROUP BY p.id
+            ORDER BY p.${sortBy} ${sortOrder}
+            LIMIT ? OFFSET ?
+        `;
+
+        db.get(countQuery, queryParams, (countErr, countRow: any) => {
+            if (countErr) {
+                logger.error('Error counting paginated talent search results', {
+                    searchCriteria,
+                    error: countErr.message
+                });
+                db.close();
+                reject(countErr);
+                return;
+            }
+
+            const total = Number(countRow?.total || 0);
+            const totalPages = Math.ceil(total / limit);
+            const dataParams = [...queryParams, limit, offset];
+
+            db.all(dataQuery, dataParams, (dataErr, rows: Person[]) => {
+                if (dataErr) {
+                    logger.error('Error executing paginated talent search', {
+                        searchCriteria,
+                        error: dataErr.message
+                    });
+                    db.close();
+                    reject(dataErr);
+                    return;
+                }
+
+                db.close();
+                resolve({
+                    data: rows || [],
+                    total,
+                    page,
+                    limit,
+                    totalPages
+                });
+            });
         });
     });
 };
@@ -2267,9 +2506,552 @@ const updateComprehensivePerson = async (personId: number, data: {
     }
 };
 
+// ==================== 批量操作方法 ====================
+
+const BATCH_UPDATE_ALLOWED_FIELDS = ['education_level', 'employment_status', 'political_status', 'address', 'phone'] as const;
+type BatchUpdateField = typeof BATCH_UPDATE_ALLOWED_FIELDS[number];
+
+const batchDeletePersons = async (ids: number[]): Promise<number> => {
+    const db = createConnection();
+
+    try {
+        let deletedCount = 0;
+
+        await runInTransaction(db, 'batchDeletePersons', async () => {
+            const placeholders = ids.map(() => '?').join(',');
+
+            const countRow = await getDb<{ count: number }>(
+                db,
+                `SELECT COUNT(*) as count FROM persons WHERE id IN (${placeholders})`,
+                ids
+            );
+            const existingCount = countRow?.count ?? 0;
+
+            if (existingCount === 0) {
+                throw createValidationError('未找到指定的人员信息');
+            }
+
+            await runDb(db, `DELETE FROM rural_talent_profile WHERE person_id IN (${placeholders})`, ids);
+            await runDb(db, `DELETE FROM talent_skills WHERE person_id IN (${placeholders})`, ids);
+            await runDb(db, `DELETE FROM cooperation_intentions WHERE person_id IN (${placeholders})`, ids);
+
+            const result = await runDb(db, `DELETE FROM persons WHERE id IN (${placeholders})`, ids);
+            deletedCount = result.changes;
+        });
+
+        logger.info('Batch delete completed', { requestedIds: ids.length, deletedCount });
+        return deletedCount;
+    } catch (err: any) {
+        logger.error('Error in batch delete', { ids, error: err.message });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const batchUpdatePersons = async (ids: number[], updates: Record<string, unknown>): Promise<number> => {
+    const db = createConnection();
+
+    try {
+        const filteredUpdates: Partial<Record<BatchUpdateField, unknown>> = {};
+        for (const key of Object.keys(updates)) {
+            if ((BATCH_UPDATE_ALLOWED_FIELDS as readonly string[]).includes(key)) {
+                filteredUpdates[key as BatchUpdateField] = updates[key];
+            }
+        }
+
+        if (Object.keys(filteredUpdates).length === 0) {
+            throw createValidationError('没有可更新的有效字段');
+        }
+
+        let updatedCount = 0;
+
+        await runInTransaction(db, 'batchUpdatePersons', async () => {
+            const placeholders = ids.map(() => '?').join(',');
+
+            const countRow = await getDb<{ count: number }>(
+                db,
+                `SELECT COUNT(*) as count FROM persons WHERE id IN (${placeholders})`,
+                ids
+            );
+            const existingCount = countRow?.count ?? 0;
+
+            if (existingCount === 0) {
+                throw createValidationError('未找到指定的人员信息');
+            }
+
+            const setClauses: string[] = [];
+            const setParams: unknown[] = [];
+
+            for (const [field, value] of Object.entries(filteredUpdates)) {
+                setClauses.push(`${field} = ?`);
+                setParams.push(value);
+            }
+
+            setClauses.push('updated_at = CURRENT_TIMESTAMP');
+
+            const sql = `UPDATE persons SET ${setClauses.join(', ')} WHERE id IN (${placeholders})`;
+            const result = await runDb(db, sql, [...setParams, ...ids]);
+            updatedCount = result.changes;
+        });
+
+        logger.info('Batch update completed', { requestedIds: ids.length, updatedCount, fields: Object.keys(filteredUpdates) });
+        return updatedCount;
+    } catch (err: any) {
+        logger.error('Error in batch update', { ids, updates, error: err.message });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const validatePersonData = (data: Record<string, unknown>, rowIndex: number): ImportError[] => {
+    const errors: ImportError[] = [];
+
+    if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
+        errors.push({ row: rowIndex, field: 'name', message: '姓名不能为空' });
+    }
+
+    const age = Number(data.age);
+    if (isNaN(age) || !Number.isInteger(age) || age < 1 || age > 150) {
+        errors.push({ row: rowIndex, field: 'age', message: '年龄必须是1-150之间的整数' });
+    }
+
+    if (data.email && typeof data.email === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        errors.push({ row: rowIndex, field: 'email', message: '邮箱格式不正确' });
+    }
+
+    if (data.phone && typeof data.phone === 'string' && !/^1[3-9]\d{9}$/.test(data.phone)) {
+        errors.push({ row: rowIndex, field: 'phone', message: '手机号格式不正确' });
+    }
+
+    return errors;
+};
+
+const importPersons = async (personDataArray: Record<string, unknown>[]): Promise<ImportResult> => {
+    const result: ImportResult = {
+        total: personDataArray.length,
+        success: 0,
+        failed: 0,
+        errors: []
+    };
+
+    const BATCH_SIZE = 50;
+
+    for (let batchStart = 0; batchStart < personDataArray.length; batchStart += BATCH_SIZE) {
+        const batch = personDataArray.slice(batchStart, batchStart + BATCH_SIZE);
+        const db = createConnection();
+
+        try {
+            await runInTransaction(db, 'importPersons', async () => {
+                for (let i = 0; i < batch.length; i++) {
+                    const rowIndex = batchStart + i + 1;
+                    const data = batch[i];
+
+                    const validationErrors = validatePersonData(data, rowIndex);
+                    if (validationErrors.length > 0) {
+                        result.errors.push(...validationErrors);
+                        result.failed++;
+                        continue;
+                    }
+
+                    try {
+                        const email = data.email as string || `import_${Date.now()}_${rowIndex}@temp.local`;
+                        const phone = data.phone as string || `0000000${rowIndex}`;
+
+                        await runDb(
+                            db,
+                            `INSERT INTO persons
+                                (name, age, gender, email, phone, address, education_level, political_status, employment_status)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            [
+                                data.name,
+                                Number(data.age),
+                                data.gender || '其他',
+                                email,
+                                phone,
+                                data.address || null,
+                                data.education_level || null,
+                                data.political_status || null,
+                                data.employment_status || null
+                            ]
+                        );
+                        result.success++;
+                    } catch (insertErr: any) {
+                        if (isUniqueConstraintError(insertErr)) {
+                            result.errors.push({
+                                row: rowIndex,
+                                field: 'email_or_phone',
+                                message: '邮箱或手机号已存在'
+                            });
+                        } else {
+                            result.errors.push({
+                                row: rowIndex,
+                                field: 'unknown',
+                                message: insertErr.message
+                            });
+                        }
+                        result.failed++;
+                    }
+                }
+            });
+        } catch (txErr: any) {
+            logger.error('Import batch transaction failed', {
+                batchStart,
+                batchSize: batch.length,
+                error: txErr.message
+            });
+            for (let i = 0; i < batch.length; i++) {
+                const alreadyProcessed = result.success + result.failed;
+                if (i >= alreadyProcessed - batchStart) {
+                    result.errors.push({
+                        row: batchStart + i + 1,
+                        field: 'transaction',
+                        message: '事务失败: ' + txErr.message
+                    });
+                    result.failed++;
+                }
+            }
+        } finally {
+            await closeDb(db);
+        }
+    }
+
+    logger.info('Import completed', {
+        total: result.total,
+        success: result.success,
+        failed: result.failed
+    });
+
+    return result;
+};
+
+const getExistingPersonIds = async (ids: number[]): Promise<number[]> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        const placeholders = ids.map(() => '?').join(',');
+        db.all(
+            `SELECT id FROM persons WHERE id IN (${placeholders})`,
+            ids,
+            (err, rows: Array<{ id: number }>) => {
+                db.close();
+                if (err) {
+                    logger.error('Error checking existing person IDs', { error: err.message });
+                    reject(err);
+                } else {
+                    resolve((rows || []).map(r => r.id));
+                }
+            }
+        );
+    });
+};
+
+// ==================== 收藏方法 ====================
+
+const addFavorite = async (userId: number, personId: number, notes?: string): Promise<any> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'INSERT INTO favorites (user_id, person_id, notes) VALUES (?, ?, ?)',
+            [userId, personId, notes || '']
+        );
+        logger.info('Favorite added', { userId, personId, favoriteId: result.lastID });
+        return { id: result.lastID, user_id: userId, person_id: personId, notes: notes || '' };
+    } catch (err: any) {
+        if (isUniqueConstraintError(err)) {
+            throw new Error('已收藏该人才');
+        }
+        logger.error('Error adding favorite', { error: err.message, userId, personId });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const removeFavorite = async (userId: number, personId: number): Promise<boolean> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'DELETE FROM favorites WHERE user_id = ? AND person_id = ?',
+            [userId, personId]
+        );
+        return result.changes > 0;
+    } catch (err: any) {
+        logger.error('Error removing favorite', { error: err.message, userId, personId });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const getUserFavorites = async (userId: number): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        db.all(
+            `SELECT f.*, p.name as person_name, p.age as person_age, p.gender as person_gender,
+                    p.education_level as person_education_level, p.address as person_address
+             FROM favorites f
+             LEFT JOIN persons p ON f.person_id = p.id
+             WHERE f.user_id = ?
+             ORDER BY f.created_at DESC`,
+            [userId],
+            (err, rows) => {
+                db.close();
+                if (err) {
+                    logger.error('Error getting user favorites', { error: err.message, userId });
+                    reject(err);
+                } else {
+                    resolve(rows || []);
+                }
+            }
+        );
+    });
+};
+
+const updateFavoriteNotes = async (userId: number, personId: number, notes: string): Promise<boolean> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'UPDATE favorites SET notes = ? WHERE user_id = ? AND person_id = ?',
+            [notes, userId, personId]
+        );
+        return result.changes > 0;
+    } catch (err: any) {
+        logger.error('Error updating favorite notes', { error: err.message, userId, personId });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const isFavorite = async (userId: number, personId: number): Promise<boolean> => {
+    const db = createConnection();
+    try {
+        const row = await getDb<{ count: number }>(
+            db,
+            'SELECT COUNT(*) as count FROM favorites WHERE user_id = ? AND person_id = ?',
+            [userId, personId]
+        );
+        return (row?.count ?? 0) > 0;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+// ==================== 通知方法 ====================
+
+const createNotification = async (userId: number, type: string, title: string, content?: string, link?: string): Promise<any> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'INSERT INTO notifications (user_id, type, title, content, link) VALUES (?, ?, ?, ?, ?)',
+            [userId, type, title, content || '', link || '']
+        );
+        logger.info('Notification created', { userId, type, notificationId: result.lastID });
+        return { id: result.lastID, user_id: userId, type, title, content: content || '', link: link || '' };
+    } catch (err: any) {
+        logger.error('Error creating notification', { error: err.message, userId, type });
+        throw err;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const getUserNotifications = async (userId: number, page?: number, limit?: number): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        const actualPage = page || 1;
+        const actualLimit = Math.min(limit || 20, 100);
+        const offset = (actualPage - 1) * actualLimit;
+
+        db.all(
+            'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            [userId, actualLimit, offset],
+            (err, rows) => {
+                db.close();
+                if (err) {
+                    logger.error('Error getting user notifications', { error: err.message, userId });
+                    reject(err);
+                } else {
+                    resolve((rows || []).map((n: any) => ({
+                        ...n,
+                        is_read: n.is_read === 1
+                    })));
+                }
+            }
+        );
+    });
+};
+
+const getUnreadNotificationCount = async (userId: number): Promise<number> => {
+    const db = createConnection();
+    try {
+        const row = await getDb<{ count: number }>(
+            db,
+            'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
+            [userId]
+        );
+        return row?.count ?? 0;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const markNotificationRead = async (userId: number, notificationId: number): Promise<boolean> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?',
+            [notificationId, userId]
+        );
+        return result.changes > 0;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const markAllNotificationsRead = async (userId: number): Promise<number> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0',
+            [userId]
+        );
+        return result.changes;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const deleteNotification = async (userId: number, notificationId: number): Promise<boolean> => {
+    const db = createConnection();
+    try {
+        const result = await runDb(
+            db,
+            'DELETE FROM notifications WHERE id = ? AND user_id = ?',
+            [notificationId, userId]
+        );
+        return result.changes > 0;
+    } finally {
+        await closeDb(db);
+    }
+};
+
+// ==================== 审计日志方法 ====================
+
+const logAudit = async (
+    userId: number | null, username: string | null, action: string,
+    resourceType: string, resourceId: number | null, details: string,
+    ip: string | null, userAgent: string | null
+): Promise<void> => {
+    const db = createConnection();
+    try {
+        await runDb(
+            db,
+            `INSERT INTO audit_logs (user_id, username, action, resource_type, resource_id, details, ip_address, user_agent)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, username, action, resourceType, resourceId, details, ip, userAgent]
+        );
+    } catch (err: any) {
+        logger.error('Error logging audit', { error: err.message, action, resourceType });
+    } finally {
+        await closeDb(db);
+    }
+};
+
+const getAuditLogs = async (filters: any): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        const conditions: string[] = [];
+        const params: any[] = [];
+
+        if (filters.action) {
+            conditions.push('action = ?');
+            params.push(filters.action);
+        }
+        if (filters.resource_type) {
+            conditions.push('resource_type = ?');
+            params.push(filters.resource_type);
+        }
+        if (filters.user_id) {
+            conditions.push('user_id = ?');
+            params.push(filters.user_id);
+        }
+        if (filters.date_from) {
+            conditions.push('created_at >= ?');
+            params.push(filters.date_from);
+        }
+        if (filters.date_to) {
+            conditions.push('created_at <= ?');
+            params.push(filters.date_to);
+        }
+
+        const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+        const page = filters.page || 1;
+        const limit = Math.min(filters.limit || 20, 100);
+        const offset = (page - 1) * limit;
+
+        const countSql = `SELECT COUNT(*) as total FROM audit_logs ${whereClause}`;
+        db.get(countSql, params, (err, countRow: any) => {
+            if (err) {
+                db.close();
+                logger.error('Error counting audit logs', { error: err.message });
+                reject(err);
+                return;
+            }
+
+            const dataSql = `SELECT * FROM audit_logs ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+            db.all(dataSql, [...params, limit, offset], (err2, rows) => {
+                db.close();
+                if (err2) {
+                    logger.error('Error getting audit logs', { error: err2.message });
+                    reject(err2);
+                    return;
+                }
+                resolve({
+                    data: rows || [],
+                    total: countRow?.total || 0,
+                    page,
+                    limit,
+                    totalPages: Math.ceil((countRow?.total || 0) / limit)
+                });
+            });
+        });
+    });
+};
+
+const getAuditStats = async (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+        db.all(
+            `SELECT action, resource_type, COUNT(*) as count
+             FROM audit_logs
+             GROUP BY action, resource_type
+             ORDER BY count DESC`,
+            [],
+            (err, rows) => {
+                db.close();
+                if (err) {
+                    logger.error('Error getting audit stats', { error: err.message });
+                    reject(err);
+                } else {
+                    resolve(rows || []);
+                }
+            }
+        );
+    });
+};
+
 export default {
     initDatabase,
     getAllPersons,
+    getAllPersonsPaginated,
     getPersonById,
     createPerson,
     updatePerson,
@@ -2279,6 +3061,7 @@ export default {
     addSkill,
     deleteSkill,
     searchTalents,
+    searchTalentsPaginated,
     getTotalPersonsCount,
     getAverageAge,
     getTotalSkillsCount,
@@ -2309,5 +3092,32 @@ export default {
     
     // 综合信息处理方法
     createComprehensivePerson,
-    updateComprehensivePerson
+    updateComprehensivePerson,
+
+    // 批量操作方法
+    batchDeletePersons,
+    batchUpdatePersons,
+    importPersons,
+    getExistingPersonIds,
+    validatePersonData,
+
+    // 收藏方法
+    addFavorite,
+    removeFavorite,
+    getUserFavorites,
+    updateFavoriteNotes,
+    isFavorite,
+
+    // 通知方法
+    createNotification,
+    getUserNotifications,
+    getUnreadNotificationCount,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+
+    // 审计日志方法
+    logAudit,
+    getAuditLogs,
+    getAuditStats
 };

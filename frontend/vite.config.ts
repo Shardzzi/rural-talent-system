@@ -52,13 +52,13 @@ export default defineConfig({
         // 手动代码分割配置
         manualChunks: {
           // Vue核心库
-          'vue-vendor': ['vue', 'vue-router'],
+          'vue-vendor': ['vue', 'vue-router', 'pinia'],
           // UI组件库
           'element-plus': ['element-plus', '@element-plus/icons-vue'],
           // 状态管理和HTTP库
-          'utils': ['pinia', 'axios'],
-          // 其他第三方库
-          'vendor': ['core-js']
+          'utils': ['axios'],
+          // 图表库
+          'echarts': ['echarts', 'vue-echarts'],
         }
       }
     }
