@@ -1,12 +1,142 @@
-import sqlite3 from 'sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs-extra';
 import logger from '../config/logger';
 import { DatabaseResult, User, Person, SearchParams, PaginationParams, PaginatedResult, ImportResult, ImportError } from '../types';
 
-const sqlite = sqlite3.verbose();
 // 使用相对路径，相对于项目根目录的data文件夹
 const dbPath = path.join(__dirname, '..', '..', 'data', 'persons.db');
+
+type RunContext = { lastID: number; changes: number };
+type RunCallback = (this: RunContext, err: Error | null) => void;
+type GetCallback<T = any> = (err: Error | null, row?: T) => void;
+type AllCallback<T = any> = (err: Error | null, rows?: T[]) => void;
+
+type PreparedStatementCompat = {
+    run: (params?: any[] | any, callback?: RunCallback) => void;
+    finalize: (callback?: (err?: Error | null) => void) => void;
+};
+
+type SqliteCompatDatabase = {
+    native: BetterSqlite3.Database;
+    run: (sql: string, params?: any[] | RunCallback, callback?: RunCallback) => void;
+    get: <T = any>(sql: string, params?: any[] | GetCallback<T>, callback?: GetCallback<T>) => void;
+    all: <T = any>(sql: string, params?: any[] | AllCallback<T>, callback?: AllCallback<T>) => void;
+    prepare: (sql: string) => PreparedStatementCompat;
+    close: (callback?: () => void) => void;
+    serialize: (callback: () => void) => void;
+};
+
+const normalizeParams = (params?: any[] | any): any[] => {
+    if (params === undefined || params === null) {
+        return [];
+    }
+    return Array.isArray(params) ? params : [params];
+};
+
+const createStatementCompat = (statement: BetterSqlite3.Statement): PreparedStatementCompat => {
+    return {
+        run: (params?: any[] | any, callback?: RunCallback) => {
+            const values = normalizeParams(params);
+            try {
+                const result = statement.run(...values);
+                if (callback) {
+                    callback.call(
+                        {
+                            lastID: Number(result.lastInsertRowid),
+                            changes: result.changes
+                        },
+                        null
+                    );
+                }
+            } catch (error: any) {
+                if (callback) {
+                    callback.call({ lastID: 0, changes: 0 }, error);
+                    return;
+                }
+                throw error;
+            }
+        },
+        finalize: (callback?: (err?: Error | null) => void) => {
+            if (callback) {
+                callback(null);
+            }
+        }
+    };
+};
+
+const createDatabaseCompat = (native: BetterSqlite3.Database): SqliteCompatDatabase => {
+    return {
+        native,
+        run: (sql: string, params?: any[] | RunCallback, callback?: RunCallback) => {
+            const cb = typeof params === 'function' ? params : callback;
+            const values = normalizeParams(typeof params === 'function' ? undefined : params);
+
+            try {
+                const result = native.prepare(sql).run(...values);
+                if (cb) {
+                    cb.call(
+                        {
+                            lastID: Number(result.lastInsertRowid),
+                            changes: result.changes
+                        },
+                        null
+                    );
+                }
+            } catch (error: any) {
+                if (cb) {
+                    cb.call({ lastID: 0, changes: 0 }, error);
+                    return;
+                }
+                throw error;
+            }
+        },
+        get: <T = any>(sql: string, params?: any[] | GetCallback<T>, callback?: GetCallback<T>) => {
+            const cb = typeof params === 'function' ? params : callback;
+            const values = normalizeParams(typeof params === 'function' ? undefined : params);
+
+            try {
+                const row = native.prepare(sql).get(...values) as T | undefined;
+                if (cb) {
+                    cb(null, row);
+                }
+            } catch (error: any) {
+                if (cb) {
+                    cb(error);
+                    return;
+                }
+                throw error;
+            }
+        },
+        all: <T = any>(sql: string, params?: any[] | AllCallback<T>, callback?: AllCallback<T>) => {
+            const cb = typeof params === 'function' ? params : callback;
+            const values = normalizeParams(typeof params === 'function' ? undefined : params);
+
+            try {
+                const rows = native.prepare(sql).all(...values) as T[];
+                if (cb) {
+                    cb(null, rows);
+                }
+            } catch (error: any) {
+                if (cb) {
+                    cb(error);
+                    return;
+                }
+                throw error;
+            }
+        },
+        prepare: (sql: string) => createStatementCompat(native.prepare(sql)),
+        close: (callback?: () => void) => {
+            native.close();
+            if (callback) {
+                callback();
+            }
+        },
+        serialize: (callback: () => void) => {
+            callback();
+        }
+    };
+};
 
 // 确保数据目录存在
 const ensureDataDir = async () => {
@@ -14,48 +144,44 @@ const ensureDataDir = async () => {
 };
 
 // 创建数据库连接
-const createConnection = () => {
-    return new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-            logger.error('Error opening database', { 
-                error: err.message, 
-                stack: err.stack,
-                dbPath 
-            });
-            throw err;
-        }
+const createConnection = (): SqliteCompatDatabase => {
+    try {
+        const db = new BetterSqlite3(dbPath);
+        db.pragma('journal_mode = WAL');
+        db.pragma('foreign_keys = ON');
         logger.info('Connected to SQLite database', { dbPath });
-    });
-};
-
-const runDb = (db: sqlite3.Database, sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> => {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve({ lastID: this.lastID, changes: this.changes });
+        return createDatabaseCompat(db);
+    } catch (err: any) {
+        logger.error('Error opening database', {
+            error: err.message,
+            stack: err.stack,
+            dbPath
         });
+        throw err;
+    }
+};
+
+const runDb = (db: SqliteCompatDatabase, sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> => {
+    const result = db.native.prepare(sql).run(...params);
+    return Promise.resolve({
+        lastID: Number(result.lastInsertRowid),
+        changes: result.changes
     });
 };
 
-const getDb = <T = any>(db: sqlite3.Database, sql: string, params: any[] = []): Promise<T | undefined> => {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(row as T | undefined);
-        });
-    });
+const getDb = <T = any>(db: SqliteCompatDatabase, sql: string, params: any[] = []): Promise<T | undefined> => {
+    const row = db.native.prepare(sql).get(...params) as T | undefined;
+    return Promise.resolve(row);
 };
 
-const closeDb = (db: sqlite3.Database): Promise<void> => {
-    return new Promise((resolve) => {
-        db.close(() => resolve());
-    });
+const allDb = <T = any>(db: SqliteCompatDatabase, sql: string, params: any[] = []): Promise<T[]> => {
+    const rows = db.native.prepare(sql).all(...params) as T[];
+    return Promise.resolve(rows);
+};
+
+const closeDb = (db: SqliteCompatDatabase): Promise<void> => {
+    db.native.close();
+    return Promise.resolve();
 };
 
 const isUniqueConstraintError = (error: any): boolean => {
@@ -64,6 +190,7 @@ const isUniqueConstraintError = (error: any): boolean => {
         error?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||
         error?.code === 'ER_DUP_ENTRY' ||
         error?.code === 'DUPLICATE_ENTRY' ||
+        (typeof error?.message === 'string' && error.message.includes('UNIQUE constraint failed')) ||
         error?.sqlState === '23000' ||
         error?.errno === 19 ||
         error?.errno === 1062;
@@ -103,7 +230,7 @@ const normalizePaginationParams = (params: PaginationParams = {}) => {
     return { page, limit, offset, sortBy, sortOrder };
 };
 
-const safeRollback = async (db: sqlite3.Database, context: string) => {
+const safeRollback = async (db: SqliteCompatDatabase, context: string) => {
     try {
         await runDb(db, 'ROLLBACK');
     } catch (rollbackError: any) {
@@ -115,7 +242,7 @@ const safeRollback = async (db: sqlite3.Database, context: string) => {
 };
 
 const runInTransaction = async <T>(
-    db: sqlite3.Database,
+    db: SqliteCompatDatabase,
     context: string,
     operation: () => Promise<T>
 ): Promise<T> => {
