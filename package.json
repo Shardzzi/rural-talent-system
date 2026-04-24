@@ -1,6 +1,6 @@
 {
   "name": "rural-talent-system",
-  "version": "2.2.1",
+  "version": "4.0.0",
   "private": true,
   "description": "数字乡村人才信息系统 - 生产级Docker化Monorepo",
   "author": "数字乡村人才信息系统项目团队",

@@ -40,7 +40,7 @@ export default defineConfig({
   
   // 构建配置
   build: {
-    target: 'es2015',
+    target: 'es2020',
     outDir: 'dist',
     sourcemap: true,
     chunkSizeWarningLimit: 600, // 提高警告阈值到600KB
@@ -66,7 +66,7 @@ export default defineConfig({
   
   // TypeScript配置
   esbuild: {
-    target: 'es2015',
+    target: 'es2020',
     drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
   }
 })

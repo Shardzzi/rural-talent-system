@@ -4,185 +4,121 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a full-stack rural talent management system (数字乡村人才信息系统) built with TypeScript throughout. It's a production-ready monorepo using pnpm workspaces with Vue 3 frontend and Express.js backend.
+数字乡村人才信息系统 — a full-stack rural talent management system. Monorepo via pnpm workspaces with three packages: `backend`, `frontend`, `test`. TypeScript throughout.
 
 ## Development Commands
 
-### Quick Start
 ```bash
-# Install all dependencies
-pnpm install
+pnpm install                # Install all dependencies
+pnpm dev                    # Start both frontend + backend in parallel
+pnpm build                  # Build all packages
+pnpm start                  # Start production services
+pnpm lint                   # Lint all packages
+pnpm type-check             # TypeScript checking across all packages
 
-# Development mode (recommended for development)
-pnpm dev
+# Individual services
+pnpm backend:dev            # Backend only (port 8083), hot reload via nodemon
+pnpm frontend:dev           # Frontend only (port 8081), Vite dev server
+pnpm backend:build          # tsc compilation to backend/dist/
+pnpm frontend:build         # Vite build to frontend/dist/
 
-# Production mode
-pnpm start
+# Tests (requires backend running on 8083)
+pnpm test                   # Run test suite via pnpm filter
+cd test && ./run-tests.sh   # Run all tests with the shell runner
+cd test && ./run-tests.sh endpoints   # Run specific test category
+# Categories: all, health, integration, permissions, endpoints, errors, edge-cases, auth, search
 
-# Docker deployment
+# Docker
 ./docker-quick-start.sh
-./deploy.sh dev    # Development with MySQL
-./deploy.sh prod   # Production deployment
-```
-
-### Package Management (pnpm workspace)
-```bash
-# Development (start both frontend and backend)
-pnpm dev
-
-# Build all packages
-pnpm build
-
-# Start production services
-pnpm start
-
-# Run tests
-pnpm test
-
-# Lint all packages
-pnpm lint
-
-# Type checking
-pnpm type-check
-
-# Individual service commands
-pnpm backend:dev          # Backend development with hot reload
-pnpm frontend:dev         # Frontend development server
-pnpm backend:build        # Build backend for production
-pnpm frontend:build       # Build frontend for production
-pnpm backend:start        # Start built backend
-pnpm frontend:start       # Start built frontend
-```
-
-### Dependency Management
-```bash
-pnpm deps:check           # Check for outdated dependencies
-pnpm deps:update          # Update all dependencies
-pnpm security:check       # Run security audit
+./deploy.sh dev|prod|stop|status
 ```
 
 ## Architecture
 
-### Technology Stack
-- **Frontend**: Vue 3 + TypeScript + Element Plus + Vite (Port 8081)
-- **Backend**: Node.js + Express + TypeScript + SQLite (Port 8083)
-- **Authentication**: JWT with bcrypt password hashing
-- **Rate limiting**: In-memory per-IP limiter
-- **Input validation**: express-validator with custom sanitizers
-- **XSS protection**: HTML tag stripping
-- **Package Manager**: pnpm workspace
-- **Database**: SQLite with 7 main tables
-
-### Key Directories
-- `backend/src/` - Express.js application with controllers, services, middleware, and routes
-- `frontend/src/` - Vue 3 application with components, views, stores (Pinia), and API services
-- `test/` - Custom test suite for health checks, integration, and permission testing
-- `docs/` - Comprehensive documentation
-
-### Database Schema
-SQLite database with tables for users, persons, rural_talent_profile, talent_skills, cooperation_intentions, training_records, and user_sessions.
-
-### Authentication & Permissions
-- JWT token-based authentication
-- Three-tier role system: admin/user/guest
-- Data masking for unauthenticated users
-- Users can only edit their own bound person information
-
-### Token Refresh (T9)
-- POST /api/auth/refresh endpoint
-- Access token: 24h expiry
-- Refresh token: 7d expiry
-- Frontend axios interceptor auto-refreshes on 401
-
-### Rate Limiting (T2)
-- Login: 5 attempts per 15 minutes per IP
-- Register: 3 attempts per hour per IP
-- Headers: X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After
-
-### JWT Format Validation (T3)
-- Bearer prefix enforced
-- 3-part JWT structure validated
-- Failed attempts logged with IP
-
-### XSS Protection (T1)
-- sanitizeString middleware strips HTML tags
-- All user inputs sanitized before validation
-
-## Development Workflow
-
-### Access Points
-- **Frontend Application**: http://localhost:8081
-- **Backend API**: http://localhost:8083
-- **API Test Endpoint**: http://localhost:8083/api/persons
-
-### Test Accounts
-- **Admin**: admin/admin123 (full access)
-- **User**: testuser/test123 (can view all, edit only own data)
-
-### Logging
-- Backend logs: `logs/backend.log`
-- Frontend logs: `logs/frontend.log`
-- Logs directory is automatically created and managed by the application
-
-## Code Patterns
-
-### Backend Structure
-- **Controllers**: Handle HTTP requests and responses
-- **Services**: Database operations and business logic
-- **Middleware**: Authentication, validation, error handling
-- **Routes**: API endpoint definitions
-- **Types**: TypeScript interfaces and type definitions
-
-### Frontend Structure
-- **Components**: Reusable Vue components (Element Plus based)
-- **Views**: Page-level components
-- **Stores**: Pinia state management
-- **API**: Axios-based service layer for backend communication
-
-### Performance Features (v2.2.1)
-- Main bundle reduced by 98% (22.7KB)
-- Element Plus on-demand imports
-- Code splitting with manual chunks
-- PC-optimized responsive design
-- Chinese localization
-
-## Testing
-
-The project includes a comprehensive test suite:
-```bash
-# Run all tests
-pnpm test
-
-# All test files (8 total)
-node test/simple-verification.js        # Health checks
-node test/test_system_integration.js    # Integration tests
-node test/test_dual_user_features.js    # Permission tests
-node test/test_all_endpoints.js         # All 22 endpoints
-node test/test_error_handling.js        # Error responses
-node test/test_edge_cases.js            # Security/edge cases
-node test/test_auth_permissions.js      # Auth & permissions
-node test/test_search_pagination.js     # Search & pagination
+### Request Flow
+```
+Request → Express Router → Validation Middleware → Auth Middleware → Controller → Service → Database
 ```
 
-## Important Notes
+### Backend (`backend/src/`)
+- **Entry**: `app.ts` — Express server setup, middleware registration, route mounting
+- **Routes**: `routes/` — personRoutes, authRoutes, batchRoutes (plus favorites, notifications, audit)
+- **Controllers**: `controllers/` — HTTP request/response handling, delegates to services
+- **Services**: `services/` — business logic and DB operations
+  - `databaseService.ts` — primary, uses **better-sqlite3** (synchronous API wrapped in callbacks)
+  - `mysqlService.ts` — alternative for MySQL via `DB_TYPE=mysql` env var
+  - `dbServiceFactory.ts` — factory that selects DB service based on `DB_TYPE`
+- **Middleware**: `middleware/` — `auth.ts` (JWT + role checks), `validation.ts` (express-validator), `errorHandler.ts`
+- **Types**: `types/index.ts` — shared TypeScript interfaces (update these first when changing schema)
+- **Logging**: Winston via `config/logger.ts` — use this instead of `console.log`
 
-- Never disable rate limiting in production
-- Always use parameterized SQL queries
-- Always sanitize user inputs with sanitizeString
-- Use TypeScript throughout - strict type checking is enabled
-- Follow the existing authentication and permission patterns
-- Database is SQLite - located at `backend/data/persons.db`
-- Frontend is PC-optimized (not mobile-responsive)
-- All UI is in Chinese with Element Plus components
-- The system includes data masking for sensitive information
-- Use the existing API service layer for frontend-backend communication
-- Backend uses Express middleware for auth, validation, and error handling
+### Frontend (`frontend/src/`)
+- **Entry**: `main.ts` — Vue 3 app init with Element Plus on-demand imports (lines 3-33 list all components)
+- **Router**: `router/index.ts` — Vue Router with auth guards
+- **Stores**: `stores/auth.ts` — Pinia store for auth state, JWT + auto-refresh on 401
+- **API Layer**: `api/persons.ts` — Axios wrapper with request/response interceptors
+- **Views**: `AdminDashboard.vue`, `UserDashboard.vue`, `GuestView.vue` — three role-based pages
+- **Components**: `PersonFormDialog.vue`, `PersonDetailDialog.vue`, `LoginForm.vue`
+- All UI in Chinese, PC-optimized (not mobile-responsive), layout max-width 1400px
 
-## Performance Optimizations
+### Database
+Default: **SQLite** via better-sqlite3 at `backend/data/persons.db`. Set `DB_TYPE=mysql` to use MySQL instead.
 
-The project has undergone significant performance optimization in v2.2.1:
-- Bundle size reduction through code splitting
-- Element Plus on-demand component imports
-- Lazy loading for better initial load times
-- Optimized Vite build configuration
-- Manual chunk splitting for vendor libraries
+Tables: `users`, `persons`, `rural_talent_profile`, `talent_skills`, `cooperation_intentions`, `training_records`, `user_sessions`, `favorites`, `notifications`, `audit_logs`. Foreign keys with CASCADE deletes.
+
+Gender values stored in Chinese (男/女/其他). Skill proficiency as integer 1-5.
+
+### Auth & Permissions
+- JWT with access token (24h) + refresh token (7d), `POST /api/auth/refresh`
+- Three roles: admin (full access), user (view all, edit own bound person only), guest (masked data, read-only)
+- Rate limiting: login 5/15min/IP, register 3/hour/IP
+- `sanitizeString` middleware strips HTML tags from all inputs
+- Error responses: `{ success: false, message: string }`
+
+## Where to Look
+
+| Task | Location |
+|------|----------|
+| Add API endpoint | `backend/src/routes/` → `controllers/` → `services/` |
+| Add/change DB field | `backend/src/types/index.ts` first, then `services/databaseService.ts` |
+| Change auth logic | `backend/src/middleware/auth.ts` |
+| Add validation rules | `backend/src/middleware/validation.ts` |
+| Fix error responses | `backend/src/middleware/errorHandler.ts` |
+| Add UI component | `frontend/src/components/` |
+| Add page/view | `frontend/src/views/` → `router/index.ts` |
+| Update auth state | `frontend/src/stores/auth.ts` |
+| Add API client call | `frontend/src/api/persons.ts` |
+
+## Conventions
+
+- All SQL queries are parameterized — never string-concatenate user input
+- All user input passes through `sanitizeString` then express-validator
+- Backend uses synchronous better-sqlite3 but wraps calls in a callback compatibility layer
+- Frontend proxy: Vite proxies `/api` → `http://localhost:8083` during development
+- Vite build uses manual chunk splitting: `vue-vendor`, `element-plus`, `utils`, `echarts`
+- Custom test suite — no Jest/Mocha, pure Node.js scripts in `test/`
+- `main.ts` contains ResizeObserver error suppression for Element Plus compatibility
+
+## Anti-Patterns
+
+- **Never** use `any` type suppression or `as any` assertions — use `unknown` with runtime checks
+- **Never** skip auth middleware on protected routes
+- **Never** make direct `axios` calls in Vue components — use `api/persons.ts`
+- **Never** make direct DB queries in controllers — use services
+- **Never** disable rate limiting on auth endpoints
+- **Never** allow Guest view to modify data (read-only)
+- **Always** update `types/index.ts` when changing DB schema
+- **Always** use Winston logger (`config/logger.ts`) instead of `console.log`
+- **Always** use `sanitizeString` for user-provided string inputs
+- **Always** use Element Plus components (no custom CSS frameworks)
+
+## Ports
+
+- Frontend dev server: 8081
+- Backend API: 8083
+- Tests hit the backend directly on 8083 (backend must be running)
+
+## Test Accounts
+
+- `admin` / `admin123` — full access
+- `testuser` / `test123` — view all, edit own data only

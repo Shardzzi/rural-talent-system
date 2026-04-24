@@ -2256,11 +2256,14 @@ const createUserSession = async (userId, token, expiresAt) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
+        // SQLite只接受numbers/strings/bigints/buffers/null，Date对象需要转换为ISO字符串
+        const expiresAtStr = expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt;
+        
         const stmt = db.prepare(`INSERT INTO user_sessions 
             (user_id, token, expires_at) 
             VALUES (?, ?, ?)`);
         
-        stmt.run([userId, token, expiresAt], function(err) {
+        stmt.run([userId, token, expiresAtStr], function(err) {
             if (err) {
                 db.close();
                 logger.error('Error creating user session', { 

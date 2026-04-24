@@ -43,37 +43,41 @@
         </el-button>
       </el-tooltip>
       
-      <template v-if="authStore.isAuthenticated">
-        <el-dropdown trigger="click" @command="handleCommand">
-          <div class="user-profile" aria-label="用户菜单">
-            <el-avatar :size="32" class="user-avatar">
-              {{ authStore.user?.username?.charAt(0).toUpperCase() || 'U' }}
-            </el-avatar>
-            <div class="user-info" v-if="!isMobile">
-              <span class="user-name">{{ authStore.user?.username }}</span>
-              <el-tag 
-                :type="authStore.user?.role === 'admin' ? 'danger' : 'primary'" 
-                size="small" 
-                effect="plain"
-                class="role-badge"
-              >
-                {{ authStore.user?.role === 'admin' ? '管理员' : '用户' }}
-              </el-tag>
-            </div>
-            <el-icon class="dropdown-icon"><CaretBottom /></el-icon>
+      <el-dropdown
+        v-if="authStore.isAuthenticated"
+        trigger="click"
+        :teleported="true"
+        popper-class="user-menu-popper"
+        @command="handleCommand"
+      >
+        <div class="user-profile" aria-label="用户菜单">
+          <el-avatar :size="32" class="user-avatar">
+            {{ authStore.user?.username?.charAt(0).toUpperCase() || 'U' }}
+          </el-avatar>
+          <div class="user-info" v-if="!isMobile">
+            <span class="user-name">{{ authStore.user?.username }}</span>
+            <el-tag
+              :type="authStore.user?.role === 'admin' ? 'danger' : 'primary'"
+              size="small"
+              effect="plain"
+              class="role-badge"
+            >
+              {{ authStore.user?.role === 'admin' ? '管理员' : '用户' }}
+            </el-tag>
           </div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="profile">
-                <el-icon><User /></el-icon>个人中心
-              </el-dropdown-item>
-              <el-dropdown-item divided command="logout" class="text-danger">
-                <el-icon><SwitchButton /></el-icon>退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </template>
+          <el-icon class="dropdown-icon"><CaretBottom /></el-icon>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="profile">
+              <el-icon><User /></el-icon>个人中心
+            </el-dropdown-item>
+            <el-dropdown-item divided command="logout">
+              <el-icon><SwitchButton /></el-icon>退出登录
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <template v-else>
         <el-button type="primary" @click="$router.push('/login')">
           登录
@@ -295,7 +299,15 @@ const handleStartTour = () => {
   margin-left: 4px;
 }
 
-.text-danger {
-  color: var(--color-danger);
+</style>
+
+<!-- Global styles for teleported dropdown (cannot be scoped) -->
+<style>
+.user-menu-popper {
+  z-index: 3000 !important;
+}
+
+.user-menu-popper .el-dropdown-menu__item:last-child {
+  color: var(--el-color-danger);
 }
 </style>

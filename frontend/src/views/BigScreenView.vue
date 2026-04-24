@@ -417,7 +417,7 @@ export default {
 <style scoped>
 .bigscreen {
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
   background: #0a1929;
   color: #e0e0e0;
   font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -536,6 +536,7 @@ export default {
   gap: 16px;
   padding: 0 32px 24px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .chart-cell {
@@ -547,6 +548,7 @@ export default {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  height: 100%;
 }
 
 .chart-title {
@@ -561,7 +563,8 @@ export default {
 
 .bigscreen-chart {
   flex: 1;
-  min-height: 0;
+  min-height: 200px;
+  width: 100%;
 }
 
 /* 刷新提示 */
@@ -590,7 +593,7 @@ export default {
 
   .charts-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
+    grid-template-rows: repeat(4, minmax(280px, 1fr));
     padding: 0 16px 16px;
   }
 
