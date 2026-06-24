@@ -140,7 +140,7 @@ const authRateLimiters = {
 };
 
 const app = express();
-const PORT: number = parseInt(process.env.PORT || '8083', 10);
+const PORT: number = parseInt(process.env.PORT || '8085', 10);
 
 // 中间件
 app.use(cors());
@@ -188,6 +188,7 @@ const startServer = async (): Promise<void> => {
         } else {
             logger.info('Using SQLite database');
             await databaseService.initDatabase();
+            await databaseService.migratePersonsSchema();
             // 使用默认的SQLite服务
             app.set('dbService', databaseService);
         }
