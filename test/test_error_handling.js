@@ -6,12 +6,19 @@
 const axios = require('axios');
 const http = require('http');
 
-const API_BASE = 'http://localhost:8083/api';
+const BACKEND_PORT = parseInt(process.env.BACKEND_PORT || '8085', 10);
+const API_BASE = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 
 const colors = {
   reset: '\x1b[0m', red: '\x1b[31m', green: '\x1b[32m',
   yellow: '\x1b[33m', blue: '\x1b[34m', cyan: '\x1b[36m'
 };
+
+let ipCounter = 10;
+function nextIp() {
+  ipCounter += 1;
+  return `10.10.${Math.floor(ipCounter / 240)}.${(ipCounter % 240) + 1}`;
+}
 
 function colorLog(text, color = 'reset') {
   console.log(colors[color] + text + colors.reset);
@@ -43,7 +50,7 @@ async function getAdminToken() {
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, {
         username: 'admin', password: 'admin123'
-      });
+      }, { headers: { 'X-Forwarded-For': nextIp() } });
       adminTokenCache = res.data.data?.token || res.data.token;
       return adminTokenCache;
     } catch (e) {
@@ -63,12 +70,12 @@ async function getUserToken() {
     await axios.post(`${API_BASE}/auth/register`, {
       username: 'errtest_user', password: 'test123456',
       confirmPassword: 'test123456', email: 'errtest@example.com'
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
   } catch (e) { /* 用户已存在 */ }
   await sleep(300);
   const res = await axios.post(`${API_BASE}/auth/login`, {
     username: 'errtest_user', password: 'test123456'
-  });
+  }, { headers: { 'X-Forwarded-For': nextIp() } });
   return res.data.data?.token || res.data.token;
 }
 
@@ -221,7 +228,7 @@ async function testValidationErrors() {
   try {
     await axios.post(`${API_BASE}/auth/register`, {
       username: 'ab', password: 'test123456', confirmPassword: 'test123456', email: 'test@example.com'
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     assert(false, '用户名太短应返回400');
   } catch (error) {
     assert(error.response?.status === 400 || error.response?.status === 429,
@@ -233,7 +240,7 @@ async function testValidationErrors() {
     const ts = Date.now();
     await axios.post(`${API_BASE}/auth/register`, {
       username: `testuser${ts}`, password: '123', confirmPassword: '123', email: `test${ts}@example.com`
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     assert(false, '密码太短应返回400');
   } catch (error) {
     assert(error.response?.status === 400 || error.response?.status === 429,
@@ -245,7 +252,7 @@ async function testValidationErrors() {
     const ts = Date.now();
     await axios.post(`${API_BASE}/auth/register`, {
       username: `testuser${ts}`, password: 'test123456', confirmPassword: 'test123456', email: 'not-an-email'
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     assert(false, '无效邮箱注册应返回400');
   } catch (error) {
     assert(error.response?.status === 400 || error.response?.status === 429,
@@ -294,7 +301,7 @@ async function testMalformedRequests() {
   await new Promise((resolve) => {
     const data = JSON.stringify({ name: 'test', age: 25, gender: '男' });
     const options = {
-      hostname: 'localhost', port: 8083, path: '/api/persons', method: 'POST',
+      hostname: 'localhost', port: BACKEND_PORT, path: '/api/persons', method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Length': Buffer.byteLength(data) }
     };
     const req = http.request(options, (res) => {
@@ -353,7 +360,7 @@ async function test500Errors() {
   await new Promise((resolve) => {
     const options = {
       hostname: 'localhost',
-      port: 8083,
+      port: BACKEND_PORT,
       path: '/api/persons',
       method: 'POST',
       headers: {

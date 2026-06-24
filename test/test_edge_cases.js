@@ -6,12 +6,18 @@
 const axios = require('axios');
 const http = require('http');
 
-const API_BASE = 'http://localhost:8083/api';
+const API_BASE = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 
 const colors = {
   reset: '\x1b[0m', red: '\x1b[31m', green: '\x1b[32m',
   yellow: '\x1b[33m', blue: '\x1b[34m', cyan: '\x1b[36m'
 };
+
+let ipCounter = 10;
+function nextIp() {
+  ipCounter += 1;
+  return `10.10.${Math.floor(ipCounter / 240)}.${(ipCounter % 240) + 1}`;
+}
 
 function colorLog(text, color = 'reset') {
   console.log(colors[color] + text + colors.reset);
@@ -38,6 +44,8 @@ async function getAdminToken() {
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, {
         username: 'admin', password: 'admin123'
+      }, {
+        headers: { 'X-Forwarded-For': nextIp() }
       });
       cachedToken = res.data.data?.token || res.data.token;
       return cachedToken;
@@ -112,7 +120,7 @@ async function testSQLInjection() {
   try {
     await axios.post(`${API_BASE}/auth/login`, {
       username: "admin'--", password: "anything"
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     assert(false, 'SQL注入登录应失败');
   } catch (error) {
     assert(error.response?.status === 400 || error.response?.status === 401,
@@ -124,7 +132,7 @@ async function testSQLInjection() {
   try {
     await axios.post(`${API_BASE}/auth/login`, {
       username: "' UNION SELECT * FROM users--", password: "anything"
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     assert(false, 'UNION注入登录应失败');
   } catch (error) {
     assert(error.response?.status === 400 || error.response?.status === 401,
@@ -413,12 +421,12 @@ async function testDuplicateOperations() {
     await axios.post(`${API_BASE}/auth/register`, {
       username: `dup_test_${ts}`, password: 'test123456',
       confirmPassword: 'test123456', email: `dup_${ts}@example.com`
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     await sleep(2000);
     await axios.post(`${API_BASE}/auth/register`, {
       username: `dup_test_${ts}`, password: 'test123456',
       confirmPassword: 'test123456', email: `dup_${ts}@example.com`
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     assert(false, '重复注册应返回错误');
   } catch (error) {
     assert(error.response?.status === 400 || error.response?.status === 409 || error.response?.status === 429,

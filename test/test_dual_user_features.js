@@ -6,7 +6,7 @@
 const axios = require('axios');
 
 // 配置API基础URL
-const API_BASE = 'http://localhost:8083/api';
+const API_BASE = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 
 // 颜色输出函数
 const colors = {
@@ -18,6 +18,12 @@ const colors = {
   magenta: '\x1b[35m',
   cyan: '\x1b[36m'
 };
+
+let ipCounter = 10;
+function nextIp() {
+  ipCounter += 1;
+  return `10.10.${Math.floor(ipCounter / 240)}.${(ipCounter % 240) + 1}`;
+}
 
 function colorLog(text, color = 'reset') {
   console.log(colors[color] + text + colors.reset);
@@ -34,7 +40,7 @@ async function testUserLogin(username, password, userType) {
     const response = await axios.post(`${API_BASE}/auth/login`, {
       username,
       password
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     
     colorLog(`✅ ${userType}登录成功`, 'green');
     
@@ -59,7 +65,7 @@ async function ensureRegularUser() {
       password: 'test123',
       name: '测试用户',
       email: 'test@example.com'
-    });
+    }, { headers: { 'X-Forwarded-For': nextIp() } });
     
     return true;
   } catch (error) {

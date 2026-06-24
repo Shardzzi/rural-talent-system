@@ -73,7 +73,7 @@ async function checkAPIEndpoints() {
   console.log('\n🌐 API端点健康检查');
   console.log('=====================================');
   
-  const baseURL = 'http://localhost:8083/api';
+  const baseURL = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
   const endpoints = [
     { path: '/persons', method: 'GET', name: '人员列表API' },
     { path: '/health', method: 'GET', name: '系统健康检查' }
@@ -115,7 +115,7 @@ async function runHealthCheck() {
   // 1. 检查服务端口
   console.log('🚀 服务端口检查');
   console.log('=====================================');
-  const backendRunning = checkPort(8083, '后端服务');
+  const backendRunning = checkPort(parseInt(process.env.BACKEND_PORT || '8085', 10), '后端服务');
   const frontendRunning = checkPort(8081, '前端服务');
   
   if (!backendRunning || !frontendRunning) {

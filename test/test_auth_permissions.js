@@ -6,7 +6,7 @@
 const axios = require('axios');
 
 // 配置
-const API_BASE = 'http://localhost:8083/api';
+const API_BASE = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 const JWT_SECRET = 'rural_talent_system_secret_key_2025';
 
 // 颜色输出
@@ -16,6 +16,12 @@ const colors = {
 };
 function log(text, color = 'reset') { console.log(colors[color] + text + colors.reset); }
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+let ipCounter = 10 + (Date.now() % 9973);
+const nextIp = () => {
+  ipCounter += 1;
+  return `10.10.${Math.floor(ipCounter / 240)}.${(ipCounter % 240) + 1}`;
+};
 
 // 测试统计
 let totalTests = 0;
@@ -40,7 +46,7 @@ async function request(method, url, data = null, token = null) {
     const config = {
       method,
       url: `${API_BASE}${url}`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': nextIp() },
       validateStatus: () => true // 不抛异常，手动检查状态
     };
     if (token) config.headers['Authorization'] = `Bearer ${token}`;
@@ -56,7 +62,8 @@ async function request(method, url, data = null, token = null) {
 // 测试辅助: 注册用户并登录
 // ========================
 async function registerAndLogin(suffix) {
-  const username = `authtest_${suffix}_${Date.now()}`;
+  const shortTs = Date.now().toString().slice(-6);
+  const username = `at_${suffix}_${shortTs}`;
   const email = `${username}@test.com`;
   const password = 'Test1234';
 
@@ -204,8 +211,9 @@ async function testRoleBasedAccess() {
   // 用户可以创建人员
   await sleep(100);
   const userCreate = await request('POST', '/persons', {
-    name: '用户创建测试', age: 28, gender: '女', phone: '13900000000',
-    email: 'usercreate@test.com'
+    name: '用户创建测试', age: 28, gender: '女',
+    phone: `139${Date.now().toString().slice(-8)}`,
+    email: `usercreate_${Date.now().toString().slice(-8)}@test.com`
   }, userToken);
   assert(userCreate.status === 200 || userCreate.status === 201, '普通用户可创建人员', `status=${userCreate.status}`);
 
@@ -249,6 +257,8 @@ async function testRoleBasedAccess() {
   // ---- Admin 权限 ----
   log('\n  👑 管理员权限测试', 'cyan');
 
+  const createSuffix = Date.now().toString().slice(-6);
+
   // 管理员可以查看人员列表
   await sleep(100);
   const adminPersons = await request('GET', '/persons', null, adminToken);
@@ -257,8 +267,9 @@ async function testRoleBasedAccess() {
   // 管理员可以创建人员
   await sleep(100);
   const adminCreate = await request('POST', '/persons', {
-    name: '管理员创建测试', age: 35, gender: '男', phone: '13700000000',
-    email: 'admincreate@test.com'
+    name: '管理员创建测试', age: 35, gender: '男',
+    phone: `137${Date.now().toString().slice(-8)}`,
+    email: `admincreate_${createSuffix}@test.com`
   }, adminToken);
   assert(adminCreate.status === 200 || adminCreate.status === 201, '管理员可创建人员');
 
@@ -274,7 +285,7 @@ async function testRoleBasedAccess() {
 
   // 管理员可以删除人员（用不存在的ID测试权限层）
   await sleep(100);
-  const adminDelete = await request('DELETE', '/persons/nonexistent_id', null, adminToken);
+  const adminDelete = await request('DELETE', '/persons/999999', null, adminToken);
   // 404表示通过了权限检查，到达了数据层
   assert(adminDelete.status === 404 || adminDelete.status === 200, '管理员有删除权限（404=通过权限检查，人员不存在）', `status=${adminDelete.status}`);
 
@@ -421,7 +432,7 @@ async function testPasswordChange() {
 async function testDuplicateRegistration() {
   log('\n📋 5. 重复注册防护测试', 'blue');
 
-  const suffix = Date.now();
+  const suffix = Date.now().toString().slice(-6);
   const username = `duptest_${suffix}`;
   const email = `duptest_${suffix}@test.com`;
   const password = 'Test1234';
@@ -546,7 +557,8 @@ async function testWeakPasswordRejection() {
 async function testEditOwnPersonOnly() {
   log('\n📋 8. 普通用户仅可编辑本人信息测试', 'blue');
 
-  const suffix = Date.now();
+  const suffix = Date.now().toString().slice(-6);
+  const phoneSuffix = Date.now().toString().slice(-8);
   const username = `editown_${suffix}`;
   const email = `${username}@test.com`;
   const password = 'Test1234';
@@ -588,7 +600,7 @@ async function testEditOwnPersonOnly() {
       name: `编辑本人_${suffix}`,
       age: 26,
       gender: '男',
-      phone: `139${String(suffix).slice(-8)}`,
+      phone: `139${phoneSuffix}`,
       email: `person_${suffix}@test.com`
     }, userToken);
     assert(createOwn.status === 200 || createOwn.status === 201, '普通用户创建本人person成功', `status=${createOwn.status}`);
@@ -600,13 +612,20 @@ async function testEditOwnPersonOnly() {
     const linkRes = await request('PUT', '/auth/link-person', { personId: ownPersonId }, userToken);
     assert(linkRes.status === 200, '普通用户成功绑定本人person', `status=${linkRes.status}`);
 
+    // 关联后重新登录获取包含 personId 的 token
+    await sleep(100);
+    const relogin = await request('POST', '/auth/login', { username, password });
+    assert(relogin.status === 200, '关联后重新登录成功', `status=${relogin.status}`);
+    if (relogin.status !== 200) return;
+    const userTokenWithPerson = relogin.data.data?.token;
+
     await sleep(100);
     const updateOwn = await request('PUT', `/persons/${ownPersonId}`, {
       name: `编辑本人_已更新_${suffix}`,
       age: 27,
       gender: '男',
-      phone: `138${String(suffix).slice(-8)}`
-    }, userToken);
+      phone: `138${phoneSuffix}`
+    }, userTokenWithPerson);
     assert(updateOwn.status === 200, '普通用户可编辑本人person', `status=${updateOwn.status}`);
 
     await sleep(100);
@@ -614,7 +633,7 @@ async function testEditOwnPersonOnly() {
       name: `他人记录_${suffix}`,
       age: 33,
       gender: '女',
-      phone: `137${String(suffix).slice(-8)}`,
+      phone: `137${phoneSuffix}`,
       email: `otherperson_${suffix}@test.com`
     }, adminToken);
     assert(createOther.status === 200 || createOther.status === 201, '管理员创建他人person成功', `status=${createOther.status}`);

@@ -12,6 +12,8 @@
     "test:edge": "node test_edge_cases.js",
     "test:auth": "node test_auth_permissions.js",
     "test:search": "node test_search_pagination.js",
+    "test:batch": "node test_batch_operations.js",
+    "test:pagination": "npx ts-node test_pagination.js",
     "test:all": "./run-tests.sh all"
   },
   "dependencies": {

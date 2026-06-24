@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:8083/api';
+const BASE_URL = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 let token = '';
 let testPersonId = '';
 let testUserId = '';
@@ -13,6 +13,12 @@ let cleanupData = {
 // 添加延迟函数
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+let ipCounter = 10;
+const nextIp = () => {
+  ipCounter += 1;
+  return `10.10.${Math.floor(ipCounter / 240)}.${(ipCounter % 240) + 1}`;
+};
+
 // 辅助函数
 const makeRequest = async (method, url, data = null) => {
   try {
@@ -21,6 +27,7 @@ const makeRequest = async (method, url, data = null) => {
       url: `${BASE_URL}${url}`,
       headers: {
         'Content-Type': 'application/json',
+        'X-Forwarded-For': nextIp(),
         ...(token && { 'Authorization': `Bearer ${token}` })
       }
     };

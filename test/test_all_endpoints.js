@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:8083/api';
+const BASE_URL = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 
 const colors = {
   reset: '\x1b[0m',

@@ -7,7 +7,7 @@
 const axios = require('axios');
 
 // 配置
-const API_BASE = 'http://localhost:8083/api';
+const API_BASE = (process.env.API_BASE_URL || 'http://localhost:8085') + '/api';
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };
 
 // 颜色输出
@@ -26,6 +26,12 @@ function log(text, color = 'reset') {
 
 // 延迟
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+let ipCounter = 10;
+const nextIp = () => {
+  ipCounter += 1;
+  return `10.10.${Math.floor(ipCounter / 240)}.${(ipCounter % 240) + 1}`;
+};
 
 // 测试计数
 let totalTests = 0;
@@ -52,6 +58,7 @@ async function apiRequest(method, url, data = null, token = null) {
       url: `${API_BASE}${url}`,
       headers: {
         'Content-Type': 'application/json',
+        'X-Forwarded-For': nextIp(),
         ...(token && { 'Authorization': `Bearer ${token}` })
       }
     };
