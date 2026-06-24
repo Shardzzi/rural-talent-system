@@ -129,7 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const refreshAccessToken = async (): Promise<string> => {
     if (!refreshToken.value) {
-      throw new Error('刷新令牌不存在')
+      throw new Error('登录已过期，请重新登录')
     }
 
     const response = await axios.post('/api/auth/refresh', null, {
@@ -140,7 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const result = response.data
     if (!result.success || !result.data?.token) {
-      throw new Error(result.message || '刷新令牌失败')
+      throw new Error(result.message || '登录状态已过期，请重新登录')
     }
 
     token.value = result.data.token

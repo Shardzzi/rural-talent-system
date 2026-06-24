@@ -251,16 +251,16 @@
         
         <div class="meta-content">
           <div class="meta-item">
-            <label>创建时间：</label>
+            <label>录入时间：</label>
             <span>{{ formatDate(currentPerson.created_at) }}</span>
           </div>
           <div class="meta-item" v-if="currentPerson.updated_at && currentPerson.updated_at !== currentPerson.created_at">
-            <label>更新时间：</label>
+            <label>最后更新：</label>
             <span>{{ formatDate(currentPerson.updated_at) }}</span>
           </div>
           <div class="meta-item" v-if="!isGuestMode && currentPerson.id">
-            <label>编号：</label>
-            <span>{{ currentPerson.id }}</span>
+            <label>档案编号：</label>
+            <span>P{{ String(currentPerson.id).padStart(6, '0') }}</span>
           </div>
         </div>
       </el-card>

@@ -1,0 +1,1 @@
+{"success":true,"message":"创建成功","data":{"id":11,"name":"座机测试","age":40,"gender":"female","email":"qa590505@test.com","phone":"010-12345678","id_card":null,"address":null,"current_address":null,"education_level":null,"political_status":null,"created_at":"2026-03-31 04:16:31","updated_at":"2026-03-31

@@ -168,7 +168,7 @@ export default defineComponent({
         ElMessage.success('备注已更新')
         this.fetchFavorites()
       } catch {
-        ElMessage.error('保存失败')
+        ElMessage.error('备注保存失败，请稍后重试')
       }
     },
     truncate(str: string, max: number): string {

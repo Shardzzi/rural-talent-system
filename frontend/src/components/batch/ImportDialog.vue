@@ -48,9 +48,9 @@
       <!-- Step 2: Preview -->
       <div v-if="currentStep === 1" class="step-content">
         <div class="preview-summary">
-          <el-tag type="success" size="large">有效: {{ validCount }} 条</el-tag>
-          <el-tag type="danger" size="large">无效: {{ invalidCount }} 条</el-tag>
-          <el-tag size="large">总计: {{ totalCount }} 条</el-tag>
+          <el-tag type="success" size="large">可导入 {{ validCount }} 条</el-tag>
+          <el-tag type="danger" size="large">需修正 {{ invalidCount }} 条</el-tag>
+          <el-tag size="large">共 {{ totalCount }} 条</el-tag>
         </div>
 
         <el-table
@@ -196,7 +196,9 @@ const invalidCount = computed(() => totalCount.value - validCount.value)
 
 const importResultTitle = computed(() => {
   if (!importResult.value) return ''
-  return `导入完成：成功 ${importResult.value.success} 条，失败 ${importResult.value.failed} 条`
+  return importResult.value.failed === 0
+      ? `成功导入 ${importResult.value.success} 条记录`
+      : `导入完成：成功 ${importResult.value.success} 条，${importResult.value.failed} 条未通过`
 })
 
 const footerCancelText = computed(() => {
@@ -236,7 +238,7 @@ async function handleUpload(): Promise<void> {
     currentStep.value = 1
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } }; message?: string }
-    ElMessage.error(err.response?.data?.message || err.message || '文件上传失败')
+    console.error('上传失败:', err); ElMessage.error(err.response?.data?.message || '文件上传失败，请检查文件格式后重试')
   } finally {
     uploading.value = false
   }
@@ -262,7 +264,7 @@ async function startImport(): Promise<void> {
     }
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } }; message?: string }
-    ElMessage.error(err.response?.data?.message || err.message || '导入失败')
+    console.error('导入失败:', err); ElMessage.error(err.response?.data?.message || '导入失败，请稍后重试')
   } finally {
     clearInterval(progressInterval)
     importing.value = false
@@ -282,7 +284,7 @@ async function handleDownloadTemplate(): Promise<void> {
     window.URL.revokeObjectURL(url)
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } }; message?: string }
-    ElMessage.error(err.response?.data?.message || err.message || '下载模板失败')
+    console.error('下载失败:', err); ElMessage.error('下载模板失败，请稍后重试')
   }
 }
 

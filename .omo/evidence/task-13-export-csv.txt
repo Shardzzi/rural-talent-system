@@ -1,0 +1,13 @@
+=== Test 1: CSV export response headers ===
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: text/csv; charset=utf-8
+Content-Disposition: attachment; filename="%E4%BA%BA%E6%89%8D%E4%BF%A1%E6%81%AF%E5%AF%BC%E5%87%BA_20260330.csv"
+Content-Length: 892
+ETag: W/"37c-mQJ/sjOQWl8v/Pa5Kv3sDT4lIFM"
+Date: Mon, 30 Mar 2026 16:54:25 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+

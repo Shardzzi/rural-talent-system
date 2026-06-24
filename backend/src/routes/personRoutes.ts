@@ -19,8 +19,8 @@ router.get('/health', personController.healthCheck);
 // 搜索人才（可选认证，影响返回数据详细程度）
 router.get('/search', validateSearch, validatePagination, handleValidationErrors, optionalAuth, personController.searchTalents);
 
-// 获取数据统计分析（管理员权限）
-router.get('/statistics', authenticateToken, requireAdmin, personController.getStatistics);
+// 获取数据统计分析（登录用户可访问）
+router.get('/statistics', authenticateToken, personController.getStatistics);
 
 // 获取技能特长库统计（可选认证）
 router.get('/skills-library-stats', optionalAuth, personController.getSkillsLibraryStats);

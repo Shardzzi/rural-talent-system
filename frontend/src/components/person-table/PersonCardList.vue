@@ -52,7 +52,7 @@
     </div>
     <div v-if="!loading && data.length === 0" class="empty-cards">
       <el-icon class="empty-icon"><DocumentRemove /></el-icon>
-      <p>暂无数据</p>
+      <p>没有找到符合条件的人才</p>
     </div>
     <div ref="sentinelRef" class="scroll-sentinel" />
   </div>

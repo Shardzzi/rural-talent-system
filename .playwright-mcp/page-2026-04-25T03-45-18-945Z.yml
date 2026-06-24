@@ -1,0 +1,318 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - button "显示调试面板" [ref=e5] [cursor=pointer]:
+      - generic [ref=e6]: 显示调试面板
+    - generic [ref=e7]:
+      - navigation "主导航" [ref=e8]:
+        - generic [ref=e9]:
+          - img [ref=e11]
+          - generic [ref=e13]: 数字乡村人才
+        - menubar [ref=e14]:
+          - menuitem "人才库" [ref=e15] [cursor=pointer]:
+            - img [ref=e17]
+            - generic [ref=e19]: 人才库
+          - menuitem "数据分析" [ref=e20] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e24]: 数据分析
+            - img [ref=e162]
+          - menuitem "我的" [ref=e25] [cursor=pointer]:
+            - img [ref=e27]
+            - generic [ref=e29]: 我的
+            - img [ref=e166]
+        - button [ref=e31] [cursor=pointer]:
+          - img [ref=e34]
+      - generic [ref=e36]:
+        - banner [ref=e37]:
+          - link "跳转到主要内容" [ref=e38] [cursor=pointer]:
+            - /url: "#main-content"
+          - navigation "面包屑" [ref=e41]:
+            - link "首页" [ref=e169]
+          - generic [ref=e44]:
+            - button [ref=e45] [cursor=pointer]:
+              - img [ref=e48]
+            - button [ref=e51] [cursor=pointer]:
+              - img [ref=e54]
+            - button [ref=e59] [cursor=pointer]:
+              - img [ref=e62]
+            - button "登录" [ref=e170] [cursor=pointer]:
+              - generic [ref=e171]: 登录
+        - main [ref=e74]:
+          - generic [ref=e172]:
+            - generic [ref=e174]:
+              - heading "🔍 认证状态调试面板" [level=4] [ref=e175]
+              - button "展开" [ref=e176] [cursor=pointer]:
+                - generic [ref=e177]: 展开
+            - generic [ref=e178]:
+              - generic [ref=e179]:
+                - heading "数字乡村人才信息系统" [level=1] [ref=e180]
+                - paragraph [ref=e181]: 汇聚乡村人才，助力乡村振兴
+                - generic [ref=e182]:
+                  - button "登录/注册" [ref=e183] [cursor=pointer]:
+                    - generic [ref=e184]:
+                      - img [ref=e186]
+                      - text: 登录/注册
+                  - button "浏览人才" [ref=e188] [cursor=pointer]:
+                    - generic [ref=e189]:
+                      - img [ref=e191]
+                      - text: 浏览人才
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - generic [ref=e195]: "15"
+                  - generic [ref=e196]: 人才总数
+                - generic [ref=e197]:
+                  - generic [ref=e198]: "6"
+                  - generic [ref=e199]: 技能类别
+                - generic [ref=e200]:
+                  - generic [ref=e201]: "3"
+                  - generic [ref=e202]: 覆盖地区
+            - generic [ref=e203]:
+              - generic [ref=e205]:
+                - generic [ref=e206]:
+                  - heading "发现人才" [level=3] [ref=e207]:
+                    - img [ref=e209]
+                    - text: 发现人才
+                  - paragraph [ref=e211]: 搜索和筛选适合的乡村人才
+                - generic [ref=e212]:
+                  - generic [ref=e213]:
+                    - generic [ref=e216]:
+                      - img [ref=e219]
+                      - textbox "搜索姓名、技能、地区" [ref=e221]
+                    - generic [ref=e223]:
+                      - button "减少数值" [ref=e224] [cursor=pointer]:
+                        - img [ref=e226]
+                      - button "增加数值" [ref=e228] [cursor=pointer]:
+                        - img [ref=e230]
+                      - spinbutton [ref=e234]
+                    - generic [ref=e236]:
+                      - button "减少数值" [ref=e237] [cursor=pointer]:
+                        - img [ref=e239]
+                      - button "增加数值" [ref=e241] [cursor=pointer]:
+                        - img [ref=e243]
+                      - spinbutton [ref=e247]
+                    - generic [ref=e250] [cursor=pointer]:
+                      - generic:
+                        - combobox [ref=e252]
+                        - generic [ref=e253]: 学历筛选
+                      - img [ref=e256]
+                    - generic [ref=e260] [cursor=pointer]:
+                      - generic:
+                        - combobox [ref=e262]
+                        - generic [ref=e263]: 就业状态
+                      - img [ref=e266]
+                  - generic [ref=e268]:
+                    - generic [ref=e271]:
+                      - img [ref=e274]
+                      - textbox "技能关键词" [ref=e276]
+                    - generic [ref=e279]:
+                      - img [ref=e282]
+                      - textbox "作物筛选（如：水稻、小麦）" [ref=e285]
+                    - generic [ref=e287]:
+                      - button "搜索" [ref=e288] [cursor=pointer]:
+                        - generic [ref=e289]:
+                          - img [ref=e291]
+                          - text: 搜索
+                      - button "重置" [ref=e293] [cursor=pointer]:
+                        - generic [ref=e294]: 重置
+              - generic [ref=e295]:
+                - generic [ref=e297]:
+                  - generic [ref=e298]:
+                    - img [ref=e300]
+                    - text: 人才信息
+                    - generic [ref=e303]: 共 15 人
+                  - button "刷新" [ref=e304] [cursor=pointer]:
+                    - generic [ref=e305]:
+                      - img [ref=e307]
+                      - text: 刷新
+                - generic [ref=e310]:
+                  - generic [ref=e312]:
+                    - button [ref=e313] [cursor=pointer]:
+                      - img [ref=e316]
+                    - button [ref=e318] [cursor=pointer]:
+                      - img [ref=e321]
+                    - button [ref=e323] [cursor=pointer]:
+                      - img [ref=e325]
+                  - generic [ref=e329]:
+                    - table [ref=e331]:
+                      - rowgroup [ref=e341]:
+                        - row "序号 姓名 按 姓名 排序 年龄 按 年龄 排序 性别 学历 按 学历 排序 技能专长 所在地区 就业状态" [ref=e342]:
+                          - columnheader "序号" [ref=e343]:
+                            - generic [ref=e344]: 序号
+                          - columnheader "姓名 按 姓名 排序" [ref=e345] [cursor=pointer]:
+                            - generic [ref=e346]:
+                              - text: 姓名
+                              - button "按 姓名 排序" [ref=e347]
+                          - columnheader "年龄 按 年龄 排序" [ref=e350] [cursor=pointer]:
+                            - generic [ref=e351]:
+                              - text: 年龄
+                              - button "按 年龄 排序" [ref=e352]
+                          - columnheader "性别" [ref=e355]:
+                            - generic [ref=e356]: 性别
+                          - columnheader "学历 按 学历 排序" [ref=e357] [cursor=pointer]:
+                            - generic [ref=e358]:
+                              - text: 学历
+                              - button "按 学历 排序" [ref=e359]
+                          - columnheader "技能专长" [ref=e362]:
+                            - generic [ref=e363]: 技能专长
+                          - columnheader "所在地区" [ref=e364]:
+                            - generic [ref=e365]: 所在地区
+                          - columnheader "就业状态" [ref=e366]:
+                            - generic [ref=e367]: 就业状态
+                    - table [ref=e372]:
+                      - rowgroup [ref=e382]:
+                        - row "1 张三 25 男 高中 生猪养殖,苹果栽培 山东省烟台市福山区张格庄镇张三村" [ref=e383]:
+                          - cell "1" [ref=e384]:
+                            - generic [ref=e386]: "1"
+                          - cell "张三" [ref=e387]:
+                            - generic [ref=e388]: 张三
+                          - cell "25" [ref=e389]:
+                            - generic [ref=e390]: "25"
+                          - cell "男" [ref=e391]:
+                            - generic [ref=e392]: 男
+                          - cell "高中" [ref=e393]:
+                            - generic [ref=e394]: 高中
+                          - cell "生猪养殖,苹果栽培" [ref=e395]:
+                            - generic [ref=e396]: 生猪养殖,苹果栽培
+                          - cell "山东省烟台市福山区张格庄镇张三村" [ref=e397]:
+                            - generic [ref=e398]: 山东省烟台市福山区张格庄镇张三村
+                          - cell [ref=e399]
+                        - row "2 李四 30 女 大专 大樱桃种植,电商运营 山东省烟台市福山区门楼镇李四村" [ref=e400]:
+                          - cell "2" [ref=e401]:
+                            - generic [ref=e403]: "2"
+                          - cell "李四" [ref=e404]:
+                            - generic [ref=e405]: 李四
+                          - cell "30" [ref=e406]:
+                            - generic [ref=e407]: "30"
+                          - cell "女" [ref=e408]:
+                            - generic [ref=e409]: 女
+                          - cell "大专" [ref=e410]:
+                            - generic [ref=e411]: 大专
+                          - cell "大樱桃种植,电商运营" [ref=e412]:
+                            - generic [ref=e413]: 大樱桃种植,电商运营
+                          - cell "山东省烟台市福山区门楼镇李四村" [ref=e414]:
+                            - generic [ref=e415]: 山东省烟台市福山区门楼镇李四村
+                          - cell [ref=e416]
+                        - row "3 王五 28 男 本科 蔬菜大棚,合作社管理 山东省烟台市福山区回里镇王五村" [ref=e417]:
+                          - cell "3" [ref=e418]:
+                            - generic [ref=e420]: "3"
+                          - cell "王五" [ref=e421]:
+                            - generic [ref=e422]: 王五
+                          - cell "28" [ref=e423]:
+                            - generic [ref=e424]: "28"
+                          - cell "男" [ref=e425]:
+                            - generic [ref=e426]: 男
+                          - cell "本科" [ref=e427]:
+                            - generic [ref=e428]: 本科
+                          - cell "蔬菜大棚,合作社管理" [ref=e429]:
+                            - generic [ref=e430]: 蔬菜大棚,合作社管理
+                          - cell "山东省烟台市福山区回里镇王五村" [ref=e431]:
+                            - generic [ref=e432]: 山东省烟台市福山区回里镇王五村
+                          - cell [ref=e433]
+                        - row "4 XSSImgTest1775019966963 25 男" [ref=e434]:
+                          - cell "4" [ref=e435]:
+                            - generic [ref=e437]: "4"
+                          - cell "XSSImgTest1775019966963" [ref=e438]:
+                            - generic [ref=e439]: XSSImgTest1775019966963
+                          - cell "25" [ref=e440]:
+                            - generic [ref=e441]: "25"
+                          - cell "男" [ref=e442]:
+                            - generic [ref=e443]: 男
+                          - cell [ref=e444]
+                          - cell [ref=e445]
+                          - cell [ref=e446]
+                          - cell [ref=e447]
+                        - row "5 NotesTest1775019968095 25 男" [ref=e448]:
+                          - cell "5" [ref=e449]:
+                            - generic [ref=e451]: "5"
+                          - cell "NotesTest1775019968095" [ref=e452]:
+                            - generic [ref=e453]: NotesTest1775019968095
+                          - cell "25" [ref=e454]:
+                            - generic [ref=e455]: "25"
+                          - cell "男" [ref=e456]:
+                            - generic [ref=e457]: 男
+                          - cell [ref=e458]
+                          - cell [ref=e459]
+                          - cell [ref=e460]
+                          - cell [ref=e461]
+                        - row "6 SalaryTest1775019968311 25 男" [ref=e462]:
+                          - cell "6" [ref=e463]:
+                            - generic [ref=e465]: "6"
+                          - cell "SalaryTest1775019968311" [ref=e466]:
+                            - generic [ref=e467]: SalaryTest1775019968311
+                          - cell "25" [ref=e468]:
+                            - generic [ref=e469]: "25"
+                          - cell "男" [ref=e470]:
+                            - generic [ref=e471]: 男
+                          - cell [ref=e472]
+                          - cell [ref=e473]
+                          - cell [ref=e474]
+                          - cell [ref=e475]
+                        - row "7 XSSImgTest1775022622269 25 男" [ref=e476]:
+                          - cell "7" [ref=e477]:
+                            - generic [ref=e479]: "7"
+                          - cell "XSSImgTest1775022622269" [ref=e480]:
+                            - generic [ref=e481]: XSSImgTest1775022622269
+                          - cell "25" [ref=e482]:
+                            - generic [ref=e483]: "25"
+                          - cell "男" [ref=e484]:
+                            - generic [ref=e485]: 男
+                          - cell [ref=e486]
+                          - cell [ref=e487]
+                          - cell [ref=e488]
+                          - cell [ref=e489]
+                        - row "8 NotesTest1775022623407 25 男" [ref=e490]:
+                          - cell "8" [ref=e491]:
+                            - generic [ref=e493]: "8"
+                          - cell "NotesTest1775022623407" [ref=e494]:
+                            - generic [ref=e495]: NotesTest1775022623407
+                          - cell "25" [ref=e496]:
+                            - generic [ref=e497]: "25"
+                          - cell "男" [ref=e498]:
+                            - generic [ref=e499]: 男
+                          - cell [ref=e500]
+                          - cell [ref=e501]
+                          - cell [ref=e502]
+                          - cell [ref=e503]
+                        - row "9 SalaryTest1775022623624 25 男" [ref=e504]:
+                          - cell "9" [ref=e505]:
+                            - generic [ref=e507]: "9"
+                          - cell "SalaryTest1775022623624" [ref=e508]:
+                            - generic [ref=e509]: SalaryTest1775022623624
+                          - cell "25" [ref=e510]:
+                            - generic [ref=e511]: "25"
+                          - cell "男" [ref=e512]:
+                            - generic [ref=e513]: 男
+                          - cell [ref=e514]
+                          - cell [ref=e515]
+                          - cell [ref=e516]
+                          - cell [ref=e517]
+                  - generic [ref=e519]:
+                    - generic [ref=e520]: 共 15 条
+                    - generic [ref=e523] [cursor=pointer]:
+                      - generic:
+                        - combobox [ref=e525]
+                        - generic [ref=e526]: 9条/页
+                      - img [ref=e529]
+                    - button "上一页" [disabled] [ref=e531]:
+                      - generic:
+                        - img
+                    - list [ref=e532]:
+                      - listitem "第 1 页" [ref=e533]: "1"
+                      - listitem "第 2 页" [ref=e534] [cursor=pointer]: "2"
+                    - button "下一页" [ref=e535] [cursor=pointer]:
+                      - generic:
+                        - img
+              - generic [ref=e538]:
+                - img [ref=e540]
+                - generic [ref=e543]:
+                  - heading "想要了解更多？" [level=3] [ref=e544]
+                  - paragraph [ref=e545]: 登录后可以查看完整的联系方式，还可以添加和管理您自己的人才信息。
+                  - button "立即登录/注册" [ref=e546] [cursor=pointer]:
+                    - generic [ref=e547]:
+                      - img [ref=e549]
+                      - text: 立即登录/注册
+  - alert [ref=e551]:
+    - img [ref=e553]
+    - paragraph [ref=e555]: 退出登录成功
+  - alert [ref=e556]:
+    - img [ref=e558]
+    - paragraph [ref=e560]: 登录已过期，请重新登录

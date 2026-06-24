@@ -7,25 +7,25 @@
 
     <!-- Summary Cards -->
     <el-row :gutter="20" class="summary-row">
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col :xs="24" :sm="12" :md="summarySpan">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-value">{{ stats.totalTalents }}</div>
           <div class="summary-label">人才总数</div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col :xs="24" :sm="12" :md="summarySpan">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-value">{{ stats.avgAge }}</div>
           <div class="summary-label">平均年龄</div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col :xs="24" :sm="12" :md="summarySpan">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-value">{{ stats.totalSkills }}</div>
           <div class="summary-label">技能总数</div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col v-if="isAdmin" :xs="24" :sm="12" :md="6">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-value">{{ stats.recentRegistrations?.last30Days ?? 0 }}</div>
           <div class="summary-label">近30天新增</div>
@@ -73,7 +73,7 @@
     </el-row>
 
     <el-row :gutter="20">
-      <el-col :xs="24" :md="12">
+      <el-col :xs="24" :md="isAdmin ? 12 : 24">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title">热门技能 TOP10</span>
@@ -81,7 +81,7 @@
           <v-chart class="chart" :option="topSkillsOption" :autoresize="true" />
         </el-card>
       </el-col>
-      <el-col :xs="24" :md="12">
+      <el-col v-if="isAdmin" :xs="24" :md="12">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title">合作意愿分布</span>
@@ -98,6 +98,11 @@ import { ref, computed, onMounted } from 'vue'
 import VChart from 'vue-echarts'
 import '@/utils/echarts'
 import type { EChartsOption } from '@/utils/echarts'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.user?.role === 'admin')
+const summarySpan = computed(() => isAdmin.value ? 6 : 8)
 
 // Design token colors
 const COLORS = {
@@ -131,10 +136,10 @@ interface Statistics {
   avgAge: number
   totalSkills: number
   education: Array<{ education_level: string; count: number }>
-  ageDistribution: Array<{ age_range: string; count: number }>
+  ageDistribution: Array<{ age_group: string; count: number }>
   genderDistribution: Array<{ gender: string; count: number }>
-  topSkills: Array<{ skill_name: string; count: number }>
-  skillsCategory: Array<{ category: string; count: number }>
+  topSkills: Array<{ skill_name: string; person_count: number }>
+  skillsCategory: Array<{ skill_category: string; count: number }>
   cooperation: { strong: number; moderate: number; weak: number; total: number }
   recentRegistrations: { last7Days: number; last30Days: number; total: number }
 }
@@ -169,7 +174,7 @@ const ageOption = computed<EChartsOption>(() => {
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category',
-      data: dist.map(a => a.age_range),
+      data: dist.map(a => a.age_group),
       boundaryGap: false,
     },
     yAxis: { type: 'value', name: '人数' },
@@ -201,8 +206,8 @@ const skillCategoryOption = computed<EChartsOption>(() => ({
     radius: ['35%', '65%'],
     center: ['50%', '45%'],
     label: { show: true, formatter: '{b}\n{d}%' },
-    data: (stats.value.skillsCategory ?? []).map((s: { category: string; count: number }, i: number) => ({
-      name: s.category,
+    data: (stats.value.skillsCategory ?? []).map((s: { skill_category: string; count: number }, i: number) => ({
+      name: s.skill_category,
       value: s.count,
       itemStyle: { color: PALETTE[i % PALETTE.length] },
     })),
@@ -245,7 +250,7 @@ const topSkillsOption = computed<EChartsOption>(() => {
     series: [{
       type: 'bar',
       data: skills.map(s => ({
-        value: s.count,
+        value: s.person_count,
         itemStyle: {
           color: {
             type: 'linear',

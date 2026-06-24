@@ -8,7 +8,7 @@
             <el-icon><component :is="currentDensityIcon" /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="虚拟滚动" placement="top">
+        <el-tooltip content="大数据模式" placement="top">
           <el-button
             circle
             size="small"
@@ -80,7 +80,7 @@
                 <span class="expand-value">{{ row.skills || '未填写' }}</span>
               </div>
               <div class="expand-row">
-                <span class="expand-label">创建时间:</span>
+                <span class="expand-label">录入时间:</span>
                 <span class="expand-value">{{ formatDate(row.created_at as string) }}</span>
               </div>
             </div>

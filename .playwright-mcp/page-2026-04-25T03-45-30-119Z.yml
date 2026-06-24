@@ -1,0 +1,750 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - button "显示调试面板" [ref=e5] [cursor=pointer]:
+      - generic [ref=e6]: 显示调试面板
+    - generic [ref=e53]:
+      - navigation "主导航" [ref=e54]:
+        - generic [ref=e55]:
+          - img [ref=e57]
+          - generic [ref=e59]: 数字乡村人才
+        - menubar [ref=e60]:
+          - menuitem "人才库" [ref=e61] [cursor=pointer]:
+            - img [ref=e63]
+            - generic [ref=e65]: 人才库
+          - menuitem "数据分析" [ref=e66] [cursor=pointer]:
+            - img [ref=e68]
+            - generic [ref=e70]: 数据分析
+          - menuitem "我的" [ref=e71] [cursor=pointer]:
+            - img [ref=e73]
+            - generic [ref=e75]: 我的
+          - menuitem "管理后台" [ref=e76] [cursor=pointer]:
+            - img [ref=e78]
+            - generic [ref=e80]: 管理后台
+        - button [ref=e82] [cursor=pointer]:
+          - img [ref=e85]
+      - generic [ref=e87]:
+        - banner [ref=e88]:
+          - link "跳转到主要内容" [ref=e89] [cursor=pointer]:
+            - /url: "#main-content"
+          - navigation "面包屑" [ref=e92]:
+            - link "管理后台" [ref=e94]
+          - generic [ref=e95]:
+            - button [ref=e96] [cursor=pointer]:
+              - img [ref=e99]
+            - button [ref=e102] [cursor=pointer]:
+              - img [ref=e105]
+            - button [ref=e110] [cursor=pointer]:
+              - img [ref=e113]
+            - button "用户菜单" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: A
+              - generic [ref=e118]:
+                - generic [ref=e119]: admin
+                - generic [ref=e121]: 管理员
+              - img [ref=e123]
+        - main [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]:
+              - generic [ref=e129]:
+                - button "返回 返回" [ref=e130] [cursor=pointer]:
+                  - generic "返回" [ref=e131]:
+                    - img [ref=e133]
+                  - generic [ref=e136]: 返回
+                - separator [ref=e137]
+                - generic [ref=e138]: 管理员控制台
+              - generic [ref=e139]:
+                - button "导入数据" [ref=e140] [cursor=pointer]:
+                  - generic [ref=e141]:
+                    - img [ref=e143]
+                    - text: 导入数据
+                - button "添加人员" [ref=e145] [cursor=pointer]:
+                  - generic [ref=e146]:
+                    - img [ref=e148]
+                    - text: 添加人员
+            - generic [ref=e150]:
+              - generic [ref=e151]:
+                - generic [ref=e154]:
+                  - generic:
+                    - img
+                  - generic [ref=e155]:
+                    - img [ref=e157]
+                    - generic [ref=e159]:
+                      - generic [ref=e160]: "15"
+                      - generic [ref=e161]: 总人数
+                - generic [ref=e164]:
+                  - generic:
+                    - img
+                  - generic [ref=e165]:
+                    - img [ref=e167]
+                    - generic [ref=e169]:
+                      - generic [ref=e170]: "15"
+                      - generic [ref=e171]: 注册用户
+                - generic [ref=e174]:
+                  - generic:
+                    - img
+                  - generic [ref=e175]:
+                    - img [ref=e177]
+                    - generic [ref=e181]:
+                      - generic [ref=e182]: "0"
+                      - generic [ref=e183]: 今日活跃
+              - generic [ref=e187]:
+                - generic [ref=e190]:
+                  - img [ref=e193]
+                  - textbox "搜索姓名、技能、地区" [ref=e195]
+                - button "搜索" [ref=e197] [cursor=pointer]:
+                  - generic [ref=e198]:
+                    - img [ref=e200]
+                    - text: 搜索
+              - generic [ref=e202]:
+                - generic [ref=e204]:
+                  - generic [ref=e205]: 人员信息列表
+                  - button "刷新" [ref=e206] [cursor=pointer]:
+                    - generic [ref=e207]:
+                      - img [ref=e209]
+                      - text: 刷新
+                - generic [ref=e212]:
+                  - generic [ref=e214]:
+                    - button [ref=e215] [cursor=pointer]:
+                      - img [ref=e218]
+                    - button [ref=e220] [cursor=pointer]:
+                      - img [ref=e223]
+                    - button [ref=e225] [cursor=pointer]:
+                      - img [ref=e227]
+                  - generic [ref=e231]:
+                    - table [ref=e233]:
+                      - rowgroup [ref=e249]:
+                        - row "选择所有行 序号 姓名 按 姓名 排序 年龄 按 年龄 排序 性别 学历 按 学历 排序 技能专长 所在地区 联系电话 就业状态 创建时间 按 创建时间 排序 操作" [ref=e250]:
+                          - columnheader "选择所有行" [ref=e251]:
+                            - generic "选择所有行" [ref=e253] [cursor=pointer]:
+                              - generic [ref=e254]:
+                                - checkbox "选择所有行"
+                          - columnheader "序号" [ref=e256]:
+                            - generic [ref=e257]: 序号
+                          - columnheader [ref=e258]
+                          - columnheader "姓名 按 姓名 排序" [ref=e259] [cursor=pointer]:
+                            - generic [ref=e260]:
+                              - text: 姓名
+                              - button "按 姓名 排序" [ref=e261]
+                          - columnheader "年龄 按 年龄 排序" [ref=e264] [cursor=pointer]:
+                            - generic [ref=e265]:
+                              - text: 年龄
+                              - button "按 年龄 排序" [ref=e266]
+                          - columnheader "性别" [ref=e269]:
+                            - generic [ref=e270]: 性别
+                          - columnheader "学历 按 学历 排序" [ref=e271] [cursor=pointer]:
+                            - generic [ref=e272]:
+                              - text: 学历
+                              - button "按 学历 排序" [ref=e273]
+                          - columnheader "技能专长" [ref=e276]:
+                            - generic [ref=e277]: 技能专长
+                          - columnheader "所在地区" [ref=e278]:
+                            - generic [ref=e279]: 所在地区
+                          - columnheader "联系电话" [ref=e280]:
+                            - generic [ref=e281]: 联系电话
+                          - columnheader "就业状态" [ref=e282]:
+                            - generic [ref=e283]: 就业状态
+                          - columnheader "创建时间 按 创建时间 排序" [ref=e284] [cursor=pointer]:
+                            - generic [ref=e285]:
+                              - text: 创建时间
+                              - button "按 创建时间 排序" [ref=e286]
+                          - columnheader "操作" [ref=e289]:
+                            - generic [ref=e290]: 操作
+                    - table [ref=e295]:
+                      - rowgroup [ref=e311]:
+                        - row "选择当前行 1 展开当前行 NotesTest1775060746707 25 男 13860746707 2026/4/1 16:25:46 详情 编辑 删除" [ref=e312]:
+                          - cell "选择当前行" [ref=e313]:
+                            - generic "选择当前行" [ref=e315] [cursor=pointer]:
+                              - generic [ref=e316]:
+                                - checkbox "选择当前行"
+                          - cell "1" [ref=e318]:
+                            - generic [ref=e320]: "1"
+                          - cell "展开当前行" [ref=e321]:
+                            - button "展开当前行" [ref=e323] [cursor=pointer]:
+                              - img [ref=e325]
+                          - cell "NotesTest1775060746707" [ref=e327]:
+                            - generic [ref=e328]: NotesTest1775060746707
+                          - cell "25" [ref=e329]:
+                            - generic [ref=e330]: "25"
+                          - cell "男" [ref=e331]:
+                            - generic [ref=e332]: 男
+                          - cell [ref=e333]
+                          - cell [ref=e334]
+                          - cell [ref=e335]
+                          - cell "13860746707" [ref=e336]:
+                            - generic [ref=e337]: "13860746707"
+                          - cell [ref=e338]
+                          - cell "2026/4/1 16:25:46" [ref=e339]:
+                            - generic [ref=e340]: 2026/4/1 16:25:46
+                          - cell "详情 编辑 删除" [ref=e341]:
+                            - generic [ref=e343]:
+                              - button "详情" [ref=e344] [cursor=pointer]:
+                                - generic [ref=e345]:
+                                  - img [ref=e347]
+                                  - text: 详情
+                              - button "编辑" [ref=e349] [cursor=pointer]:
+                                - generic [ref=e350]:
+                                  - img [ref=e352]
+                                  - text: 编辑
+                              - button "删除" [ref=e355] [cursor=pointer]:
+                                - generic [ref=e356]:
+                                  - img [ref=e358]
+                                  - text: 删除
+                        - row "选择当前行 2 展开当前行 SalaryTest1775060746926 25 男 13960746926 2026/4/1 16:25:46 详情 编辑 删除" [ref=e360]:
+                          - cell "选择当前行" [ref=e361]:
+                            - generic "选择当前行" [ref=e363] [cursor=pointer]:
+                              - generic [ref=e364]:
+                                - checkbox "选择当前行"
+                          - cell "2" [ref=e366]:
+                            - generic [ref=e368]: "2"
+                          - cell "展开当前行" [ref=e369]:
+                            - button "展开当前行" [ref=e371] [cursor=pointer]:
+                              - img [ref=e373]
+                          - cell "SalaryTest1775060746926" [ref=e375]:
+                            - generic [ref=e376]: SalaryTest1775060746926
+                          - cell "25" [ref=e377]:
+                            - generic [ref=e378]: "25"
+                          - cell "男" [ref=e379]:
+                            - generic [ref=e380]: 男
+                          - cell [ref=e381]
+                          - cell [ref=e382]
+                          - cell [ref=e383]
+                          - cell "13960746926" [ref=e384]:
+                            - generic [ref=e385]: "13960746926"
+                          - cell [ref=e386]
+                          - cell "2026/4/1 16:25:46" [ref=e387]:
+                            - generic [ref=e388]: 2026/4/1 16:25:46
+                          - cell "详情 编辑 删除" [ref=e389]:
+                            - generic [ref=e391]:
+                              - button "详情" [ref=e392] [cursor=pointer]:
+                                - generic [ref=e393]:
+                                  - img [ref=e395]
+                                  - text: 详情
+                              - button "编辑" [ref=e397] [cursor=pointer]:
+                                - generic [ref=e398]:
+                                  - img [ref=e400]
+                                  - text: 编辑
+                              - button "删除" [ref=e403] [cursor=pointer]:
+                                - generic [ref=e404]:
+                                  - img [ref=e406]
+                                  - text: 删除
+                        - row "选择当前行 3 展开当前行 XSSImgTest1775060745575 25 男 13860745575 2026/4/1 16:25:45 详情 编辑 删除" [ref=e408]:
+                          - cell "选择当前行" [ref=e409]:
+                            - generic "选择当前行" [ref=e411] [cursor=pointer]:
+                              - generic [ref=e412]:
+                                - checkbox "选择当前行"
+                          - cell "3" [ref=e414]:
+                            - generic [ref=e416]: "3"
+                          - cell "展开当前行" [ref=e417]:
+                            - button "展开当前行" [ref=e419] [cursor=pointer]:
+                              - img [ref=e421]
+                          - cell "XSSImgTest1775060745575" [ref=e423]:
+                            - generic [ref=e424]: XSSImgTest1775060745575
+                          - cell "25" [ref=e425]:
+                            - generic [ref=e426]: "25"
+                          - cell "男" [ref=e427]:
+                            - generic [ref=e428]: 男
+                          - cell [ref=e429]
+                          - cell [ref=e430]
+                          - cell [ref=e431]
+                          - cell "13860745575" [ref=e432]:
+                            - generic [ref=e433]: "13860745575"
+                          - cell [ref=e434]
+                          - cell "2026/4/1 16:25:45" [ref=e435]:
+                            - generic [ref=e436]: 2026/4/1 16:25:45
+                          - cell "详情 编辑 删除" [ref=e437]:
+                            - generic [ref=e439]:
+                              - button "详情" [ref=e440] [cursor=pointer]:
+                                - generic [ref=e441]:
+                                  - img [ref=e443]
+                                  - text: 详情
+                              - button "编辑" [ref=e445] [cursor=pointer]:
+                                - generic [ref=e446]:
+                                  - img [ref=e448]
+                                  - text: 编辑
+                              - button "删除" [ref=e451] [cursor=pointer]:
+                                - generic [ref=e452]:
+                                  - img [ref=e454]
+                                  - text: 删除
+                        - row "选择当前行 4 展开当前行 SalaryTest1775022643160 25 男 13922643160 2026/4/1 05:50:43 详情 编辑 删除" [ref=e456]:
+                          - cell "选择当前行" [ref=e457]:
+                            - generic "选择当前行" [ref=e459] [cursor=pointer]:
+                              - generic [ref=e460]:
+                                - checkbox "选择当前行"
+                          - cell "4" [ref=e462]:
+                            - generic [ref=e464]: "4"
+                          - cell "展开当前行" [ref=e465]:
+                            - button "展开当前行" [ref=e467] [cursor=pointer]:
+                              - img [ref=e469]
+                          - cell "SalaryTest1775022643160" [ref=e471]:
+                            - generic [ref=e472]: SalaryTest1775022643160
+                          - cell "25" [ref=e473]:
+                            - generic [ref=e474]: "25"
+                          - cell "男" [ref=e475]:
+                            - generic [ref=e476]: 男
+                          - cell [ref=e477]
+                          - cell [ref=e478]
+                          - cell [ref=e479]
+                          - cell "13922643160" [ref=e480]:
+                            - generic [ref=e481]: "13922643160"
+                          - cell [ref=e482]
+                          - cell "2026/4/1 05:50:43" [ref=e483]:
+                            - generic [ref=e484]: 2026/4/1 05:50:43
+                          - cell "详情 编辑 删除" [ref=e485]:
+                            - generic [ref=e487]:
+                              - button "详情" [ref=e488] [cursor=pointer]:
+                                - generic [ref=e489]:
+                                  - img [ref=e491]
+                                  - text: 详情
+                              - button "编辑" [ref=e493] [cursor=pointer]:
+                                - generic [ref=e494]:
+                                  - img [ref=e496]
+                                  - text: 编辑
+                              - button "删除" [ref=e499] [cursor=pointer]:
+                                - generic [ref=e500]:
+                                  - img [ref=e502]
+                                  - text: 删除
+                        - row "选择当前行 5 展开当前行 NotesTest1775022642938 25 男 13822642938 2026/4/1 05:50:42 详情 编辑 删除" [ref=e504]:
+                          - cell "选择当前行" [ref=e505]:
+                            - generic "选择当前行" [ref=e507] [cursor=pointer]:
+                              - generic [ref=e508]:
+                                - checkbox "选择当前行"
+                          - cell "5" [ref=e510]:
+                            - generic [ref=e512]: "5"
+                          - cell "展开当前行" [ref=e513]:
+                            - button "展开当前行" [ref=e515] [cursor=pointer]:
+                              - img [ref=e517]
+                          - cell "NotesTest1775022642938" [ref=e519]:
+                            - generic [ref=e520]: NotesTest1775022642938
+                          - cell "25" [ref=e521]:
+                            - generic [ref=e522]: "25"
+                          - cell "男" [ref=e523]:
+                            - generic [ref=e524]: 男
+                          - cell [ref=e525]
+                          - cell [ref=e526]
+                          - cell [ref=e527]
+                          - cell "13822642938" [ref=e528]:
+                            - generic [ref=e529]: "13822642938"
+                          - cell [ref=e530]
+                          - cell "2026/4/1 05:50:42" [ref=e531]:
+                            - generic [ref=e532]: 2026/4/1 05:50:42
+                          - cell "详情 编辑 删除" [ref=e533]:
+                            - generic [ref=e535]:
+                              - button "详情" [ref=e536] [cursor=pointer]:
+                                - generic [ref=e537]:
+                                  - img [ref=e539]
+                                  - text: 详情
+                              - button "编辑" [ref=e541] [cursor=pointer]:
+                                - generic [ref=e542]:
+                                  - img [ref=e544]
+                                  - text: 编辑
+                              - button "删除" [ref=e547] [cursor=pointer]:
+                                - generic [ref=e548]:
+                                  - img [ref=e550]
+                                  - text: 删除
+                        - row "选择当前行 6 展开当前行 XSSImgTest1775022641809 25 男 13822641809 2026/4/1 05:50:41 详情 编辑 删除" [ref=e552]:
+                          - cell "选择当前行" [ref=e553]:
+                            - generic "选择当前行" [ref=e555] [cursor=pointer]:
+                              - generic [ref=e556]:
+                                - checkbox "选择当前行"
+                          - cell "6" [ref=e558]:
+                            - generic [ref=e560]: "6"
+                          - cell "展开当前行" [ref=e561]:
+                            - button "展开当前行" [ref=e563] [cursor=pointer]:
+                              - img [ref=e565]
+                          - cell "XSSImgTest1775022641809" [ref=e567]:
+                            - generic [ref=e568]: XSSImgTest1775022641809
+                          - cell "25" [ref=e569]:
+                            - generic [ref=e570]: "25"
+                          - cell "男" [ref=e571]:
+                            - generic [ref=e572]: 男
+                          - cell [ref=e573]
+                          - cell [ref=e574]
+                          - cell [ref=e575]
+                          - cell "13822641809" [ref=e576]:
+                            - generic [ref=e577]: "13822641809"
+                          - cell [ref=e578]
+                          - cell "2026/4/1 05:50:41" [ref=e579]:
+                            - generic [ref=e580]: 2026/4/1 05:50:41
+                          - cell "详情 编辑 删除" [ref=e581]:
+                            - generic [ref=e583]:
+                              - button "详情" [ref=e584] [cursor=pointer]:
+                                - generic [ref=e585]:
+                                  - img [ref=e587]
+                                  - text: 详情
+                              - button "编辑" [ref=e589] [cursor=pointer]:
+                                - generic [ref=e590]:
+                                  - img [ref=e592]
+                                  - text: 编辑
+                              - button "删除" [ref=e595] [cursor=pointer]:
+                                - generic [ref=e596]:
+                                  - img [ref=e598]
+                                  - text: 删除
+                        - row "选择当前行 7 展开当前行 NotesTest1775022623407 25 男 13822623407 2026/4/1 05:50:23 详情 编辑 删除" [ref=e600]:
+                          - cell "选择当前行" [ref=e601]:
+                            - generic "选择当前行" [ref=e603] [cursor=pointer]:
+                              - generic [ref=e604]:
+                                - checkbox "选择当前行"
+                          - cell "7" [ref=e606]:
+                            - generic [ref=e608]: "7"
+                          - cell "展开当前行" [ref=e609]:
+                            - button "展开当前行" [ref=e611] [cursor=pointer]:
+                              - img [ref=e613]
+                          - cell "NotesTest1775022623407" [ref=e615]:
+                            - generic [ref=e616]: NotesTest1775022623407
+                          - cell "25" [ref=e617]:
+                            - generic [ref=e618]: "25"
+                          - cell "男" [ref=e619]:
+                            - generic [ref=e620]: 男
+                          - cell [ref=e621]
+                          - cell [ref=e622]
+                          - cell [ref=e623]
+                          - cell "13822623407" [ref=e624]:
+                            - generic [ref=e625]: "13822623407"
+                          - cell [ref=e626]
+                          - cell "2026/4/1 05:50:23" [ref=e627]:
+                            - generic [ref=e628]: 2026/4/1 05:50:23
+                          - cell "详情 编辑 删除" [ref=e629]:
+                            - generic [ref=e631]:
+                              - button "详情" [ref=e632] [cursor=pointer]:
+                                - generic [ref=e633]:
+                                  - img [ref=e635]
+                                  - text: 详情
+                              - button "编辑" [ref=e637] [cursor=pointer]:
+                                - generic [ref=e638]:
+                                  - img [ref=e640]
+                                  - text: 编辑
+                              - button "删除" [ref=e643] [cursor=pointer]:
+                                - generic [ref=e644]:
+                                  - img [ref=e646]
+                                  - text: 删除
+                        - row "选择当前行 8 展开当前行 SalaryTest1775022623624 25 男 13922623624 2026/4/1 05:50:23 详情 编辑 删除" [ref=e648]:
+                          - cell "选择当前行" [ref=e649]:
+                            - generic "选择当前行" [ref=e651] [cursor=pointer]:
+                              - generic [ref=e652]:
+                                - checkbox "选择当前行"
+                          - cell "8" [ref=e654]:
+                            - generic [ref=e656]: "8"
+                          - cell "展开当前行" [ref=e657]:
+                            - button "展开当前行" [ref=e659] [cursor=pointer]:
+                              - img [ref=e661]
+                          - cell "SalaryTest1775022623624" [ref=e663]:
+                            - generic [ref=e664]: SalaryTest1775022623624
+                          - cell "25" [ref=e665]:
+                            - generic [ref=e666]: "25"
+                          - cell "男" [ref=e667]:
+                            - generic [ref=e668]: 男
+                          - cell [ref=e669]
+                          - cell [ref=e670]
+                          - cell [ref=e671]
+                          - cell "13922623624" [ref=e672]:
+                            - generic [ref=e673]: "13922623624"
+                          - cell [ref=e674]
+                          - cell "2026/4/1 05:50:23" [ref=e675]:
+                            - generic [ref=e676]: 2026/4/1 05:50:23
+                          - cell "详情 编辑 删除" [ref=e677]:
+                            - generic [ref=e679]:
+                              - button "详情" [ref=e680] [cursor=pointer]:
+                                - generic [ref=e681]:
+                                  - img [ref=e683]
+                                  - text: 详情
+                              - button "编辑" [ref=e685] [cursor=pointer]:
+                                - generic [ref=e686]:
+                                  - img [ref=e688]
+                                  - text: 编辑
+                              - button "删除" [ref=e691] [cursor=pointer]:
+                                - generic [ref=e692]:
+                                  - img [ref=e694]
+                                  - text: 删除
+                        - row "选择当前行 9 展开当前行 XSSImgTest1775022622269 25 男 13822622269 2026/4/1 05:50:22 详情 编辑 删除" [ref=e696]:
+                          - cell "选择当前行" [ref=e697]:
+                            - generic "选择当前行" [ref=e699] [cursor=pointer]:
+                              - generic [ref=e700]:
+                                - checkbox "选择当前行"
+                          - cell "9" [ref=e702]:
+                            - generic [ref=e704]: "9"
+                          - cell "展开当前行" [ref=e705]:
+                            - button "展开当前行" [ref=e707] [cursor=pointer]:
+                              - img [ref=e709]
+                          - cell "XSSImgTest1775022622269" [ref=e711]:
+                            - generic [ref=e712]: XSSImgTest1775022622269
+                          - cell "25" [ref=e713]:
+                            - generic [ref=e714]: "25"
+                          - cell "男" [ref=e715]:
+                            - generic [ref=e716]: 男
+                          - cell [ref=e717]
+                          - cell [ref=e718]
+                          - cell [ref=e719]
+                          - cell "13822622269" [ref=e720]:
+                            - generic [ref=e721]: "13822622269"
+                          - cell [ref=e722]
+                          - cell "2026/4/1 05:50:22" [ref=e723]:
+                            - generic [ref=e724]: 2026/4/1 05:50:22
+                          - cell "详情 编辑 删除" [ref=e725]:
+                            - generic [ref=e727]:
+                              - button "详情" [ref=e728] [cursor=pointer]:
+                                - generic [ref=e729]:
+                                  - img [ref=e731]
+                                  - text: 详情
+                              - button "编辑" [ref=e733] [cursor=pointer]:
+                                - generic [ref=e734]:
+                                  - img [ref=e736]
+                                  - text: 编辑
+                              - button "删除" [ref=e739] [cursor=pointer]:
+                                - generic [ref=e740]:
+                                  - img [ref=e742]
+                                  - text: 删除
+                        - row "选择当前行 10 展开当前行 NotesTest1775019968095 25 男 13819968095 2026/4/1 05:06:08 详情 编辑 删除" [ref=e744]:
+                          - cell "选择当前行" [ref=e745]:
+                            - generic "选择当前行" [ref=e747] [cursor=pointer]:
+                              - generic [ref=e748]:
+                                - checkbox "选择当前行"
+                          - cell "10" [ref=e750]:
+                            - generic [ref=e752]: "10"
+                          - cell "展开当前行" [ref=e753]:
+                            - button "展开当前行" [ref=e755] [cursor=pointer]:
+                              - img [ref=e757]
+                          - cell "NotesTest1775019968095" [ref=e759]:
+                            - generic [ref=e760]: NotesTest1775019968095
+                          - cell "25" [ref=e761]:
+                            - generic [ref=e762]: "25"
+                          - cell "男" [ref=e763]:
+                            - generic [ref=e764]: 男
+                          - cell [ref=e765]
+                          - cell [ref=e766]
+                          - cell [ref=e767]
+                          - cell "13819968095" [ref=e768]:
+                            - generic [ref=e769]: "13819968095"
+                          - cell [ref=e770]
+                          - cell "2026/4/1 05:06:08" [ref=e771]:
+                            - generic [ref=e772]: 2026/4/1 05:06:08
+                          - cell "详情 编辑 删除" [ref=e773]:
+                            - generic [ref=e775]:
+                              - button "详情" [ref=e776] [cursor=pointer]:
+                                - generic [ref=e777]:
+                                  - img [ref=e779]
+                                  - text: 详情
+                              - button "编辑" [ref=e781] [cursor=pointer]:
+                                - generic [ref=e782]:
+                                  - img [ref=e784]
+                                  - text: 编辑
+                              - button "删除" [ref=e787] [cursor=pointer]:
+                                - generic [ref=e788]:
+                                  - img [ref=e790]
+                                  - text: 删除
+                        - row "选择当前行 11 展开当前行 SalaryTest1775019968311 25 男 13919968311 2026/4/1 05:06:08 详情 编辑 删除" [ref=e792]:
+                          - cell "选择当前行" [ref=e793]:
+                            - generic "选择当前行" [ref=e795] [cursor=pointer]:
+                              - generic [ref=e796]:
+                                - checkbox "选择当前行"
+                          - cell "11" [ref=e798]:
+                            - generic [ref=e800]: "11"
+                          - cell "展开当前行" [ref=e801]:
+                            - button "展开当前行" [ref=e803] [cursor=pointer]:
+                              - img [ref=e805]
+                          - cell "SalaryTest1775019968311" [ref=e807]:
+                            - generic [ref=e808]: SalaryTest1775019968311
+                          - cell "25" [ref=e809]:
+                            - generic [ref=e810]: "25"
+                          - cell "男" [ref=e811]:
+                            - generic [ref=e812]: 男
+                          - cell [ref=e813]
+                          - cell [ref=e814]
+                          - cell [ref=e815]
+                          - cell "13919968311" [ref=e816]:
+                            - generic [ref=e817]: "13919968311"
+                          - cell [ref=e818]
+                          - cell "2026/4/1 05:06:08" [ref=e819]:
+                            - generic [ref=e820]: 2026/4/1 05:06:08
+                          - cell "详情 编辑 删除" [ref=e821]:
+                            - generic [ref=e823]:
+                              - button "详情" [ref=e824] [cursor=pointer]:
+                                - generic [ref=e825]:
+                                  - img [ref=e827]
+                                  - text: 详情
+                              - button "编辑" [ref=e829] [cursor=pointer]:
+                                - generic [ref=e830]:
+                                  - img [ref=e832]
+                                  - text: 编辑
+                              - button "删除" [ref=e835] [cursor=pointer]:
+                                - generic [ref=e836]:
+                                  - img [ref=e838]
+                                  - text: 删除
+                        - row "选择当前行 12 展开当前行 XSSImgTest1775019966963 25 男 13819966963 2026/4/1 05:06:06 详情 编辑 删除" [ref=e840]:
+                          - cell "选择当前行" [ref=e841]:
+                            - generic "选择当前行" [ref=e843] [cursor=pointer]:
+                              - generic [ref=e844]:
+                                - checkbox "选择当前行"
+                          - cell "12" [ref=e846]:
+                            - generic [ref=e848]: "12"
+                          - cell "展开当前行" [ref=e849]:
+                            - button "展开当前行" [ref=e851] [cursor=pointer]:
+                              - img [ref=e853]
+                          - cell "XSSImgTest1775019966963" [ref=e855]:
+                            - generic [ref=e856]: XSSImgTest1775019966963
+                          - cell "25" [ref=e857]:
+                            - generic [ref=e858]: "25"
+                          - cell "男" [ref=e859]:
+                            - generic [ref=e860]: 男
+                          - cell [ref=e861]
+                          - cell [ref=e862]
+                          - cell [ref=e863]
+                          - cell "13819966963" [ref=e864]:
+                            - generic [ref=e865]: "13819966963"
+                          - cell [ref=e866]
+                          - cell "2026/4/1 05:06:06" [ref=e867]:
+                            - generic [ref=e868]: 2026/4/1 05:06:06
+                          - cell "详情 编辑 删除" [ref=e869]:
+                            - generic [ref=e871]:
+                              - button "详情" [ref=e872] [cursor=pointer]:
+                                - generic [ref=e873]:
+                                  - img [ref=e875]
+                                  - text: 详情
+                              - button "编辑" [ref=e877] [cursor=pointer]:
+                                - generic [ref=e878]:
+                                  - img [ref=e880]
+                                  - text: 编辑
+                              - button "删除" [ref=e883] [cursor=pointer]:
+                                - generic [ref=e884]:
+                                  - img [ref=e886]
+                                  - text: 删除
+                        - row "选择当前行 13 展开当前行 张三 25 男 高中 山东省烟台市福山区张格庄镇张三村 13812345678 2026/3/31 07:49:16 详情 编辑 删除" [ref=e888]:
+                          - cell "选择当前行" [ref=e889]:
+                            - generic "选择当前行" [ref=e891] [cursor=pointer]:
+                              - generic [ref=e892]:
+                                - checkbox "选择当前行"
+                          - cell "13" [ref=e894]:
+                            - generic [ref=e896]: "13"
+                          - cell "展开当前行" [ref=e897]:
+                            - button "展开当前行" [ref=e899] [cursor=pointer]:
+                              - img [ref=e901]
+                          - cell "张三" [ref=e903]:
+                            - generic [ref=e904]: 张三
+                          - cell "25" [ref=e905]:
+                            - generic [ref=e906]: "25"
+                          - cell "男" [ref=e907]:
+                            - generic [ref=e908]: 男
+                          - cell "高中" [ref=e909]:
+                            - generic [ref=e910]: 高中
+                          - cell [ref=e911]
+                          - cell "山东省烟台市福山区张格庄镇张三村" [ref=e912]:
+                            - generic [ref=e913]: 山东省烟台市福山区张格庄镇张三村
+                          - cell "13812345678" [ref=e914]:
+                            - generic [ref=e915]: "13812345678"
+                          - cell [ref=e916]
+                          - cell "2026/3/31 07:49:16" [ref=e917]:
+                            - generic [ref=e918]: 2026/3/31 07:49:16
+                          - cell "详情 编辑 删除" [ref=e919]:
+                            - generic [ref=e921]:
+                              - button "详情" [ref=e922] [cursor=pointer]:
+                                - generic [ref=e923]:
+                                  - img [ref=e925]
+                                  - text: 详情
+                              - button "编辑" [ref=e927] [cursor=pointer]:
+                                - generic [ref=e928]:
+                                  - img [ref=e930]
+                                  - text: 编辑
+                              - button "删除" [ref=e933] [cursor=pointer]:
+                                - generic [ref=e934]:
+                                  - img [ref=e936]
+                                  - text: 删除
+                        - row "选择当前行 14 展开当前行 李四 30 女 大专 山东省烟台市福山区门楼镇李四村 13987654321 2026/3/31 07:49:16 详情 编辑 删除" [ref=e938]:
+                          - cell "选择当前行" [ref=e939]:
+                            - generic "选择当前行" [ref=e941] [cursor=pointer]:
+                              - generic [ref=e942]:
+                                - checkbox "选择当前行"
+                          - cell "14" [ref=e944]:
+                            - generic [ref=e946]: "14"
+                          - cell "展开当前行" [ref=e947]:
+                            - button "展开当前行" [ref=e949] [cursor=pointer]:
+                              - img [ref=e951]
+                          - cell "李四" [ref=e953]:
+                            - generic [ref=e954]: 李四
+                          - cell "30" [ref=e955]:
+                            - generic [ref=e956]: "30"
+                          - cell "女" [ref=e957]:
+                            - generic [ref=e958]: 女
+                          - cell "大专" [ref=e959]:
+                            - generic [ref=e960]: 大专
+                          - cell [ref=e961]
+                          - cell "山东省烟台市福山区门楼镇李四村" [ref=e962]:
+                            - generic [ref=e963]: 山东省烟台市福山区门楼镇李四村
+                          - cell "13987654321" [ref=e964]:
+                            - generic [ref=e965]: "13987654321"
+                          - cell [ref=e966]
+                          - cell "2026/3/31 07:49:16" [ref=e967]:
+                            - generic [ref=e968]: 2026/3/31 07:49:16
+                          - cell "详情 编辑 删除" [ref=e969]:
+                            - generic [ref=e971]:
+                              - button "详情" [ref=e972] [cursor=pointer]:
+                                - generic [ref=e973]:
+                                  - img [ref=e975]
+                                  - text: 详情
+                              - button "编辑" [ref=e977] [cursor=pointer]:
+                                - generic [ref=e978]:
+                                  - img [ref=e980]
+                                  - text: 编辑
+                              - button "删除" [ref=e983] [cursor=pointer]:
+                                - generic [ref=e984]:
+                                  - img [ref=e986]
+                                  - text: 删除
+                        - row "选择当前行 15 展开当前行 王五 28 男 本科 山东省烟台市福山区回里镇王五村 13611223344 2026/3/31 07:49:16 详情 编辑 删除" [ref=e988]:
+                          - cell "选择当前行" [ref=e989]:
+                            - generic "选择当前行" [ref=e991] [cursor=pointer]:
+                              - generic [ref=e992]:
+                                - checkbox "选择当前行"
+                          - cell "15" [ref=e994]:
+                            - generic [ref=e996]: "15"
+                          - cell "展开当前行" [ref=e997]:
+                            - button "展开当前行" [ref=e999] [cursor=pointer]:
+                              - img [ref=e1001]
+                          - cell "王五" [ref=e1003]:
+                            - generic [ref=e1004]: 王五
+                          - cell "28" [ref=e1005]:
+                            - generic [ref=e1006]: "28"
+                          - cell "男" [ref=e1007]:
+                            - generic [ref=e1008]: 男
+                          - cell "本科" [ref=e1009]:
+                            - generic [ref=e1010]: 本科
+                          - cell [ref=e1011]
+                          - cell "山东省烟台市福山区回里镇王五村" [ref=e1012]:
+                            - generic [ref=e1013]: 山东省烟台市福山区回里镇王五村
+                          - cell "13611223344" [ref=e1014]:
+                            - generic [ref=e1015]: "13611223344"
+                          - cell [ref=e1016]
+                          - cell "2026/3/31 07:49:16" [ref=e1017]:
+                            - generic [ref=e1018]: 2026/3/31 07:49:16
+                          - cell "详情 编辑 删除" [ref=e1019]:
+                            - generic [ref=e1021]:
+                              - button "详情" [ref=e1022] [cursor=pointer]:
+                                - generic [ref=e1023]:
+                                  - img [ref=e1025]
+                                  - text: 详情
+                              - button "编辑" [ref=e1027] [cursor=pointer]:
+                                - generic [ref=e1028]:
+                                  - img [ref=e1030]
+                                  - text: 编辑
+                              - button "删除" [ref=e1033] [cursor=pointer]:
+                                - generic [ref=e1034]:
+                                  - img [ref=e1036]
+                                  - text: 删除
+                  - generic [ref=e1039]:
+                    - generic [ref=e1040]: 共 15 条
+                    - generic [ref=e1043] [cursor=pointer]:
+                      - generic:
+                        - combobox [ref=e1045]
+                        - generic [ref=e1046]: 20条/页
+                      - img [ref=e1049]
+                    - button "上一页" [disabled] [ref=e1051]:
+                      - generic:
+                        - img
+                    - list [ref=e1052]:
+                      - listitem "第 1 页" [ref=e1053]: "1"
+                    - button "下一页" [disabled] [ref=e1054]:
+                      - generic:
+                        - img
+                    - generic [ref=e1055]:
+                      - generic [ref=e1056]: 前往
+                      - spinbutton "页" [ref=e1059]: "1"
+                      - generic [ref=e1060]: 页
+  - alert [ref=e1061]:
+    - img [ref=e1063]
+    - paragraph [ref=e1065]: 登录成功

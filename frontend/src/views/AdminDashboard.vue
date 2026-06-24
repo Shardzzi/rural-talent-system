@@ -1,6 +1,6 @@
 <template>
   <div class="admin-dashboard">
-    <el-page-header @back="goBack" content="管理员控制台">
+    <el-page-header @back="goBack" content="管理中心">
       <template #extra>
         <el-button type="success" @click="showImportDialog = true">
           <el-icon><Upload /></el-icon>
@@ -606,7 +606,7 @@ export default {
         await loadPersons()
         await loadStats()
       } catch (error) {
-        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+        console.error('删除失败:', error); ElMessage.error('删除失败，请稍后重试')
       } finally {
         loading.value = false
       }
@@ -670,7 +670,7 @@ export default {
         window.URL.revokeObjectURL(url)
         ElMessage.success('数据导出成功')
       } catch (error) {
-        ElMessage.error('导出失败: ' + (error.response?.data?.message || error.message))
+        console.error('导出失败:', error); ElMessage.error('导出失败，请稍后重试')
       }
     }
     
@@ -711,7 +711,7 @@ export default {
         await loadPersons()
         await loadStats()
       } catch (error) {
-        ElMessage.error('批量删除失败: ' + (error.response?.data?.message || error.message))
+        console.error('批量删除失败:', error); ElMessage.error('批量删除失败，请稍后重试')
       } finally {
         loading.value = false
       }
@@ -726,7 +726,7 @@ export default {
         selectedRows.value = []
         await loadPersons()
       } catch (error) {
-        ElMessage.error('批量更新失败: ' + (error.response?.data?.message || error.message))
+        console.error('批量更新失败:', error); ElMessage.error('批量更新失败，请稍后重试')
       } finally {
         loading.value = false
       }

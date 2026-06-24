@@ -211,7 +211,17 @@ export default {
 
     function parseJSONField(field: unknown): string[] {
       try {
-        return field ? (typeof field === 'string' ? JSON.parse(field) : field) as string[] : []
+        if (!field) return []
+        if (typeof field === 'string') {
+          try {
+            const parsed = JSON.parse(field)
+            if (Array.isArray(parsed)) return parsed
+          } catch {
+            return field.split(',').map((s: string) => s.trim()).filter(Boolean)
+          }
+        }
+        if (Array.isArray(field)) return field
+        return []
       } catch {
         return []
       }
@@ -434,7 +444,7 @@ export default {
               } catch {
                 // rollback failed silently
               }
-              throw new Error('关联用户账号失败，已取消人员创建')
+              throw new Error('信息保存出现问题，请重试')
             }
           }
           ElMessage.success('信息添加成功')
@@ -446,7 +456,7 @@ export default {
         emit('update:visible', false)
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string } }; message?: string }
-        ElMessage.error('保存失败: ' + (err.response?.data?.message || err.message))
+        console.error('保存失败:', err); ElMessage.error('保存失败，请检查信息后重试')
       } finally {
         submitting.value = false
       }

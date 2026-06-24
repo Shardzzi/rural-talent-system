@@ -1,0 +1,3 @@
+=== Test 3: Special characters in CSV ===
+Fields with commas are properly quoted:
+4,"测试,逗号",35,male,15000000000,testcomma@example.com,"山东省,烟台市,福山区",,,,,,,,,,,,,,,,2026-03-30 16:53:50,2026-03-30 16:53:50

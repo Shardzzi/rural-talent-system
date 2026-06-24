@@ -1,0 +1,182 @@
+- generic [ref=e3]:
+  - button "显示调试面板" [ref=e5] [cursor=pointer]:
+    - generic [ref=e6]: 显示调试面板
+  - generic [ref=e7]:
+    - navigation "主导航" [ref=e8]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e13]: 数字乡村人才
+      - menubar [ref=e14]:
+        - menuitem "人才库" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+          - generic [ref=e19]: 人才库
+        - menuitem "数据分析" [ref=e20] [cursor=pointer]:
+          - img [ref=e22]
+          - generic [ref=e24]: 数据分析
+        - menuitem "我的" [ref=e25] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e29]: 我的
+        - menuitem "管理后台" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+          - generic [ref=e34]: 管理后台
+      - button [ref=e36] [cursor=pointer]:
+        - img [ref=e39]
+    - generic [ref=e41]:
+      - banner [ref=e42]:
+        - link "跳转到主要内容" [ref=e43] [cursor=pointer]:
+          - /url: "#main-content"
+        - navigation "面包屑" [ref=e46]:
+          - link "管理后台" [ref=e48]
+        - generic [ref=e49]:
+          - button [ref=e50] [cursor=pointer]:
+            - img [ref=e53]
+          - button [ref=e56] [cursor=pointer]:
+            - img [ref=e59]
+          - button [ref=e64] [cursor=pointer]:
+            - img [ref=e67]
+          - button "用户菜单" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: A
+            - generic [ref=e72]:
+              - generic [ref=e73]: admin
+              - generic [ref=e75]: 管理员
+            - img [ref=e77]
+      - main [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e82]:
+            - generic [ref=e83]:
+              - button "返回 返回" [ref=e84] [cursor=pointer]:
+                - generic "返回" [ref=e85]:
+                  - img [ref=e87]
+                - generic [ref=e90]: 返回
+              - separator [ref=e91]
+              - generic [ref=e92]: 管理员控制台
+            - generic [ref=e93]:
+              - button "导入数据" [ref=e94] [cursor=pointer]:
+                - generic [ref=e95]:
+                  - img [ref=e97]
+                  - text: 导入数据
+              - button "添加人员" [ref=e99] [cursor=pointer]:
+                - generic [ref=e100]:
+                  - img [ref=e102]
+                  - text: 添加人员
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - generic [ref=e108]:
+                - generic:
+                  - img
+                - generic [ref=e109]:
+                  - img [ref=e111]
+                  - generic [ref=e113]:
+                    - generic [ref=e114]: "0"
+                    - generic [ref=e115]: 总人数
+              - generic [ref=e118]:
+                - generic:
+                  - img
+                - generic [ref=e119]:
+                  - img [ref=e121]
+                  - generic [ref=e123]:
+                    - generic [ref=e124]: "0"
+                    - generic [ref=e125]: 注册用户
+              - generic [ref=e128]:
+                - generic:
+                  - img
+                - generic [ref=e129]:
+                  - img [ref=e131]
+                  - generic [ref=e135]:
+                    - generic [ref=e136]: "0"
+                    - generic [ref=e137]: 今日活跃
+            - generic [ref=e141]:
+              - generic [ref=e144]:
+                - img [ref=e147]
+                - textbox "搜索姓名、技能、地区" [ref=e149]
+              - generic [ref=e150]:
+                - button "搜索" [disabled]:
+                  - generic:
+                    - img
+                  - generic:
+                    - generic:
+                      - img
+                    - text: 搜索
+            - generic [ref=e151]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: 人员信息列表
+                - button "刷新" [ref=e155] [cursor=pointer]:
+                  - generic [ref=e156]:
+                    - img [ref=e158]
+                    - text: 刷新
+              - generic [ref=e161]:
+                - generic [ref=e163]:
+                  - button [ref=e164] [cursor=pointer]:
+                    - img [ref=e167]
+                  - button [ref=e169] [cursor=pointer]:
+                    - img [ref=e172]
+                  - button [ref=e174] [cursor=pointer]:
+                    - img [ref=e176]
+                - generic [ref=e179]:
+                  - generic [ref=e180]:
+                    - table [ref=e182]:
+                      - rowgroup [ref=e198]:
+                        - row "选择所有行 序号 姓名 按 姓名 排序 年龄 按 年龄 排序 性别 学历 按 学历 排序 技能专长 所在地区 联系电话 邮箱 就业状态 创建时间 按 创建时间 排序 操作" [ref=e199]:
+                          - columnheader "选择所有行" [ref=e200]:
+                            - generic "选择所有行" [ref=e202]:
+                              - generic [ref=e203] [cursor=pointer]:
+                                - checkbox "选择所有行" [disabled]
+                          - columnheader "序号" [ref=e205]:
+                            - generic [ref=e206]: 序号
+                          - columnheader [ref=e207]
+                          - columnheader "姓名 按 姓名 排序" [ref=e208] [cursor=pointer]:
+                            - generic [ref=e209]:
+                              - text: 姓名
+                              - button "按 姓名 排序" [ref=e210]
+                          - columnheader "年龄 按 年龄 排序" [ref=e213] [cursor=pointer]:
+                            - generic [ref=e214]:
+                              - text: 年龄
+                              - button "按 年龄 排序" [ref=e215]
+                          - columnheader "性别" [ref=e218]:
+                            - generic [ref=e219]: 性别
+                          - columnheader "学历 按 学历 排序" [ref=e220] [cursor=pointer]:
+                            - generic [ref=e221]:
+                              - text: 学历
+                              - button "按 学历 排序" [ref=e222]
+                          - columnheader "技能专长" [ref=e225]:
+                            - generic [ref=e226]: 技能专长
+                          - columnheader "所在地区" [ref=e227]:
+                            - generic [ref=e228]: 所在地区
+                          - columnheader "联系电话" [ref=e229]:
+                            - generic [ref=e230]: 联系电话
+                          - columnheader "邮箱" [ref=e231]:
+                            - generic [ref=e232]: 邮箱
+                          - columnheader "就业状态" [ref=e233]:
+                            - generic [ref=e234]: 就业状态
+                          - columnheader "创建时间 按 创建时间 排序" [ref=e235] [cursor=pointer]:
+                            - generic [ref=e236]:
+                              - text: 创建时间
+                              - button "按 创建时间 排序" [ref=e237]
+                          - columnheader "操作" [ref=e240]:
+                            - generic [ref=e241]: 操作
+                    - generic [ref=e245]:
+                      - table:
+                        - rowgroup
+                      - generic [ref=e247]: 暂无数据
+                  - generic [ref=e249]:
+                    - img [ref=e250]
+                    - paragraph [ref=e252]: 正在加载...
+                - generic [ref=e254]:
+                  - generic [ref=e255]: 共 0 条
+                  - generic [ref=e258] [cursor=pointer]:
+                    - generic:
+                      - combobox [ref=e260]
+                      - generic [ref=e261]: 20条/页
+                    - img [ref=e264]
+                  - button "上一页" [disabled] [ref=e266]:
+                    - generic:
+                      - img
+                  - list [ref=e267]:
+                    - listitem "第 1 页" [ref=e268]: "1"
+                  - button "下一页" [disabled] [ref=e269]:
+                    - generic:
+                      - img
+                  - generic [ref=e270]:
+                    - generic [ref=e271]: 前往
+                    - spinbutton "页" [ref=e274]: "1"
+                    - generic [ref=e275]: 页

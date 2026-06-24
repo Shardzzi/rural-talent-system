@@ -98,7 +98,7 @@ const ALL_COLUMNS: ColumnConfig[] = [
   },
   {
     key: 'created_at',
-    label: '创建时间',
+    label: '录入时间',
     width: 160,
     sortable: true,
     visibleByDefault: true,

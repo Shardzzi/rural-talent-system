@@ -62,9 +62,9 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'analytics',
         name: 'Analytics',
-        component: () => import('@/views/AdminDashboard.vue'),
-        meta: { 
-          requiresAuth: true, 
+        component: () => import('@/views/StatisticsDashboard.vue'),
+        meta: {
+          requiresAuth: true,
           title: '数据分析 - 数字乡村人才信息系统',
           breadcrumb: [{ title: '数据分析' }]
         }

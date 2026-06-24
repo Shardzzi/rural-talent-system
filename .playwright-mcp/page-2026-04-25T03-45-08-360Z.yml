@@ -1,0 +1,75 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - button "显示调试面板" [ref=e5] [cursor=pointer]:
+      - generic [ref=e6]: 显示调试面板
+    - generic [ref=e7]:
+      - navigation "主导航" [ref=e8]:
+        - generic [ref=e9]:
+          - img [ref=e11]
+          - generic [ref=e13]: 数字乡村人才
+        - menubar [ref=e14]:
+          - menuitem "人才库" [ref=e15] [cursor=pointer]:
+            - img [ref=e17]
+            - generic [ref=e19]: 人才库
+          - menuitem "数据分析" [ref=e20] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e24]: 数据分析
+          - menuitem "我的" [ref=e25] [cursor=pointer]:
+            - img [ref=e27]
+            - generic [ref=e29]: 我的
+        - button [ref=e31] [cursor=pointer]:
+          - img [ref=e34]
+      - generic [ref=e36]:
+        - banner [ref=e37]:
+          - link "跳转到主要内容" [ref=e38] [cursor=pointer]:
+            - /url: "#main-content"
+          - navigation "面包屑" [ref=e41]:
+            - link "数据分析" [ref=e43]
+          - generic [ref=e44]:
+            - button [ref=e45] [cursor=pointer]:
+              - img [ref=e48]
+            - button [ref=e51] [cursor=pointer]:
+              - img [ref=e54]
+            - button [ref=e59] [cursor=pointer]:
+              - img [ref=e62]
+            - button "用户菜单" [expanded] [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: T
+              - generic [ref=e67]:
+                - generic [ref=e68]: testuser
+                - generic [ref=e70]: 用户
+              - img [ref=e72]
+        - main [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - heading "数据统计分析" [level=2] [ref=e77]
+              - paragraph [ref=e78]: 人才系统数据概览
+            - generic [ref=e79]:
+              - generic [ref=e82]:
+                - generic [ref=e142]: "15"
+                - generic [ref=e83]: 人才总数
+              - generic [ref=e86]:
+                - generic [ref=e143]: "26"
+                - generic [ref=e87]: 平均年龄
+              - generic [ref=e90]:
+                - generic [ref=e144]: "10"
+                - generic [ref=e91]: 技能总数
+              - generic [ref=e94]:
+                - generic [ref=e95]: "15"
+                - generic [ref=e96]: 近30天新增
+            - generic [ref=e97]:
+              - generic [ref=e100]: 学历分布
+              - generic [ref=e107]: 年龄分布
+            - generic [ref=e112]:
+              - generic [ref=e115]: 技能类别分布
+              - generic [ref=e122]: 性别分布
+            - generic [ref=e127]:
+              - generic [ref=e130]: 热门技能 TOP10
+              - generic [ref=e137]: 合作意愿分布
+  - menu "用户菜单" [active] [ref=e149]:
+    - menuitem "个人中心" [ref=e150] [cursor=pointer]:
+      - img [ref=e152]
+      - text: 个人中心
+    - separator [ref=e154]
+    - menuitem "退出登录" [ref=e155] [cursor=pointer]:
+      - img [ref=e157]
+      - text: 退出登录

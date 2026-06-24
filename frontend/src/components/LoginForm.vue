@@ -61,9 +61,10 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button 
-            type="primary" 
-            :loading="loading" 
+          <el-button
+            type="primary"
+            native-type="submit"
+            :loading="loading"
             @click="handleSubmit"
             size="large"
             class="submit-btn"

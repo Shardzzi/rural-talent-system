@@ -34,7 +34,7 @@ axios.interceptors.response.use(
         const authStore = useAuthStore()
 
         if (!authStore.refreshToken) {
-          throw new Error('缺少刷新令牌')
+          throw new Error('登录已过期，请重新登录')
         }
 
         if (!isRefreshing) {
@@ -76,11 +76,14 @@ axios.interceptors.response.use(
       case 403:
         ElMessage.error('权限不足，无法执行此操作')
         break
+      case 404:
+        ElMessage.error('请求的内容不存在或已被删除')
+        break
       case 500:
-        ElMessage.error('服务器内部错误，请稍后重试')
+        ElMessage.error('系统繁忙，请稍后重试')
         break
       default:
-        ElMessage.error(error.response.data?.message || `请求失败 (${status})`)
+        ElMessage.error(error.response.data?.message || '操作失败，请稍后重试')
     }
     return Promise.reject(error)
   }

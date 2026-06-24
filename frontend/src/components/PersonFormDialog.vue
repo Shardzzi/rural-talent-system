@@ -936,7 +936,7 @@ export default {
               } catch (rollbackError) {
                 // Silently handle rollback failure
               }
-              throw new Error('关联用户账号失败，已取消人员创建')
+              throw new Error('信息保存出现问题，请重试')
             }
           }
           
@@ -947,8 +947,8 @@ export default {
         handleClose()
         
       } catch (error) {
-        console.error('❌ 保存失败:', error)
-        ElMessage.error('保存失败: ' + (error.response?.data?.message || error.message))
+        console.error('保存失败:', error)
+        console.error('保存失败:', error); ElMessage.error('保存失败，请检查信息后重试')
       } finally {
         submitting.value = false
       }

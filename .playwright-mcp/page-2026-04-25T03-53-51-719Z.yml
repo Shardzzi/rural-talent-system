@@ -1,0 +1,63 @@
+- generic [ref=e3]:
+  - button "显示调试面板" [ref=e5] [cursor=pointer]:
+    - generic [ref=e6]: 显示调试面板
+  - generic [ref=e7]:
+    - navigation "主导航" [ref=e8]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e13]: 数字乡村人才
+      - menubar [ref=e14]:
+        - menuitem "人才库" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+          - generic [ref=e19]: 人才库
+        - menuitem "数据分析" [ref=e20] [cursor=pointer]:
+          - img [ref=e22]
+          - generic [ref=e24]: 数据分析
+        - menuitem "我的" [ref=e25] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e29]: 我的
+        - menuitem "管理后台" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+          - generic [ref=e34]: 管理后台
+      - button [ref=e36] [cursor=pointer]:
+        - img [ref=e39]
+    - generic [ref=e41]:
+      - banner [ref=e42]:
+        - link "跳转到主要内容" [ref=e43] [cursor=pointer]:
+          - /url: "#main-content"
+        - navigation "面包屑" [ref=e46]:
+          - link "数据分析" [ref=e48]
+        - generic [ref=e49]:
+          - button [ref=e50] [cursor=pointer]:
+            - img [ref=e53]
+          - button [ref=e56] [cursor=pointer]:
+            - img [ref=e59]
+          - button [ref=e64] [cursor=pointer]:
+            - img [ref=e67]
+          - button "用户菜单" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: A
+            - generic [ref=e72]:
+              - generic [ref=e73]: admin
+              - generic [ref=e75]: 管理员
+            - img [ref=e77]
+      - main [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - heading "数据统计分析" [level=2] [ref=e82]
+            - paragraph [ref=e83]: 人才系统数据概览
+          - generic [ref=e84]:
+            - generic [ref=e88]: 人才总数
+            - generic [ref=e92]: 平均年龄
+            - generic [ref=e96]: 技能总数
+            - generic [ref=e99]:
+              - generic [ref=e100]: "0"
+              - generic [ref=e101]: 近30天新增
+          - generic [ref=e102]:
+            - generic [ref=e105]: 学历分布
+            - generic [ref=e112]: 年龄分布
+          - generic [ref=e117]:
+            - generic [ref=e120]: 技能类别分布
+            - generic [ref=e127]: 性别分布
+          - generic [ref=e132]:
+            - generic [ref=e135]: 热门技能 TOP10
+            - generic [ref=e142]: 合作意愿分布

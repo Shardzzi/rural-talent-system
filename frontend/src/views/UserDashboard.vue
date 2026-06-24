@@ -314,7 +314,7 @@ export default {
           totalCount.value = responseData.total ?? responseData.totalCount ?? persons.value.length
         }
       } catch (error) {
-        ElMessage.error('加载人员列表失败')
+        ElMessage.error('加载失败，请稍后重试')
       } finally {
         loading.value = false
       }
@@ -332,7 +332,7 @@ export default {
         userPerson.value = response.data.data
       } catch (error) {
         if (error.response?.status !== 404) {
-          ElMessage.error('加载个人信息失败')
+          ElMessage.error('个人信息加载失败，请刷新页面重试')
         }
       }
     }
@@ -348,7 +348,7 @@ export default {
         currentPerson.value = { ...userPerson.value }
         isEdit.value = true
         showAddDialog.value = true
-        ElMessage.warning('无法获取完整信息，将使用基本信息编辑')
+        ElMessage.warning('部分信息加载失败，你可以继续编辑基本信息')
       }
     }
     

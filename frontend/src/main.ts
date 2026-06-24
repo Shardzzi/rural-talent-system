@@ -21,6 +21,13 @@ import {
   ElContainer,
   ElHeader,
   ElMain,
+  ElAside,
+  ElMenu,
+  ElMenuItem,
+  ElDropdown,
+  ElDropdownMenu,
+  ElDropdownItem,
+  ElAvatar,
   ElMessage,
   ElInputNumber,
   ElAlert,
@@ -48,7 +55,9 @@ import {
   ElPopover,
   ElScrollbar,
   ElTooltip,
-  ElCheckbox
+  ElCheckbox,
+  ElDescriptions,
+  ElDescriptionsItem
 } from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './styles/index.css'
@@ -142,6 +151,13 @@ const components = [
   ElContainer,
   ElHeader,
   ElMain,
+  ElAside,
+  ElMenu,
+  ElMenuItem,
+  ElDropdown,
+  ElDropdownMenu,
+  ElDropdownItem,
+  ElAvatar,
   ElInputNumber,
   ElAlert,
   ElDivider,
@@ -167,7 +183,9 @@ const components = [
   ElPopover,
   ElScrollbar,
   ElTooltip,
-  ElCheckbox
+  ElCheckbox,
+  ElDescriptions,
+  ElDescriptionsItem
 ]
 
 components.forEach(component => {

@@ -1,8 +1,5 @@
 <template>
   <div class="guest-view">
-    <!-- 认证状态调试面板 -->
-    <AuthDebugPanel />
-    
     <!-- 欢迎横幅 -->
     <div class="welcome-banner">
       <div class="banner-content">
@@ -240,14 +237,12 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
 import PersonDetailDialog from '../components/PersonDetailDialog.vue'
-import AuthDebugPanel from '../components/AuthDebugPanel.vue'
 import PersonTable from '../components/person-table/PersonTable.vue'
 
 export default {
   name: 'GuestView',
   components: {
     PersonDetailDialog,
-    AuthDebugPanel,
     PersonTable,
     User,
     Search,
@@ -373,7 +368,7 @@ export default {
           // guest might not have access to statistics, ignore silently
         }
       } catch (error) {
-        ElMessage.error('加载人员列表失败')
+        ElMessage.error('加载失败，请稍后重试')
       } finally {
         loading.value = false
       }

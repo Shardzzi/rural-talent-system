@@ -1,0 +1,26 @@
+Task 10: Statistics API with Real Data
+Date: 2026-03-31
+
+Test: GET /api/statistics with admin token
+Result: 200 OK with real aggregated data
+
+Response shows:
+- totalTalents: 3 (real count from persons table)
+- avgAge: 28 (real average from persons table)
+- totalSkills: 6 (real count from talent_skills table)
+- genderDistribution: [{gender: "男", count: 2}, {gender: "女", count: 1}] (real from DB)
+- education: [{education_level: "高中", count: 1}, {"本科", count: 1}, {"大专", count: 1}] (real from DB)
+- ageDistribution: [{age_group: "25-34岁", count: 3}] (real from DB)
+- topSkills: 6 skills with person_count (real from talent_skills)
+- recentRegistrations: {last7Days: 3, last30Days: 3, total: 3} (real from persons.created_at)
+- cooperation: real stats from rural_talent_profile
+- agriculture: real stats from rural_talent_profile
+- skillsCategory: real stats from talent_skills
+
+No hardcoded values detected. All data sourced from database queries.
+
+Files modified:
+- backend/src/services/databaseService.ts (added getGenderDistribution, getTopSkills, getRecentRegistrations + fixed validateUserSession timestamp comparison)
+- backend/src/services/mysqlService.ts (added 7 missing statistics methods + 3 new methods)
+- backend/src/services/dbServiceFactory.ts (added 3 new method signatures)
+- backend/src/controllers/personController.ts (added genderDistribution, topSkills, recentRegistrations to response)

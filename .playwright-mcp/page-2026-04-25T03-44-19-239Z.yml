@@ -1,0 +1,328 @@
+- generic [ref=e3]:
+  - button "显示调试面板" [ref=e5] [cursor=pointer]:
+    - generic [ref=e6]: 显示调试面板
+  - generic [ref=e62]:
+    - navigation "主导航" [ref=e63]:
+      - generic [ref=e64]:
+        - img [ref=e66]
+        - generic [ref=e68]: 数字乡村人才
+      - menubar [ref=e69]:
+        - menuitem "人才库" [ref=e70] [cursor=pointer]:
+          - img [ref=e72]
+          - generic [ref=e74]: 人才库
+        - menuitem "数据分析" [ref=e75] [cursor=pointer]:
+          - img [ref=e77]
+          - generic [ref=e79]: 数据分析
+        - menuitem "我的" [ref=e80] [cursor=pointer]:
+          - img [ref=e82]
+          - generic [ref=e84]: 我的
+      - button [ref=e86] [cursor=pointer]:
+        - img [ref=e89]
+    - generic [ref=e91]:
+      - banner [ref=e92]:
+        - link "跳转到主要内容" [ref=e93] [cursor=pointer]:
+          - /url: "#main-content"
+        - navigation "面包屑" [ref=e96]:
+          - link "个人中心" [ref=e98]
+        - generic [ref=e99]:
+          - button [ref=e100] [cursor=pointer]:
+            - img [ref=e103]
+          - button [ref=e106] [cursor=pointer]:
+            - img [ref=e109]
+          - button [ref=e114] [cursor=pointer]:
+            - img [ref=e117]
+          - button "用户菜单" [ref=e120] [cursor=pointer]:
+            - generic [ref=e121]: T
+            - generic [ref=e122]:
+              - generic [ref=e123]: testuser
+              - generic [ref=e125]: 用户
+            - img [ref=e127]
+      - main [ref=e129]:
+        - generic [ref=e130]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - button "返回 返回" [ref=e134] [cursor=pointer]:
+                - generic "返回" [ref=e135]:
+                  - img [ref=e137]
+                - generic [ref=e140]: 返回
+              - separator [ref=e141]
+              - generic [ref=e142]: 用户中心
+            - button "完善我的信息" [ref=e144] [cursor=pointer]:
+              - generic [ref=e145]:
+                - img [ref=e147]
+                - text: 完善我的信息
+          - generic [ref=e149]:
+            - generic [ref=e152]:
+              - img [ref=e154]
+              - heading "欢迎来到数字乡村人才信息系统" [level=3] [ref=e156]
+              - paragraph [ref=e157]: 您还没有完善个人信息，点击下方按钮开始录入您的信息，让更多人了解您的专业技能。
+              - button "开始录入个人信息" [ref=e158] [cursor=pointer]:
+                - generic [ref=e159]:
+                  - img [ref=e161]
+                  - text: 开始录入个人信息
+            - generic [ref=e163]:
+              - generic [ref=e165]:
+                - generic [ref=e166]: 浏览人才信息
+                - button "刷新" [ref=e167] [cursor=pointer]:
+                  - generic [ref=e168]:
+                    - img [ref=e170]
+                    - text: 刷新
+              - generic [ref=e172]:
+                - generic [ref=e174]:
+                  - generic [ref=e177]:
+                    - img [ref=e180]
+                    - textbox "搜索姓名、技能、地区" [ref=e182]
+                  - generic [ref=e185] [cursor=pointer]:
+                    - generic:
+                      - combobox [ref=e187]
+                      - generic [ref=e188]: 学历筛选
+                    - img [ref=e191]
+                  - generic [ref=e195] [cursor=pointer]:
+                    - generic:
+                      - combobox [ref=e197]
+                      - generic [ref=e198]: 就业状态
+                    - img [ref=e201]
+                  - generic [ref=e204]:
+                    - button "搜索" [ref=e205] [cursor=pointer]:
+                      - generic [ref=e206]:
+                        - img [ref=e208]
+                        - text: 搜索
+                    - button "重置" [ref=e210] [cursor=pointer]:
+                      - generic [ref=e211]: 重置
+                    - button "刷新列表" [ref=e212] [cursor=pointer]:
+                      - generic [ref=e213]:
+                        - img [ref=e215]
+                        - text: 刷新列表
+                - generic [ref=e217]:
+                  - generic [ref=e219]:
+                    - button [ref=e220] [cursor=pointer]:
+                      - img [ref=e223]
+                    - button [ref=e225] [cursor=pointer]:
+                      - img [ref=e228]
+                    - button [ref=e230] [cursor=pointer]:
+                      - img [ref=e232]
+                  - generic [ref=e236]:
+                    - table [ref=e238]:
+                      - rowgroup [ref=e249]:
+                        - row "序号 姓名 按 姓名 排序 年龄 按 年龄 排序 性别 学历 按 学历 排序 技能专长 所在地区 联系电话 就业状态" [ref=e250]:
+                          - columnheader "序号" [ref=e251]:
+                            - generic [ref=e252]: 序号
+                          - columnheader "姓名 按 姓名 排序" [ref=e253] [cursor=pointer]:
+                            - generic [ref=e254]:
+                              - text: 姓名
+                              - button "按 姓名 排序" [ref=e255]
+                          - columnheader "年龄 按 年龄 排序" [ref=e258] [cursor=pointer]:
+                            - generic [ref=e259]:
+                              - text: 年龄
+                              - button "按 年龄 排序" [ref=e260]
+                          - columnheader "性别" [ref=e263]:
+                            - generic [ref=e264]: 性别
+                          - columnheader "学历 按 学历 排序" [ref=e265] [cursor=pointer]:
+                            - generic [ref=e266]:
+                              - text: 学历
+                              - button "按 学历 排序" [ref=e267]
+                          - columnheader "技能专长" [ref=e270]:
+                            - generic [ref=e271]: 技能专长
+                          - columnheader "所在地区" [ref=e272]:
+                            - generic [ref=e273]: 所在地区
+                          - columnheader "联系电话" [ref=e274]:
+                            - generic [ref=e275]: 联系电话
+                          - columnheader "就业状态" [ref=e276]:
+                            - generic [ref=e277]: 就业状态
+                    - table [ref=e282]:
+                      - rowgroup [ref=e293]:
+                        - row "1 NotesTest1775060746707 25 男 13860746707" [ref=e294]:
+                          - cell "1" [ref=e295]:
+                            - generic [ref=e297]: "1"
+                          - cell "NotesTest1775060746707" [ref=e298]:
+                            - generic [ref=e299]: NotesTest1775060746707
+                          - cell "25" [ref=e300]:
+                            - generic [ref=e301]: "25"
+                          - cell "男" [ref=e302]:
+                            - generic [ref=e303]: 男
+                          - cell [ref=e304]
+                          - cell [ref=e305]
+                          - cell [ref=e306]
+                          - cell "13860746707" [ref=e307]:
+                            - generic [ref=e308]: "13860746707"
+                          - cell [ref=e309]
+                        - row "2 SalaryTest1775060746926 25 男 13960746926" [ref=e310]:
+                          - cell "2" [ref=e311]:
+                            - generic [ref=e313]: "2"
+                          - cell "SalaryTest1775060746926" [ref=e314]:
+                            - generic [ref=e315]: SalaryTest1775060746926
+                          - cell "25" [ref=e316]:
+                            - generic [ref=e317]: "25"
+                          - cell "男" [ref=e318]:
+                            - generic [ref=e319]: 男
+                          - cell [ref=e320]
+                          - cell [ref=e321]
+                          - cell [ref=e322]
+                          - cell "13960746926" [ref=e323]:
+                            - generic [ref=e324]: "13960746926"
+                          - cell [ref=e325]
+                        - row "3 XSSImgTest1775060745575 25 男 13860745575" [ref=e326]:
+                          - cell "3" [ref=e327]:
+                            - generic [ref=e329]: "3"
+                          - cell "XSSImgTest1775060745575" [ref=e330]:
+                            - generic [ref=e331]: XSSImgTest1775060745575
+                          - cell "25" [ref=e332]:
+                            - generic [ref=e333]: "25"
+                          - cell "男" [ref=e334]:
+                            - generic [ref=e335]: 男
+                          - cell [ref=e336]
+                          - cell [ref=e337]
+                          - cell [ref=e338]
+                          - cell "13860745575" [ref=e339]:
+                            - generic [ref=e340]: "13860745575"
+                          - cell [ref=e341]
+                        - row "4 SalaryTest1775022643160 25 男 13922643160" [ref=e342]:
+                          - cell "4" [ref=e343]:
+                            - generic [ref=e345]: "4"
+                          - cell "SalaryTest1775022643160" [ref=e346]:
+                            - generic [ref=e347]: SalaryTest1775022643160
+                          - cell "25" [ref=e348]:
+                            - generic [ref=e349]: "25"
+                          - cell "男" [ref=e350]:
+                            - generic [ref=e351]: 男
+                          - cell [ref=e352]
+                          - cell [ref=e353]
+                          - cell [ref=e354]
+                          - cell "13922643160" [ref=e355]:
+                            - generic [ref=e356]: "13922643160"
+                          - cell [ref=e357]
+                        - row "5 NotesTest1775022642938 25 男 13822642938" [ref=e358]:
+                          - cell "5" [ref=e359]:
+                            - generic [ref=e361]: "5"
+                          - cell "NotesTest1775022642938" [ref=e362]:
+                            - generic [ref=e363]: NotesTest1775022642938
+                          - cell "25" [ref=e364]:
+                            - generic [ref=e365]: "25"
+                          - cell "男" [ref=e366]:
+                            - generic [ref=e367]: 男
+                          - cell [ref=e368]
+                          - cell [ref=e369]
+                          - cell [ref=e370]
+                          - cell "13822642938" [ref=e371]:
+                            - generic [ref=e372]: "13822642938"
+                          - cell [ref=e373]
+                        - row "6 XSSImgTest1775022641809 25 男 13822641809" [ref=e374]:
+                          - cell "6" [ref=e375]:
+                            - generic [ref=e377]: "6"
+                          - cell "XSSImgTest1775022641809" [ref=e378]:
+                            - generic [ref=e379]: XSSImgTest1775022641809
+                          - cell "25" [ref=e380]:
+                            - generic [ref=e381]: "25"
+                          - cell "男" [ref=e382]:
+                            - generic [ref=e383]: 男
+                          - cell [ref=e384]
+                          - cell [ref=e385]
+                          - cell [ref=e386]
+                          - cell "13822641809" [ref=e387]:
+                            - generic [ref=e388]: "13822641809"
+                          - cell [ref=e389]
+                        - row "7 NotesTest1775022623407 25 男 13822623407" [ref=e390]:
+                          - cell "7" [ref=e391]:
+                            - generic [ref=e393]: "7"
+                          - cell "NotesTest1775022623407" [ref=e394]:
+                            - generic [ref=e395]: NotesTest1775022623407
+                          - cell "25" [ref=e396]:
+                            - generic [ref=e397]: "25"
+                          - cell "男" [ref=e398]:
+                            - generic [ref=e399]: 男
+                          - cell [ref=e400]
+                          - cell [ref=e401]
+                          - cell [ref=e402]
+                          - cell "13822623407" [ref=e403]:
+                            - generic [ref=e404]: "13822623407"
+                          - cell [ref=e405]
+                        - row "8 SalaryTest1775022623624 25 男 13922623624" [ref=e406]:
+                          - cell "8" [ref=e407]:
+                            - generic [ref=e409]: "8"
+                          - cell "SalaryTest1775022623624" [ref=e410]:
+                            - generic [ref=e411]: SalaryTest1775022623624
+                          - cell "25" [ref=e412]:
+                            - generic [ref=e413]: "25"
+                          - cell "男" [ref=e414]:
+                            - generic [ref=e415]: 男
+                          - cell [ref=e416]
+                          - cell [ref=e417]
+                          - cell [ref=e418]
+                          - cell "13922623624" [ref=e419]:
+                            - generic [ref=e420]: "13922623624"
+                          - cell [ref=e421]
+                        - row "9 XSSImgTest1775022622269 25 男 13822622269" [ref=e422]:
+                          - cell "9" [ref=e423]:
+                            - generic [ref=e425]: "9"
+                          - cell "XSSImgTest1775022622269" [ref=e426]:
+                            - generic [ref=e427]: XSSImgTest1775022622269
+                          - cell "25" [ref=e428]:
+                            - generic [ref=e429]: "25"
+                          - cell "男" [ref=e430]:
+                            - generic [ref=e431]: 男
+                          - cell [ref=e432]
+                          - cell [ref=e433]
+                          - cell [ref=e434]
+                          - cell "13822622269" [ref=e435]:
+                            - generic [ref=e436]: "13822622269"
+                          - cell [ref=e437]
+                        - row "10 NotesTest1775019968095 25 男 13819968095" [ref=e438]:
+                          - cell "10" [ref=e439]:
+                            - generic [ref=e441]: "10"
+                          - cell "NotesTest1775019968095" [ref=e442]:
+                            - generic [ref=e443]: NotesTest1775019968095
+                          - cell "25" [ref=e444]:
+                            - generic [ref=e445]: "25"
+                          - cell "男" [ref=e446]:
+                            - generic [ref=e447]: 男
+                          - cell [ref=e448]
+                          - cell [ref=e449]
+                          - cell [ref=e450]
+                          - cell "13819968095" [ref=e451]:
+                            - generic [ref=e452]: "13819968095"
+                          - cell [ref=e453]
+                        - row "11 SalaryTest1775019968311 25 男 13919968311" [ref=e454]:
+                          - cell "11" [ref=e455]:
+                            - generic [ref=e457]: "11"
+                          - cell "SalaryTest1775019968311" [ref=e458]:
+                            - generic [ref=e459]: SalaryTest1775019968311
+                          - cell "25" [ref=e460]:
+                            - generic [ref=e461]: "25"
+                          - cell "男" [ref=e462]:
+                            - generic [ref=e463]: 男
+                          - cell [ref=e464]
+                          - cell [ref=e465]
+                          - cell [ref=e466]
+                          - cell "13919968311" [ref=e467]:
+                            - generic [ref=e468]: "13919968311"
+                          - cell [ref=e469]
+                        - row "12 XSSImgTest1775019966963 25 男 13819966963" [ref=e470]:
+                          - cell "12" [ref=e471]:
+                            - generic [ref=e473]: "12"
+                          - cell "XSSImgTest1775019966963" [ref=e474]:
+                            - generic [ref=e475]: XSSImgTest1775019966963
+                          - cell "25" [ref=e476]:
+                            - generic [ref=e477]: "25"
+                          - cell "男" [ref=e478]:
+                            - generic [ref=e479]: 男
+                          - cell [ref=e480]
+                          - cell [ref=e481]
+                          - cell [ref=e482]
+                          - cell "13819966963" [ref=e483]:
+                            - generic [ref=e484]: "13819966963"
+                          - cell [ref=e485]
+                  - generic [ref=e487]:
+                    - generic [ref=e488]: 共 0 条
+                    - generic [ref=e491] [cursor=pointer]:
+                      - generic:
+                        - combobox [ref=e493]
+                        - generic [ref=e494]: 12条/页
+                      - img [ref=e497]
+                    - button "上一页" [disabled] [ref=e499]:
+                      - generic:
+                        - img
+                    - list [ref=e500]:
+                      - listitem "第 1 页" [ref=e501]: "1"
+                    - button "下一页" [disabled] [ref=e502]:
+                      - generic:
+                        - img
