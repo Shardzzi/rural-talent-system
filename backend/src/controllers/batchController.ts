@@ -114,7 +114,7 @@ const batchDelete = async (req: AuthenticatedRequest, res: Response): Promise<vo
     } catch (err) {
         const error = err as Error;
         logger.error('Error in batch delete', { error: error.message, stack: error.stack });
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -166,7 +166,7 @@ const batchUpdate = async (req: AuthenticatedRequest, res: Response): Promise<vo
     } catch (err) {
         const error = err as Error;
         logger.error('Error in batch update', { error: error.message, stack: error.stack });
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -222,7 +222,7 @@ const importUpload = async (req: AuthenticatedRequest, res: Response): Promise<v
     } catch (err) {
         const error = err as Error;
         logger.error('Error uploading import file', { error: error.message, stack: error.stack });
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -253,7 +253,7 @@ const importPreview = async (req: AuthenticatedRequest, res: Response): Promise<
     } catch (err) {
         const error = err as Error;
         logger.error('Error getting import preview', { error: error.message, stack: error.stack });
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -299,7 +299,7 @@ const importConfirm = async (req: AuthenticatedRequest, res: Response): Promise<
     } catch (err) {
         const error = err as Error;
         logger.error('Error confirming import', { error: error.message, stack: error.stack });
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -318,7 +318,7 @@ const downloadTemplate = (_req: AuthenticatedRequest, res: Response): void => {
     } catch (err) {
         const error = err as Error;
         logger.error('Error downloading template', { error: error.message });
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 

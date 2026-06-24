@@ -25,7 +25,7 @@ const getAuditLogs = async (req: AuthenticatedRequest, res: Response): Promise<v
     } catch (error) {
         const err = error as Error;
         logger.error('Error getting audit logs', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -41,7 +41,7 @@ const getAuditStats = async (req: AuthenticatedRequest, res: Response): Promise<
     } catch (error) {
         const err = error as Error;
         logger.error('Error getting audit stats', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 

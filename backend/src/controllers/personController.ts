@@ -164,7 +164,7 @@ const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -253,7 +253,7 @@ const getPersonById = async (req: AuthenticatedRequest, res: Response): Promise<
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -357,9 +357,17 @@ const createPerson = async (req: AuthenticatedRequest, res: Response): Promise<v
             return;
         }
         
+        if (error.message && error.message.includes('NOT NULL constraint failed')) {
+            res.status(400).json({
+                success: false,
+                message: '请填写必填字段'
+            });
+            return;
+        }
+        
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '创建失败，请稍后重试'
         });
     }
 };
@@ -466,7 +474,7 @@ const updatePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -532,14 +540,14 @@ const deletePerson = async (req: AuthenticatedRequest, res: Response): Promise<v
         if (error.message === '未找到指定的人员信息') {
             res.status(404).json({
                 success: false,
-                message: error.message
+                message: '操作失败，请稍后重试'
             });
             return;
         }
         
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -593,7 +601,7 @@ const getPersonDetails = async (req: AuthenticatedRequest, res: Response): Promi
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -632,7 +640,7 @@ const upsertRuralProfile = async (req: AuthenticatedRequest, res: Response): Pro
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -672,7 +680,7 @@ const addSkill = async (req: AuthenticatedRequest, res: Response): Promise<void>
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -709,7 +717,7 @@ const deleteSkill = async (req: AuthenticatedRequest, res: Response): Promise<vo
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -771,7 +779,7 @@ const searchTalents = async (req: AuthenticatedRequest, res: Response): Promise<
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };
@@ -939,7 +947,7 @@ const exportPersons = async (req: AuthenticatedRequest, res: Response): Promise<
         });
         res.status(500).json({
             success: false,
-            message: error.message
+            message: '操作失败，请稍后重试'
         });
     }
 };

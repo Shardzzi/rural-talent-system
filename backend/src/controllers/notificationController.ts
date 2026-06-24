@@ -18,7 +18,7 @@ const getUserNotifications = async (req: AuthenticatedRequest, res: Response): P
     } catch (error) {
         const err = error as Error;
         logger.error('Error getting notifications', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -35,7 +35,7 @@ const getUnreadCount = async (req: AuthenticatedRequest, res: Response): Promise
     } catch (error) {
         const err = error as Error;
         logger.error('Error getting unread notification count', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -62,7 +62,7 @@ const markAsRead = async (req: AuthenticatedRequest, res: Response): Promise<voi
     } catch (error) {
         const err = error as Error;
         logger.error('Error marking notification as read', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -79,7 +79,7 @@ const markAllAsRead = async (req: AuthenticatedRequest, res: Response): Promise<
     } catch (error) {
         const err = error as Error;
         logger.error('Error marking all notifications as read', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -106,7 +106,7 @@ const deleteNotification = async (req: AuthenticatedRequest, res: Response): Pro
     } catch (error) {
         const err = error as Error;
         logger.error('Error deleting notification', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 

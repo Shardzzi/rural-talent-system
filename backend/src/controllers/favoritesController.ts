@@ -16,7 +16,7 @@ const getUserFavorites = async (req: AuthenticatedRequest, res: Response): Promi
     } catch (error) {
         const err = error as Error;
         logger.error('Error getting user favorites', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -45,7 +45,7 @@ const addFavorite = async (req: AuthenticatedRequest, res: Response): Promise<vo
             return;
         }
         logger.error('Error adding favorite', { error: err.message, userId: req.user?.userId, personId: req.params.personId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -73,7 +73,7 @@ const removeFavorite = async (req: AuthenticatedRequest, res: Response): Promise
     } catch (error) {
         const err = error as Error;
         logger.error('Error removing favorite', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 
@@ -107,7 +107,7 @@ const updateFavoriteNotes = async (req: AuthenticatedRequest, res: Response): Pr
     } catch (error) {
         const err = error as Error;
         logger.error('Error updating favorite notes', { error: err.message, userId: req.user?.userId });
-        res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: '操作失败，请稍后重试' });
     }
 };
 

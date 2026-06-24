@@ -20,7 +20,7 @@ router.get('/health', personController.healthCheck);
 router.get('/search', validateSearch, validatePagination, handleValidationErrors, optionalAuth, personController.searchTalents);
 
 // 获取数据统计分析（登录用户可访问）
-router.get('/statistics', authenticateToken, personController.getStatistics);
+router.get('/statistics', authenticateToken, requireAdmin, personController.getStatistics);
 
 // 获取技能特长库统计（可选认证）
 router.get('/skills-library-stats', optionalAuth, personController.getSkillsLibraryStats);
