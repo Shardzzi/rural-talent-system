@@ -20,8 +20,8 @@
   "scripts": {
     "install:all": "pnpm install",
     "build": "pnpm -r build",
-    "dev": "fuser -k 8081/tcp 8083/tcp 2>/dev/null; pnpm --parallel -r dev",
-    "ports:free": "fuser -k 8081/tcp 8083/tcp 2>/dev/null",
+    "dev": "fuser -k 8081/tcp 8085/tcp 2>/dev/null; pnpm --parallel -r dev",
+    "ports:free": "fuser -k 8081/tcp 8085/tcp 2>/dev/null",
     "start": "pnpm -r start",
     "test": "pnpm --filter rural-talent-system-test test",
     "clean": "pnpm -r clean && rm -rf node_modules .pnpm-store",
