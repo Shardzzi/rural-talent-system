@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Response, NextFunction } from 'express';
-import databaseService from '../services/databaseService';
+import { getDbService } from '../services/dbServiceFactory';
 import logger from '../config/logger';
 import { AuthenticatedRequest, JWTPayload } from '../types/index';
 
@@ -63,7 +63,7 @@ const authenticateToken = async (req: AuthenticatedRequest, res: Response, next:
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
         
         // 验证会话是否仍然有效
-        const session = await databaseService.validateUserSession(token);
+        const session = await getDbService(req).validateUserSession(token);
         if (!session) {
             res.status(401).json({
                 success: false,
@@ -137,7 +137,7 @@ const optionalAuth = async (req: AuthenticatedRequest, _res: Response, next: Nex
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
         
         // 验证会话是否仍然有效
-        const session = await databaseService.validateUserSession(token);
+        const session = await getDbService(req).validateUserSession(token);
         if (session) {
             // 有效会话，设置用户信息
             req.user = {

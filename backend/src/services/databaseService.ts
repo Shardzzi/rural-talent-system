@@ -310,8 +310,8 @@ const initDatabase = async (): Promise<void> => {
                     name TEXT NOT NULL,
                     age INTEGER NOT NULL,
                     gender TEXT,
-                    email TEXT UNIQUE NOT NULL,
-                    phone TEXT UNIQUE NOT NULL,
+                    email TEXT UNIQUE,
+                    phone TEXT UNIQUE,
                     id_card TEXT,
                     address TEXT,
                     current_address TEXT,
@@ -1161,12 +1161,14 @@ const updatePerson = async (id, personData) => {
                 return;
             }
             
-            const hasField = (key: string) => (
-                Object.prototype.hasOwnProperty.call(personData, key) && personData[key] !== undefined
+            const hasField = (key: string): number => (
+                Object.prototype.hasOwnProperty.call(personData, key) && personData[key] !== undefined ? 1 : 0
             );
 
             const getProcessedValue = (key: string) => {
                 const value = personData[key];
+
+                if (value === undefined || value === '') return null;
 
                 if (key === 'talent_skills' && Array.isArray(value)) {
                     return JSON.stringify(value);
@@ -1190,11 +1192,7 @@ const updatePerson = async (id, personData) => {
                 address: hasField('address'),
                 current_address: hasField('current_address'),
                 education_level: hasField('education_level'),
-                political_status: hasField('political_status'),
-                employment_status: hasField('employment_status'),
-                rural_profile: hasField('rural_profile'),
-                cooperation_intentions: hasField('cooperation_intentions'),
-                talent_skills: hasField('talent_skills')
+                political_status: hasField('political_status')
             };
             
             // 特殊处理需要检查重复的字段
@@ -1204,12 +1202,12 @@ const updatePerson = async (id, personData) => {
             
             if (updateFlags.email) {
                 emailToCheck = getProcessedValue('email');
-                hasUniqueFields = true;
+                if (emailToCheck) hasUniqueFields = true;
             }
 
             if (updateFlags.phone) {
                 phoneToCheck = getProcessedValue('phone');
-                hasUniqueFields = true;
+                if (phoneToCheck) hasUniqueFields = true;
             }
             
             // 如果没有字段需要更新，直接返回
@@ -1282,10 +1280,6 @@ const updatePerson = async (id, personData) => {
                         current_address = CASE WHEN ? THEN ? ELSE current_address END,
                         education_level = CASE WHEN ? THEN ? ELSE education_level END,
                         political_status = CASE WHEN ? THEN ? ELSE political_status END,
-                        employment_status = CASE WHEN ? THEN ? ELSE employment_status END,
-                        rural_profile = CASE WHEN ? THEN ? ELSE rural_profile END,
-                        cooperation_intentions = CASE WHEN ? THEN ? ELSE cooperation_intentions END,
-                        talent_skills = CASE WHEN ? THEN ? ELSE talent_skills END,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 `;
@@ -1300,10 +1294,6 @@ const updatePerson = async (id, personData) => {
                     updateFlags.current_address, getProcessedValue('current_address'),
                     updateFlags.education_level, getProcessedValue('education_level'),
                     updateFlags.political_status, getProcessedValue('political_status'),
-                    updateFlags.employment_status, getProcessedValue('employment_status'),
-                    updateFlags.rural_profile, getProcessedValue('rural_profile'),
-                    updateFlags.cooperation_intentions, getProcessedValue('cooperation_intentions'),
-                    updateFlags.talent_skills, getProcessedValue('talent_skills'),
                     id
                 ];
                 
@@ -3178,8 +3168,79 @@ const getAuditStats = async (): Promise<any> => {
     });
 };
 
+// 迁移 persons 表：将 email/phone 从 NOT NULL 改为 nullable
+// 兼容旧的 DB 模式——API 设计 email/phone 为可选字段，但旧 DB schema 错误地设置了 NOT NULL
+const migratePersonsSchema = async (): Promise<void> => {
+    const db = createConnection();
+    return new Promise<void>((resolve, reject) => {
+        db.all(`PRAGMA table_info('persons')`, (err: Error | null, rows: Array<{ name: string; notnull: number }>) => {
+            if (err) {
+                logger.warn('无法检查 persons 表结构，跳过迁移', { error: err.message });
+                resolve();
+                return;
+            }
+            const rowsArr = Array.isArray(rows) ? rows : [];
+            const emailNotNull = rowsArr.find((r: any) => r.name === 'email')?.notnull === 1;
+            const phoneNotNull = rowsArr.find((r: any) => r.name === 'phone')?.notnull === 1;
+            
+            if (!emailNotNull && !phoneNotNull) {
+                logger.info('persons 表 schema 已经是最新，无需迁移');
+                resolve();
+                return;
+            }
+
+            logger.info('发现 persons 表 email/phone 为 NOT NULL，开始迁移...');
+            db.run(`CREATE TABLE IF NOT EXISTS persons_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                age INTEGER NOT NULL,
+                gender TEXT,
+                email TEXT UNIQUE,
+                phone TEXT UNIQUE,
+                id_card TEXT,
+                address TEXT,
+                current_address TEXT,
+                education_level TEXT,
+                political_status TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`, (err2: Error | null) => {
+                if (err2) {
+                    logger.error('创建 persons_new 表失败', { error: err2.message });
+                    resolve();
+                    return;
+                }
+                db.run(`INSERT INTO persons_new SELECT * FROM persons`, (err3: Error | null) => {
+                    if (err3) {
+                        logger.error('复制数据到 persons_new 失败', { error: err3.message });
+                        resolve();
+                        return;
+                    }
+                    db.run(`DROP TABLE persons`, (err4: Error | null) => {
+                        if (err4) {
+                            logger.error('删除旧 persons 表失败', { error: err4.message });
+                            resolve();
+                            return;
+                        }
+                        db.run(`ALTER TABLE persons_new RENAME TO persons`, (err5: Error | null) => {
+                            if (err5) {
+                                logger.error('重命名 persons_new 失败', { error: err5.message });
+                                resolve();
+                                return;
+                            }
+                            logger.info('persons 表迁移成功：email/phone 已改为 nullable');
+                            resolve();
+                        });
+                    });
+                });
+            });
+        });
+    });
+};
+
 export default {
     initDatabase,
+    migratePersonsSchema,
     getAllPersons,
     getAllPersonsPaginated,
     getPersonById,
