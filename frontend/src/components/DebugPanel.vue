@@ -93,7 +93,7 @@ export default {
         {
           name: '健康检查',
           test: async () => {
-            const response = await fetch('http://localhost:8083/api/health')
+            const response = await fetch('http://localhost:8085/api/health')
             const data = await response.json()
             return data
           }

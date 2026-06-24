@@ -72,56 +72,8 @@ const app = createApp(App)
 const pinia = createPinia()
 
 // 配置 axios
-axios.defaults.baseURL = 'http://localhost:8083'
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || ''
 axios.defaults.headers.common['Content-Type'] = 'application/json'
-
-// 添加请求拦截器 - 自动添加认证token
-axios.interceptors.request.use(
-  config => {
-    // 从localStorage获取token并添加到请求头
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    
-    console.log('🚀 发送API请求:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`,
-      data: config.data,
-      params: config.params,
-      hasAuth: !!token
-    })
-    return config
-  },
-  error => {
-    console.error('❌ 请求拦截器错误:', error)
-    return Promise.reject(error)
-  }
-)
-
-// 添加响应拦截器
-axios.interceptors.response.use(
-  response => {
-    console.log('✅ API响应成功:', {
-      status: response.status,
-      url: response.config.url,
-      data: response.data
-    })
-    return response
-  },
-  error => {
-    console.error('❌ API响应错误:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      url: error.config?.url,
-      message: error.message,
-      data: error.response?.data
-    })
-    return Promise.reject(error)
-  }
-)
 
 // 注册 Pinia 状态管理
 app.use(pinia)

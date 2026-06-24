@@ -25,7 +25,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8083',
+        target: `http://localhost:${process.env.BACKEND_PORT || '8085'}`,
         changeOrigin: true
       }
     }

@@ -141,7 +141,7 @@ interface EducationStat {
 }
 
 interface AgeDistStat {
-  age_range: string
+  age_group: string
   count: number
 }
 
@@ -152,11 +152,11 @@ interface GenderDistStat {
 
 interface TopSkillStat {
   skill_name: string
-  count: number
+  person_count: number
 }
 
 interface SkillCategoryStat {
-  category: string
+  skill_category: string
   count: number
 }
 
@@ -365,15 +365,6 @@ class PersonService {
     return response.data
   }
 
-  // 验证token
-  async verifyToken(): Promise<{ valid: boolean; user?: unknown }> {
-    try {
-      const response = await axios.get('/api/auth/verify')
-      return response.data
-    } catch (error) {
-      return { valid: false }
-    }
-  }
 }
 
 export default new PersonService()
