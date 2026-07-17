@@ -10,7 +10,21 @@ const dbPath = path.join(__dirname, '..', '..', 'data', 'persons.db');
 type RunContext = { lastID: number; changes: number };
 type RunCallback = (this: RunContext, err: Error | null) => void;
 type GetCallback<T = any> = (err: Error | null, row?: T) => void;
-type AllCallback<T = any> = (err: Error | null, rows?: T[]) => void;
+// `better-sqlite3` always returns an array for `all`; keep that guarantee in
+// the compatibility layer so callers do not have to repeatedly narrow an
+// impossible `undefined` value. On errors the wrapper passes an empty array.
+type AllCallback<T = any> = (err: Error | null, rows: T[]) => void;
+
+type PersonInput = Record<string, unknown>;
+type RuralProfileInput = Record<string, unknown>;
+type SkillInput = Record<string, unknown>;
+type UserInput = {
+    username: string;
+    password: string;
+    email: string;
+    role?: User['role'];
+    person_id?: number | null;
+};
 
 type PreparedStatementCompat = {
     run: (params?: any[] | any, callback?: RunCallback) => void;
@@ -119,7 +133,7 @@ const createDatabaseCompat = (native: BetterSqlite3.Database): SqliteCompatDatab
                 }
             } catch (error: any) {
                 if (cb) {
-                    cb(error);
+                    cb(error, []);
                     return;
                 }
                 throw error;
@@ -317,6 +331,7 @@ const initDatabase = async (): Promise<void> => {
                     current_address TEXT,
                     education_level TEXT,
                     political_status TEXT,
+                    employment_status TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`, (err) => {
@@ -859,8 +874,10 @@ const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
                 conditions.push('p.education_level = ?');
                 params.push(filters.education_level);
             }
-            // employment_status column does not exist in persons table
-            // Filter removed per guardrail: no schema changes
+            if (filters.employment_status) {
+                conditions.push('p.employment_status = ?');
+                params.push(filters.employment_status);
+            }
             
             if (conditions.length > 0) {
                 whereClause = 'WHERE ' + conditions.join(' AND ');
@@ -1002,7 +1019,7 @@ const getAllPersonsWithDetails = async (filters?: Record<string, unknown>) => {
 };
 
 // 根据ID获取人员信息
-const getPersonById = async (id) => {
+const getPersonById = async (id: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1078,8 +1095,18 @@ const getPersonById = async (id) => {
 };
 
 // 创建人员信息
-const createPerson = async (personData) => {
-    const { name, age, email, phone, gender, address, education_level, political_status } = personData;
+const createPerson = async (personData: PersonInput) => {
+    const {
+        name,
+        age,
+        email,
+        phone,
+        gender,
+        address,
+        education_level,
+        political_status,
+        employment_status
+    } = personData;
     
     return new Promise((resolve, reject) => {
         const db = createConnection();
@@ -1095,9 +1122,9 @@ const createPerson = async (personData) => {
         runDb(
             db,
             `INSERT INTO persons 
-                (name, age, email, phone, gender, address, education_level, political_status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, age, email, phone, gender, address, education_level, political_status]
+                (name, age, email, phone, gender, address, education_level, political_status, employment_status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, age, email, phone, gender, address, education_level, political_status, employment_status]
         )
             .then(({ lastID }) => getDb<any>(db, 'SELECT * FROM persons WHERE id = ?', [lastID])
                 .then((newPerson) => ({ lastID, newPerson })))
@@ -1137,7 +1164,7 @@ const createPerson = async (personData) => {
 };
 
 // 更新人员信息
-const updatePerson = async (id, personData) => {
+const updatePerson = async (id: number, personData: PersonInput) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1192,7 +1219,8 @@ const updatePerson = async (id, personData) => {
                 address: hasField('address'),
                 current_address: hasField('current_address'),
                 education_level: hasField('education_level'),
-                political_status: hasField('political_status')
+                political_status: hasField('political_status'),
+                employment_status: hasField('employment_status')
             };
             
             // 特殊处理需要检查重复的字段
@@ -1280,6 +1308,7 @@ const updatePerson = async (id, personData) => {
                         current_address = CASE WHEN ? THEN ? ELSE current_address END,
                         education_level = CASE WHEN ? THEN ? ELSE education_level END,
                         political_status = CASE WHEN ? THEN ? ELSE political_status END,
+                        employment_status = CASE WHEN ? THEN ? ELSE employment_status END,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 `;
@@ -1294,6 +1323,7 @@ const updatePerson = async (id, personData) => {
                     updateFlags.current_address, getProcessedValue('current_address'),
                     updateFlags.education_level, getProcessedValue('education_level'),
                     updateFlags.political_status, getProcessedValue('political_status'),
+                    updateFlags.employment_status, getProcessedValue('employment_status'),
                     id
                 ];
                 
@@ -1341,7 +1371,7 @@ const updatePerson = async (id, personData) => {
 };
 
 // 删除人员信息
-const deletePerson = async (id) => {
+const deletePerson = async (id: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1391,7 +1421,7 @@ const deletePerson = async (id) => {
 };
 
 // 获取人员的完整信息（包括农村特色信息）
-const getPersonWithDetails = async (id) => {
+const getPersonWithDetails = async (id: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1455,7 +1485,7 @@ const getPersonWithDetails = async (id) => {
 };
 
 // 创建或更新农村特色信息
-const upsertRuralProfile = async (personId, ruralData) => {
+const upsertRuralProfile = async (personId: number, ruralData: RuralProfileInput) => {
     const db = createConnection();
 
     try {
@@ -1506,7 +1536,7 @@ const upsertRuralProfile = async (personId, ruralData) => {
 };
 
 // 添加技能
-const addSkill = async (personId, skillData) => {
+const addSkill = async (personId: number, skillData: SkillInput) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1533,7 +1563,7 @@ const addSkill = async (personId, skillData) => {
 };
 
 // 删除技能
-const deleteSkill = async (skillId) => {
+const deleteSkill = async (skillId: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1553,7 +1583,7 @@ const deleteSkill = async (skillId) => {
 };
 
 // 搜索人才
-const searchTalents = async (searchCriteria) => {
+const searchTalents = async (searchCriteria: SearchParams) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -1575,6 +1605,7 @@ const searchTalents = async (searchCriteria) => {
               AND (? = 0 OR p.age <= ?)
               AND (? = 0 OR p.gender = ?)
               AND (? = 0 OR p.education_level = ?)
+              AND (? = 0 OR p.employment_status = ?)
             GROUP BY p.id
             ORDER BY p.name
         `;
@@ -1582,10 +1613,11 @@ const searchTalents = async (searchCriteria) => {
         const nameLike = searchCriteria.name ? '%' + searchCriteria.name + '%' : null;
         const skillLike = searchCriteria.skill ? '%' + searchCriteria.skill + '%' : null;
         const cropLike = searchCriteria.crop ? '%' + searchCriteria.crop + '%' : null;
-        const minAge = searchCriteria.minAge ? parseInt(searchCriteria.minAge) : null;
-        const maxAge = searchCriteria.maxAge ? parseInt(searchCriteria.maxAge) : null;
+        const minAge = searchCriteria.minAge ? parseInt(String(searchCriteria.minAge), 10) : null;
+        const maxAge = searchCriteria.maxAge ? parseInt(String(searchCriteria.maxAge), 10) : null;
         const gender = searchCriteria.gender || null;
         const educationLevel = searchCriteria.education_level || null;
+        const employmentStatus = searchCriteria.employment_status || null;
 
         params = [
             searchCriteria.name ? 1 : 0,
@@ -1602,7 +1634,9 @@ const searchTalents = async (searchCriteria) => {
             searchCriteria.gender ? 1 : 0,
             gender,
             searchCriteria.education_level ? 1 : 0,
-            educationLevel
+            educationLevel,
+            searchCriteria.employment_status ? 1 : 0,
+            employmentStatus
         ];
         
         logger.info('Executing search query', { query, params });
@@ -1645,6 +1679,7 @@ const searchTalentsPaginated = async (searchCriteria: SearchParams & PaginationP
         const maxAge = maxAgeValue !== undefined ? parseInt(String(maxAgeValue), 10) : null;
         const gender = searchCriteria.gender || null;
         const educationLevel = searchCriteria.education_level || null;
+        const employmentStatus = searchCriteria.employment_status || null;
 
         const queryParams = [
             searchCriteria.name ? 1 : 0,
@@ -1661,7 +1696,9 @@ const searchTalentsPaginated = async (searchCriteria: SearchParams & PaginationP
             searchCriteria.gender ? 1 : 0,
             gender,
             searchCriteria.education_level ? 1 : 0,
-            educationLevel
+            educationLevel,
+            searchCriteria.employment_status ? 1 : 0,
+            employmentStatus
         ];
 
         const countQuery = `
@@ -1676,6 +1713,7 @@ const searchTalentsPaginated = async (searchCriteria: SearchParams & PaginationP
               AND (? = 0 OR p.age <= ?)
               AND (? = 0 OR p.gender = ?)
               AND (? = 0 OR p.education_level = ?)
+              AND (? = 0 OR p.employment_status = ?)
         `;
 
         const dataQuery = `
@@ -1694,6 +1732,7 @@ const searchTalentsPaginated = async (searchCriteria: SearchParams & PaginationP
               AND (? = 0 OR p.age <= ?)
               AND (? = 0 OR p.gender = ?)
               AND (? = 0 OR p.education_level = ?)
+              AND (? = 0 OR p.employment_status = ?)
             GROUP BY p.id
             ORDER BY p.${sortBy} ${sortOrder}
             LIMIT ? OFFSET ?
@@ -2083,7 +2122,7 @@ const getRecentRegistrations = () => {
 // ==================== 用户认证相关方法 ====================
 
 // 创建新用户
-const createUser = async (userData) => {
+const createUser = async (userData: UserInput) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         const { username, password, email, role = 'user', person_id = null } = userData;
@@ -2121,7 +2160,7 @@ const createUser = async (userData) => {
 };
 
 // 根据用户名获取用户
-const getUserByUsername = async (username) => {
+const getUserByUsername = async (username: string) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2143,7 +2182,7 @@ const getUserByUsername = async (username) => {
 };
 
 // 根据邮箱获取用户
-const getUserByEmail = async (email) => {
+const getUserByEmail = async (email: string) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2165,7 +2204,7 @@ const getUserByEmail = async (email) => {
 };
 
 // 根据ID获取用户
-const getUserById = async (id) => {
+const getUserById = async (id: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2187,7 +2226,7 @@ const getUserById = async (id) => {
 };
 
 // 更新用户密码
-const updateUserPassword = async (userId, hashedPassword) => {
+const updateUserPassword = async (userId: number, hashedPassword: string) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2214,7 +2253,7 @@ const updateUserPassword = async (userId, hashedPassword) => {
 };
 
 // 更新用户关联的个人信息ID
-const updateUserPersonId = async (userId, personId) => {
+const updateUserPersonId = async (userId: number, personId: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2242,18 +2281,24 @@ const updateUserPersonId = async (userId, personId) => {
 };
 
 // 创建用户会话
-const createUserSession = async (userId, token, expiresAt) => {
+const createUserSession = async (userId: number, token: string, expiresAt: Date | string | number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
-        
-        // SQLite只接受numbers/strings/bigints/buffers/null，Date对象需要转换为ISO字符串
-        const expiresAtStr = expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt;
+        const normalizedExpiresAt = (() => {
+            if (expiresAt instanceof Date) {
+                return expiresAt.toISOString();
+            }
+            const timestamp = Number(expiresAt);
+            return Number.isFinite(timestamp)
+                ? new Date(timestamp).toISOString()
+                : new Date(expiresAt).toISOString();
+        })();
         
         const stmt = db.prepare(`INSERT INTO user_sessions 
             (user_id, token, expires_at) 
             VALUES (?, ?, ?)`);
         
-        stmt.run([userId, token, expiresAtStr], function(err) {
+        stmt.run([userId, token, normalizedExpiresAt], function(err) {
             if (err) {
                 db.close();
                 logger.error('Error creating user session', { 
@@ -2278,14 +2323,14 @@ const createUserSession = async (userId, token, expiresAt) => {
 };
 
 // 验证用户会话
-const validateUserSession = async (token) => {
+const validateUserSession = async (token: string) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
-        db.get(`SELECT s.*, u.username, u.email, u.role, u.person_id 
+        db.get(`SELECT s.*, u.username, u.email, u.role, u.person_id
                 FROM user_sessions s 
                 JOIN users u ON s.user_id = u.id 
-                WHERE s.token = ? AND s.expires_at > (strftime('%s','now') * 1000) AND u.is_active = 1`, 
+                WHERE s.token = ? AND datetime(s.expires_at) > datetime('now') AND u.is_active = 1`,
                 [token], (err, row) => {
             if (err) {
                 db.close();
@@ -2303,7 +2348,7 @@ const validateUserSession = async (token) => {
 };
 
 // 删除用户会话
-const deleteUserSession = async (token) => {
+const deleteUserSession = async (token: string) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2328,15 +2373,63 @@ const deleteUserSession = async (token) => {
     });
 };
 
+// 清除用户的所有会话
+const deleteUserSessionsByUser = async (userId: number) => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+
+        const stmt = db.prepare('DELETE FROM user_sessions WHERE user_id = ?');
+
+        stmt.run([userId], function(err) {
+            if (err) {
+                db.close();
+                logger.error('Error deleting user sessions by user', {
+                    error: err.message,
+                    userId
+                });
+                reject(err);
+                return;
+            }
+
+            logger.info('User sessions deleted by user id', {
+                userId,
+                deletedSessions: this.changes
+            });
+            db.close();
+            resolve(this.changes >= 0);
+        });
+
+        stmt.finalize();
+    });
+};
+
 // 获取用户关联的人员信息
-const getUserPersonInfo = async (userId) => {
+const getUserPersonInfo = async (userId: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
-        db.get(`SELECT u.*, p.* 
-                FROM users u 
-                LEFT JOIN persons p ON u.person_id = p.id 
-                WHERE u.id = ? AND u.is_active = 1`, 
+        db.get(`SELECT
+                u.id,
+                u.username,
+                u.password,
+                u.email,
+                u.role,
+                u.person_id,
+                u.is_active,
+                u.created_at,
+                u.updated_at,
+                p.id AS person_profile_id,
+                p.name,
+                p.age,
+                p.gender,
+                p.phone,
+                p.address,
+                p.email AS person_email,
+                p.education_level,
+                p.political_status
+            FROM users u
+            LEFT JOIN persons p ON u.person_id = p.id
+            WHERE u.id = ? AND u.is_active = 1`,
                 [userId], (err, row) => {
             if (err) {
                 db.close();
@@ -2354,8 +2447,30 @@ const getUserPersonInfo = async (userId) => {
     });
 };
 
+// 根据技能ID获取所属人员ID
+const getPersonIdBySkillId = async (skillId: number) => {
+    return new Promise((resolve, reject) => {
+        const db = createConnection();
+
+        db.get('SELECT person_id FROM talent_skills WHERE id = ?', [skillId], (err, row) => {
+            if (err) {
+                db.close();
+                logger.error('Error getting person id by skill id', {
+                    error: err.message,
+                    skillId
+                });
+                reject(err);
+                return;
+            }
+
+            db.close();
+            resolve(row?.person_id ?? null);
+        });
+    });
+};
+
 // 根据person_id查找用户
-const getUserByPersonId = async (personId) => {
+const getUserByPersonId = async (personId: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -2378,7 +2493,7 @@ const getUserByPersonId = async (personId) => {
 };
 
 // 关联用户和个人信息
-const linkUserToPerson = async (userId, personId) => {
+const linkUserToPerson = async (userId: number, personId: number) => {
     return new Promise((resolve, reject) => {
         const db = createConnection();
         
@@ -3168,74 +3283,89 @@ const getAuditStats = async (): Promise<any> => {
     });
 };
 
-// 迁移 persons 表：将 email/phone 从 NOT NULL 改为 nullable
-// 兼容旧的 DB 模式——API 设计 email/phone 为可选字段，但旧 DB schema 错误地设置了 NOT NULL
+// 迁移 persons 表：保证可选联系方式和就业状态字段在 SQLite 中与 MySQL schema 对齐。
+// 迁移使用显式列清单，兼容早期没有 employment_status 的旧数据库。
 const migratePersonsSchema = async (): Promise<void> => {
     const db = createConnection();
-    return new Promise<void>((resolve, reject) => {
-        db.all(`PRAGMA table_info('persons')`, (err: Error | null, rows: Array<{ name: string; notnull: number }>) => {
-            if (err) {
-                logger.warn('无法检查 persons 表结构，跳过迁移', { error: err.message });
-                resolve();
-                return;
-            }
-            const rowsArr = Array.isArray(rows) ? rows : [];
-            const emailNotNull = rowsArr.find((r: any) => r.name === 'email')?.notnull === 1;
-            const phoneNotNull = rowsArr.find((r: any) => r.name === 'phone')?.notnull === 1;
-            
-            if (!emailNotNull && !phoneNotNull) {
-                logger.info('persons 表 schema 已经是最新，无需迁移');
-                resolve();
-                return;
-            }
 
-            logger.info('发现 persons 表 email/phone 为 NOT NULL，开始迁移...');
-            db.run(`CREATE TABLE IF NOT EXISTS persons_new (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                age INTEGER NOT NULL,
-                gender TEXT,
-                email TEXT UNIQUE,
-                phone TEXT UNIQUE,
-                id_card TEXT,
-                address TEXT,
-                current_address TEXT,
-                education_level TEXT,
-                political_status TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`, (err2: Error | null) => {
-                if (err2) {
-                    logger.error('创建 persons_new 表失败', { error: err2.message });
-                    resolve();
-                    return;
-                }
-                db.run(`INSERT INTO persons_new SELECT * FROM persons`, (err3: Error | null) => {
-                    if (err3) {
-                        logger.error('复制数据到 persons_new 失败', { error: err3.message });
-                        resolve();
-                        return;
-                    }
-                    db.run(`DROP TABLE persons`, (err4: Error | null) => {
-                        if (err4) {
-                            logger.error('删除旧 persons 表失败', { error: err4.message });
-                            resolve();
-                            return;
-                        }
-                        db.run(`ALTER TABLE persons_new RENAME TO persons`, (err5: Error | null) => {
-                            if (err5) {
-                                logger.error('重命名 persons_new 失败', { error: err5.message });
-                                resolve();
-                                return;
-                            }
-                            logger.info('persons 表迁移成功：email/phone 已改为 nullable');
-                            resolve();
-                        });
-                    });
-                });
-            });
+    try {
+        const rows = await allDb<{ name: string; notnull: number }>(
+            db,
+            `PRAGMA table_info('persons')`
+        );
+        const columns = new Set(rows.map((row) => row.name));
+        const emailNotNull = rows.some((row) => row.name === 'email' && row.notnull === 1);
+        const phoneNotNull = rows.some((row) => row.name === 'phone' && row.notnull === 1);
+        const hasEmploymentStatus = columns.has('employment_status');
+
+        if (!hasEmploymentStatus && !emailNotNull && !phoneNotNull) {
+            await runDb(db, 'ALTER TABLE persons ADD COLUMN employment_status TEXT');
+            logger.info('persons 表已补充 employment_status 字段');
+            return;
+        }
+
+        if (!emailNotNull && !phoneNotNull) {
+            logger.info('persons 表 schema 已经是最新，无需迁移');
+            return;
+        }
+
+        logger.info('发现 persons 表 email/phone 为 NOT NULL，开始迁移...');
+        await runDb(db, `CREATE TABLE persons_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            age INTEGER NOT NULL,
+            gender TEXT,
+            email TEXT UNIQUE,
+            phone TEXT UNIQUE,
+            id_card TEXT,
+            address TEXT,
+            current_address TEXT,
+            education_level TEXT,
+            political_status TEXT,
+            employment_status TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        const sharedColumns = [
+            'id',
+            'name',
+            'age',
+            'gender',
+            'email',
+            'phone',
+            'id_card',
+            'address',
+            'current_address',
+            'education_level',
+            'political_status',
+            'created_at',
+            'updated_at'
+        ];
+        const targetColumns = hasEmploymentStatus
+            ? [...sharedColumns.slice(0, 11), 'employment_status', ...sharedColumns.slice(11)]
+            : sharedColumns;
+        const sourceColumns = hasEmploymentStatus
+            ? targetColumns
+            : sharedColumns;
+
+        await runDb(
+            db,
+            `INSERT INTO persons_new (${targetColumns.join(', ')})
+             SELECT ${sourceColumns.join(', ')} FROM persons`
+        );
+        await runDb(db, 'DROP TABLE persons');
+        await runDb(db, 'ALTER TABLE persons_new RENAME TO persons');
+        logger.info('persons 表迁移成功：email/phone 已改为 nullable，并确保 employment_status 字段存在');
+    } catch (error: any) {
+        logger.error('persons 表 schema 迁移失败', {
+            error: error.message,
+            stack: error.stack
         });
-    });
+        throw error;
+    } finally {
+        await closeDb(db);
+    }
 };
 
 export default {
@@ -3276,7 +3406,9 @@ export default {
     createUserSession,
     validateUserSession,
     deleteUserSession,
+    deleteUserSessionsByUser,
     getUserPersonInfo,
+    getPersonIdBySkillId,
     getUserByPersonId,
     linkUserToPerson,
     getAllPersonsWithDetails,

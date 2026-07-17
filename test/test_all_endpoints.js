@@ -610,7 +610,8 @@ async function testPersonEndpoints() {
         phone: `1384444${suffix.slice(-4)}`,
         address: '综合地址',
         education_level: '本科',
-        political_status: '群众'
+        political_status: '群众',
+        employment_status: '在业'
       },
       ruralProfile: {
         planting_years: 5,
@@ -629,12 +630,9 @@ async function testPersonEndpoints() {
       token: state.adminToken,
       data: payload
     });
-    expectStatus(res, [201, 500], 'create comprehensive happy path');
-    if (res.status === 201) {
-      state.comprehensivePersonId = res.data?.data?.id || state.comprehensivePersonId;
-    } else {
-      bodyHasMessage(res);
-    }
+    expectStatus(res, 201, 'create comprehensive happy path');
+    state.comprehensivePersonId = res.data?.data?.id || state.comprehensivePersonId;
+    assertCondition(res.data?.data?.employment_status === '在业', 'comprehensive person persists employment_status');
   });
   markNA('POST /persons/comprehensive wrong role -> 403', '登录用户均可创建（仅未登录为401）');
 
@@ -720,7 +718,8 @@ async function testPersonEndpoints() {
           phone: `1386666${Date.now().toString().slice(-4)}`,
           address: '综合更新地址',
           education_level: '本科',
-          political_status: '群众'
+          political_status: '群众',
+          employment_status: '待业'
         },
         ruralProfile: {
           planting_years: 8,
@@ -735,10 +734,8 @@ async function testPersonEndpoints() {
         ]
       }
     });
-    expectStatus(res, [200, 500], 'update comprehensive happy path');
-    if (res.status !== 200) {
-      bodyHasMessage(res);
-    }
+    expectStatus(res, 200, 'update comprehensive happy path');
+    assertCondition(res.data?.data?.employment_status === '待业', 'comprehensive update persists employment_status');
   });
 
   endpoint('POST /persons/:id/rural-profile');

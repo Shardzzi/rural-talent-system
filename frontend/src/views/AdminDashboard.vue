@@ -808,48 +808,48 @@ export default {
 /* 优化容器宽度和布局，与用户界面保持一致 */
 .admin-dashboard {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto; /* 居中对齐 */
-  padding: 20px;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 4px 0 24px;
 }
 
 /* 移动端适配 */
 @media (max-width: 768px) {
   .admin-dashboard {
-    padding: 10px;
+    padding: 0;
   }
 }
 
 .dashboard-content {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .stats-row {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .stats-card {
   text-align: left;
-  transition: all 0.3s ease-in-out;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .stats-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
-.stats-blue { border-left: 4px solid #409EFF; }
-.stats-green { border-left: 4px solid #67C23A; }
-.stats-orange { border-left: 4px solid #E6A23C; }
+.stats-blue { border-top: 3px solid var(--color-primary); }
+.stats-green { border-top: 3px solid var(--color-info); }
+.stats-orange { border-top: 3px solid var(--color-secondary); }
 
 .stats-item {
-  padding: 16px;
+  padding: 20px;
   display: flex;
   align-items: center;
   position: relative;
@@ -862,9 +862,9 @@ export default {
   opacity: 0.9;
 }
 
-.stats-blue .stats-icon { color: #409EFF; }
-.stats-green .stats-icon { color: #67C23A; }
-.stats-orange .stats-icon { color: #E6A23C; }
+.stats-blue .stats-icon { color: var(--color-primary); }
+.stats-green .stats-icon { color: var(--color-info); }
+.stats-orange .stats-icon { color: var(--color-secondary); }
 
 .stats-info {
   display: flex;
@@ -872,19 +872,20 @@ export default {
 }
 
 .stats-number {
-  font-size: 36px;
-  font-weight: bold;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 38px;
+  font-weight: 500;
   margin-bottom: 4px;
   line-height: 1;
 }
 
-.stats-blue .stats-number { color: #409EFF; }
-.stats-green .stats-number { color: #67C23A; }
-.stats-orange .stats-number { color: #E6A23C; }
+.stats-blue .stats-number { color: var(--color-primary); }
+.stats-green .stats-number { color: var(--color-info); }
+.stats-orange .stats-number { color: var(--color-secondary); }
 
 .stats-label {
   font-size: 15px;
-  color: #606266;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
@@ -899,15 +900,15 @@ export default {
   pointer-events: none;
 }
 
-.stats-blue .bg-icon { color: #409EFF; }
-.stats-green .bg-icon { color: #67C23A; }
-.stats-orange .bg-icon { color: #E6A23C; }
+.stats-blue .bg-icon { color: var(--color-primary); }
+.stats-green .bg-icon { color: var(--color-info); }
+.stats-orange .bg-icon { color: var(--color-secondary); }
 
 .search-card {
-  margin-bottom: 20px;
-  border-radius: 8px;
-  border: none;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-form {
@@ -921,7 +922,7 @@ export default {
 .filter-row {
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--color-border-light);
 }
 
 .action-col {
@@ -945,7 +946,7 @@ export default {
 }
 
 .toggle-filters-btn {
-  color: #909399;
+  color: var(--color-text-secondary);
 }
 
 /* 响应式统计卡片 */
@@ -981,15 +982,15 @@ export default {
 }
 
 .table-card {
-  margin-bottom: 20px;
-  border-radius: 8px;
-  border: none;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
 }
 
 .table-card :deep(.el-card__header) {
-  background-color: #fcfcfd;
-  border-bottom: 1px solid #ebeef5;
+  background-color: var(--color-surface-soft);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .card-header {

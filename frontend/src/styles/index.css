@@ -1,4 +1,66 @@
 @import './tokens.css';
 @import './high-contrast.css';
-/* Future: @import './transitions.css'; */
-/* Future: @import './utilities.css'; */
+
+body {
+  background:
+    radial-gradient(circle at 88% 8%, rgba(215, 161, 79, 0.08), transparent 24rem),
+    var(--color-bg-page);
+}
+
+::selection {
+  color: #ffffff;
+  background: var(--color-primary);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.el-card {
+  border-color: var(--color-border-light);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.el-button {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.el-button--primary:not(.is-plain) {
+  box-shadow: 0 6px 16px rgba(35, 98, 74, 0.16);
+}
+
+.el-input__wrapper,
+.el-select__wrapper {
+  box-shadow: 0 0 0 1px var(--color-border) inset;
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-primary-light-5) inset;
+}
+
+.el-page-header {
+  padding: 4px 0;
+}
+
+.el-page-header__content {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

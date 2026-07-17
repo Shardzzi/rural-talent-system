@@ -106,16 +106,16 @@ const summarySpan = computed(() => isAdmin.value ? 6 : 8)
 
 // Design token colors
 const COLORS = {
-  primary: '#2E7D32',
-  primaryLight3: '#4CAF50',
-  primaryLight5: '#81C784',
-  primaryLight7: '#C8E6C9',
-  primaryDark: '#1B5E20',
-  secondary: '#F57C00',
-  secondaryLight: '#FFB74D',
-  info: '#1976D2',
-  warning: '#FFB300',
-  danger: '#D32F2F',
+  primary: '#23624A',
+  primaryLight3: '#4C8069',
+  primaryLight5: '#79A18E',
+  primaryLight7: '#B7CEC2',
+  primaryDark: '#163F31',
+  secondary: '#BD7B2D',
+  secondaryLight: '#DBB887',
+  info: '#3F7480',
+  warning: '#B77A25',
+  danger: '#B9473F',
 }
 
 const PALETTE = [
@@ -125,10 +125,10 @@ const PALETTE = [
   COLORS.warning,
   COLORS.primaryLight3,
   COLORS.secondaryLight,
-  '#7E57C2',
-  '#26A69A',
-  '#EC407A',
-  '#5C6BC0',
+  '#766D50',
+  '#5B8C79',
+  '#A86150',
+  '#617A70',
 ]
 
 interface Statistics {
@@ -188,7 +188,7 @@ const ageOption = computed<EChartsOption>(() => {
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
             { offset: 0, color: COLORS.primaryLight7 },
-            { offset: 1, color: 'rgba(200,230,201,0.1)' },
+            { offset: 1, color: 'rgba(183,206,194,0.1)' },
           ],
         },
       },
@@ -217,7 +217,7 @@ const skillCategoryOption = computed<EChartsOption>(() => ({
 const genderOption = computed<EChartsOption>(() => {
   const dist = stats.value.genderDistribution ?? []
   const genderMap: Record<string, string> = { '男': '男', '女': '女', '其他': '其他' }
-  const genderColors: Record<string, string> = { '男': COLORS.info, '女': '#EC407A', '其他': COLORS.warning }
+  const genderColors: Record<string, string> = { '男': COLORS.info, '女': '#A86150', '其他': COLORS.warning }
   return {
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { bottom: 0 },

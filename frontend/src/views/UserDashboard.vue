@@ -444,8 +444,9 @@ export default {
 /* 优化容器宽度和布局 */
 .user-dashboard {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto; /* 居中对齐 */
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 4px 0 24px;
 }
 
 .dashboard-content {
@@ -462,9 +463,10 @@ export default {
 
 .profile-card {
   margin-bottom: 24px;
-  border-radius: 12px;
-  border-left: 4px solid #67C23A;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  border-top: 3px solid var(--color-primary);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -484,11 +486,11 @@ export default {
 
 .profile-card .card-header {
   padding: 16px 20px;
-  background: linear-gradient(to right, #f0f9eb, #ffffff);
-  border-bottom: 1px solid #e1f3d8;
+  background: var(--color-primary-light-9);
+  border-bottom: 1px solid var(--color-border-light);
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-text-primary);
 }
 
 .profile-item {
@@ -498,14 +500,14 @@ export default {
 
 .profile-item label {
   font-weight: 500;
-  color: #606266;
+  color: var(--color-text-secondary);
   margin-right: 8px;
   display: inline-block;
   min-width: 70px;
 }
 
 .profile-item span {
-  color: #333;
+  color: var(--color-text-regular);
 }
 
 .profile-item.full-width {
@@ -522,7 +524,7 @@ export default {
 }
 
 .experience-text {
-  color: #606266;
+  color: var(--color-text-secondary);
   white-space: pre-line;
   line-height: 1.6;
   margin-top: 8px;
@@ -530,31 +532,33 @@ export default {
 
 .welcome-card {
   margin-bottom: 24px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
 }
 
 .welcome-content {
   text-align: center;
   padding: 48px 24px;
-  background: linear-gradient(135deg, #e8f4fd 0%, #f0f9eb 100%);
+  background:
+    radial-gradient(circle at 80% 20%, rgba(215, 161, 79, 0.12), transparent 18rem),
+    var(--color-primary-light-9);
   position: relative;
 }
 
 .welcome-icon {
   font-size: 56px;
-  color: #409EFF;
+  color: var(--color-sidebar-deep);
   margin-bottom: 24px;
-  background: #fff;
+  background: var(--color-accent);
   width: 100px;
   height: 100px;
   border-radius: 50%;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(35, 98, 74, 0.15);
   transition: transform 0.3s ease;
 }
 
@@ -563,14 +567,14 @@ export default {
 }
 
 .welcome-content h3 {
-  color: #303133;
+  color: var(--color-text-primary);
   margin-bottom: 16px;
   font-size: 24px;
   font-weight: 600;
 }
 
 .welcome-content p {
-  color: #606266;
+  color: var(--color-text-secondary);
   margin-bottom: 32px;
   max-width: 540px;
   margin-left: auto;
@@ -583,13 +587,13 @@ export default {
   padding: 12px 32px;
   font-size: 16px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(35, 98, 74, 0.18);
   transition: all 0.3s ease;
 }
 
 .welcome-content .el-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+  box-shadow: 0 8px 20px rgba(35, 98, 74, 0.24);
 }
 
 .browse-card {
@@ -600,18 +604,18 @@ export default {
 .search-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: linear-gradient(to right, #f8f9fa, #ffffff);
-  border-radius: 8px;
-  border: 1px solid #ebeef5;
-  border-left: 4px solid #409EFF;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  border-left: 4px solid var(--color-primary);
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   transition: box-shadow 0.3s ease;
 }
 
 .search-section:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .search-buttons {

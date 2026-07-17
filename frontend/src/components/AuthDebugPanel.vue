@@ -82,7 +82,8 @@ export default {
   name: 'AuthDebugPanel',
   setup() {
     const authStore = useAuthStore()
-    const showDebug = ref(process.env.NODE_ENV === 'development')
+    // 即使组件被误引入，也只有显式开启开发调试开关时才可见。
+    const showDebug = ref(import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEBUG_PANEL === 'true')
     const isExpanded = ref(false)
     const logs = ref([])
 

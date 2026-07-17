@@ -1,46 +1,27 @@
 <template>
   <el-config-provider :locale="locale">
     <div id="app">
-      <!-- 调试面板切换按钮 -->
-      <div class="debug-toggle" v-if="isDev">
-        <el-button @click="showDebug = !showDebug" type="info" size="small" plain>
-          {{ showDebug ? '隐藏调试面板' : '显示调试面板' }}
-        </el-button>
-      </div>
-      
-      <!-- 调试面板 -->
-      <DebugPanel v-if="showDebug && isDev" />
-    
-      <!-- 路由视图 -->
-      <router-view v-if="!showDebug" />
+      <!-- 调试工具不属于正常业务壳层，按需通过开发专用路由加载。 -->
+      <router-view />
     </div>
   </el-config-provider>
 </template>
 
 <script>
-import { ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useAuthStore } from './stores/auth'
-import DebugPanel from './components/DebugPanel.vue'
 
 export default {
   name: 'App',
-  components: {
-    DebugPanel
-  },
   setup() {
-    const showDebug = ref(false)
     const authStore = useAuthStore()
     const locale = zhCn
-    const isDev = import.meta.env.DEV
     
     // 初始化认证状态
     authStore.initializeAuth()
     
     return {
-      showDebug,
-      locale,
-      isDev
+      locale
     }
   }
 }
@@ -48,13 +29,6 @@ export default {
 
 <style>
 /* ===== 全局应用样式 ===== */
-
-.debug-toggle {
-  position: fixed;
-  top: 80px;
-  right: 20px;
-  z-index: 1000;
-}
 
 #app {
   font-family: var(--font-family-display);
@@ -85,6 +59,16 @@ html, body {
 }
 
 .el-button--primary:hover {
+  background-color: var(--color-primary-light-3);
+  border-color: var(--color-primary-light-3);
+}
+
+.el-button--success {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.el-button--success:hover {
   background-color: var(--color-primary-light-3);
   border-color: var(--color-primary-light-3);
 }
@@ -122,12 +106,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--color-primary-light-7);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--color-primary-light-5);
 }
 
 /* 加载动画 */
@@ -158,8 +142,10 @@ html, body {
 }
 
 .el-card {
-  border-radius: 10px;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
 }
 
 /* 通用工具类 */

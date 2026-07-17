@@ -329,11 +329,11 @@ defineExpose({
 
 .expand-content {
   padding: 16px 20px;
-  background-color: #f8fbff;
-  border-radius: 4px;
+  background-color: var(--color-surface-soft);
+  border-radius: var(--radius-md);
   margin: 12px;
-  border-left: 4px solid #409EFF;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.08);
+  border-left: 4px solid var(--color-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .expand-row {
@@ -348,13 +348,13 @@ defineExpose({
 
 .expand-label {
   font-weight: bold;
-  color: #606266;
+  color: var(--color-text-secondary);
   min-width: 80px;
   margin-right: 10px;
 }
 
 .expand-value {
-  color: #303133;
+  color: var(--color-text-primary);
   flex: 1;
 }
 
@@ -377,42 +377,42 @@ defineExpose({
 
 .no-results-icon {
   font-size: 64px;
-  color: #a0cfff;
+  color: var(--color-primary-light-5);
   margin-bottom: 24px;
-  background: #f4f9ff;
+  background: var(--color-primary-light-9);
   width: 120px;
   height: 120px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .no-results h3 {
-  color: #303133;
+  color: var(--color-text-primary);
   margin-bottom: 16px;
   font-size: 20px;
   font-weight: 600;
 }
 
 .no-results p {
-  color: #909399;
+  color: var(--color-text-secondary);
   margin-bottom: 24px;
   line-height: 1.6;
   font-size: 15px;
 }
 
 :deep(.even-row) {
-  background-color: #fafafa;
+  background-color: #faf9f4;
 }
 
 :deep(.odd-row) {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
 }
 
 :deep(.el-table__body tr:hover > td.el-table__cell) {
-  background-color: #ecf5ff !important;
+  background-color: var(--color-primary-light-9) !important;
 }
 
 .density-compact :deep(.el-table .el-table__cell) {

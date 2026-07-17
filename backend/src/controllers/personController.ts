@@ -86,6 +86,103 @@ const sanitizePersonForGuest = (person: Person): Partial<Person> & { id: number;
     updated_at: person.updated_at
 });
 
+const sanitizeObjectForGuest = <T extends Record<string, unknown>>(raw: T, removedKeys: string[]): T => {
+    const cloned = { ...raw } as Record<string, unknown>;
+    for (const key of removedKeys) {
+        delete cloned[key];
+    }
+    return cloned as T;
+};
+
+const sanitizePersonDetailsForGuest = (personDetails: Record<string, unknown>): Record<string, unknown> => {
+    const result = sanitizeObjectForGuest({
+        ...(personDetails as Record<string, unknown>)
+    }, [
+        'password',
+        'id_number',
+        'id_card',
+        'phone',
+        'email',
+        'address',
+        'current_address',
+        'notes'
+    ]);
+
+    if (result.address) {
+        result.address = typeof result.address === 'string' ? result.address.split('省')[0] + '省...' : '';
+    }
+
+    const ruralProfile = result.ruralProfile as Record<string, unknown> | undefined;
+    if (ruralProfile && typeof ruralProfile === 'object') {
+        result.ruralProfile = sanitizeObjectForGuest(ruralProfile, ['id', 'person_id']);
+    }
+
+    const ruralProfileAlias = result.rural_profile as Record<string, unknown> | undefined;
+    if (ruralProfileAlias && typeof ruralProfileAlias === 'object') {
+        result.rural_profile = sanitizeObjectForGuest(ruralProfileAlias, ['id', 'person_id']);
+    }
+
+    const cooperation = result.cooperation as Record<string, unknown> | undefined;
+    if (cooperation && typeof cooperation === 'object') {
+        result.cooperation = sanitizeObjectForGuest(cooperation, ['id', 'person_id']);
+    }
+
+    const cooperationIntentions = result.cooperation_intentions as Record<string, unknown> | undefined;
+    if (cooperationIntentions && typeof cooperationIntentions === 'object') {
+        result.cooperation_intentions = sanitizeObjectForGuest(cooperationIntentions, ['id', 'person_id']);
+    }
+
+    const talentSkills = result.talent_skills;
+    if (Array.isArray(talentSkills)) {
+        result.talent_skills = talentSkills.map((skill) => {
+            if (!skill || typeof skill !== 'object') {
+                return skill;
+            }
+            return sanitizeObjectForGuest(skill as Record<string, unknown>, ['id', 'person_id']);
+        });
+    }
+
+    const skills = result.skills;
+    if (Array.isArray(skills)) {
+        result.skills = skills.map((skill) => {
+            if (!skill || typeof skill !== 'object') {
+                return skill;
+            }
+            return sanitizeObjectForGuest(skill as Record<string, unknown>, ['id', 'person_id']);
+        });
+    }
+
+    return result;
+};
+
+const ensurePersonOwner = (
+    req: AuthenticatedRequest,
+    targetPersonId: number,
+    res: Response
+): boolean => {
+    if (req.user?.role === 'admin') {
+        return true;
+    }
+
+    if (!req.user?.personId) {
+        res.status(403).json({
+            success: false,
+            message: '请先关联个人信息'
+        });
+        return false;
+    }
+
+    if (req.user.personId !== targetPersonId) {
+        res.status(403).json({
+            success: false,
+            message: '您只能操作自己的信息'
+        });
+        return false;
+    }
+
+    return true;
+};
+
 // 获取所有人员信息
 const getAllPersons = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // 获取数据库服务
@@ -586,11 +683,15 @@ const getPersonDetails = async (req: AuthenticatedRequest, res: Response): Promi
             });
             return;
         }
+
+        const responseData = req.user
+            ? personDetails
+            : sanitizePersonDetailsForGuest(personDetails as Record<string, unknown>);
         
         logger.info('Retrieved person details successfully', { id, name: personDetails.name });
         res.json({
             success: true,
-            data: personDetails
+            data: responseData
         });
     } catch (err) {
         const error = err as Error;
@@ -620,6 +721,18 @@ const upsertRuralProfile = async (req: AuthenticatedRequest, res: Response): Pro
             return;
         }
         const ruralData = req.body;
+
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                message: '请先登录'
+            });
+            return;
+        }
+
+        if (!ensurePersonOwner(req, personId, res)) {
+            return;
+        }
         
         logger.info('Upserting rural profile', { personId, ruralData });
         
@@ -659,6 +772,18 @@ const addSkill = async (req: AuthenticatedRequest, res: Response): Promise<void>
             return;
         }
         const skillData = req.body;
+
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                message: '请先登录'
+            });
+            return;
+        }
+
+        if (!ensurePersonOwner(req, personId, res)) {
+            return;
+        }
         
         logger.info('Adding skill', { personId, skillData });
         
@@ -695,6 +820,31 @@ const deleteSkill = async (req: AuthenticatedRequest, res: Response): Promise<vo
             res.status(400).json({
                 success: false,
                 message: (validationError as Error).message
+            });
+            return;
+        }
+
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                message: '请先登录'
+            });
+            return;
+        }
+
+        const skillOwner = await getDbService(req).getPersonIdBySkillId(skillId);
+        if (!skillOwner) {
+            res.status(404).json({
+                success: false,
+                message: '技能不存在'
+            });
+            return;
+        }
+
+        if (req.user.role !== 'admin' && req.user.personId !== skillOwner) {
+            res.status(403).json({
+                success: false,
+                message: '您只能操作自己的技能'
             });
             return;
         }

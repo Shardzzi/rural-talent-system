@@ -1,51 +1,85 @@
 <template>
   <div class="guest-view">
-    <!-- 欢迎横幅 -->
-    <div class="welcome-banner">
+    <!-- 品牌主视觉 -->
+    <section class="welcome-banner" aria-labelledby="hero-title">
       <div class="banner-content">
-        <h1>数字乡村人才信息系统</h1>
-        <p>汇聚乡村人才，助力乡村振兴</p>
-        <div class="banner-actions">
-          <el-button v-if="!authStore.isAuthenticated" type="primary" size="large" @click="goToLogin">
-            <el-icon><User /></el-icon>
-            登录/注册
-          </el-button>
-          <el-button v-if="authStore.isAuthenticated" type="success" size="large" @click="goToDashboard">
-            <el-icon><User /></el-icon>
-            进入{{ authStore.user?.role === 'admin' ? '管理' : '用户' }}中心
-          </el-button>
-          <el-button size="large" @click="scrollToContent">
-            <el-icon><ArrowDown /></el-icon>
-            浏览人才
-          </el-button>
+        <div class="hero-copy">
+          <div class="hero-eyebrow">
+            <span class="eyebrow-dot"></span>
+            数字乡村人才协作网络
+          </div>
+          <h1 id="hero-title">让乡村的<em>一技之长</em><br>连接到更远的地方</h1>
+          <p>汇聚懂农业、爱农村、有经验的实干人才，让每一份乡土智慧都有被看见、被需要的机会。</p>
+          <div class="banner-actions">
+            <el-button v-if="!authStore.isAuthenticated" type="primary" size="large" @click="goToLogin">
+              <el-icon><User /></el-icon>
+              登录 / 注册
+            </el-button>
+            <el-button v-if="authStore.isAuthenticated" type="primary" size="large" @click="goToDashboard">
+              <el-icon><User /></el-icon>
+              进入{{ authStore.user?.role === 'admin' ? '管理' : '用户' }}中心
+            </el-button>
+            <el-button class="browse-button" size="large" @click="scrollToContent">
+              浏览人才名录
+              <el-icon><ArrowDown /></el-icon>
+            </el-button>
+          </div>
+          <div class="hero-topics" aria-label="平台人才方向">
+            <span>农技推广</span>
+            <span>返乡创业</span>
+            <span>乡村治理</span>
+            <span>合作对接</span>
+          </div>
         </div>
+
+        <aside class="hero-insight" aria-label="人才库概览">
+          <div class="insight-header">
+            <div>
+              <span class="insight-kicker">TALENT ATLAS</span>
+              <h2>乡村人才图谱</h2>
+            </div>
+            <span class="live-badge"><i></i>持续更新</span>
+          </div>
+          <div class="insight-focus">
+            <span>平台已收录</span>
+            <strong>{{ totalPersons }}</strong>
+            <small>位乡村人才</small>
+          </div>
+          <div class="banner-stats">
+            <div class="stat-item">
+              <div class="stat-number">{{ skillCategories }}</div>
+              <div class="stat-label">技能类别</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">{{ locations }}</div>
+              <div class="stat-label">覆盖地区</div>
+            </div>
+          </div>
+          <div class="insight-note">
+            <el-icon><Lock /></el-icon>
+            公开信息已完成隐私脱敏
+          </div>
+        </aside>
       </div>
-      <div class="banner-stats">
-        <div class="stat-item">
-          <div class="stat-number">{{ totalPersons }}</div>
-          <div class="stat-label">人才总数</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">{{ skillCategories }}</div>
-          <div class="stat-label">技能类别</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">{{ locations }}</div>
-          <div class="stat-label">覆盖地区</div>
-        </div>
-      </div>
-    </div>
+    </section>
 
     <!-- 主要内容区域 -->
     <div class="main-content" ref="contentRef">
       <!-- 搜索和筛选区域 -->
-      <el-card class="search-card">
+      <el-card class="search-card" shadow="never">
         <div class="search-header">
-          <h3>
+          <div class="section-heading">
+            <span class="section-index">01</span>
+            <div>
+              <span class="section-kicker">TALENT DISCOVERY</span>
+              <h2>发现合适的乡村人才</h2>
+              <p>按专长、地区和从业情况组合筛选，快速找到合作伙伴。</p>
+            </div>
+          </div>
+          <div class="filter-hint">
             <el-icon><Search /></el-icon>
-            发现人才
-          </h3>
-          <p>搜索和筛选适合的乡村人才</p>
+            7 项组合条件
+          </div>
         </div>
         
         <div class="search-form">
@@ -166,15 +200,18 @@
       </el-card>
 
       <!-- 人才列表 -->
-      <el-card class="talents-card">
+      <el-card class="talents-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <span>
-              <el-icon><User /></el-icon>
-              人才信息 
-              <el-tag type="info" size="small">共 {{ totalCount }} 人</el-tag>
-            </span>
-            <el-button type="text" @click="loadPersons">
+            <div class="list-title">
+              <span class="section-index section-index--small">02</span>
+              <div>
+                <span class="section-kicker">TALENT DIRECTORY</span>
+                <strong>人才名录</strong>
+              </div>
+              <el-tag type="info" effect="plain" round>共 {{ totalCount }} 人</el-tag>
+            </div>
+            <el-button link class="refresh-button" @click="loadPersons">
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -201,11 +238,13 @@
         <div class="login-prompt">
           <el-icon class="prompt-icon"><Lock /></el-icon>
           <div class="prompt-content">
-            <h3>想要了解更多？</h3>
-            <p>登录后可以查看完整的联系方式，还可以添加和管理您自己的人才信息。</p>
+            <span class="prompt-kicker">MEMBER ACCESS</span>
+            <h3>解锁更完整的人才协作体验</h3>
+            <p>登录后可查看完整联系方式、收藏人才，并维护您自己的人才档案。</p>
+          </div>
+          <div class="prompt-action">
             <el-button type="primary" @click="goToLogin">
-              <el-icon><User /></el-icon>
-              立即登录/注册
+              立即登录 / 注册
             </el-button>
           </div>
         </div>
@@ -358,14 +397,16 @@ export default {
           totalCount.value = responseData.total ?? responseData.totalCount ?? persons.value.length
         }
         
-        try {
-          const statsResponse = await axios.get('/api/statistics')
-          if (statsResponse.data && statsResponse.data.data) {
-            globalStats.value.skills = statsResponse.data.data.skillCategories || 0
-            // locations 不是默认统计项，可以留空或尝试获取
+        if (authStore.isAuthenticated) {
+          try {
+            const statsResponse = await axios.get('/api/statistics')
+            if (statsResponse.data && statsResponse.data.data) {
+              globalStats.value.skills = statsResponse.data.data.skillCategories || 0
+              // locations 不是默认统计项，可以留空或尝试获取
+            }
+          } catch (e) {
+            // 统计接口异常不影响公开人才列表展示
           }
-        } catch (e) {
-          // guest might not have access to statistics, ignore silently
         }
       } catch (error) {
         ElMessage.error('加载失败，请稍后重试')
@@ -469,143 +510,362 @@ export default {
 </script>
 
 <style scoped>
-/* 优化容器宽度和布局，与其他界面保持一致 */
 .guest-view {
   min-height: 100vh;
-  width: 100%;
-  /* 移除max-width限制，让它继承父容器的宽度控制 */
-  margin: 0;
+  width: calc(100% + 56px);
+  margin: -28px;
   padding: 0;
 }
 
-/* 欢迎横幅 */
 .welcome-banner {
-  background: linear-gradient(135deg, #0d2137 0%, #1a5276 30%, #2e86c1 60%, #27ae60 100%);
-  color: white;
-  padding: 80px 20px;
-  text-align: center;
+  color: #ffffff;
+  padding: 64px 44px 58px;
   position: relative;
   overflow: hidden;
-  background-size: 200% 200%;
-  animation: gradientShift 10s ease infinite;
-  margin: -24px -24px 0 -24px;
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  background:
+    radial-gradient(circle at 92% 8%, rgba(215, 161, 79, 0.18), transparent 22rem),
+    radial-gradient(circle at 8% 100%, rgba(121, 161, 142, 0.15), transparent 28rem),
+    var(--color-sidebar);
 }
 
 .welcome-banner::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.05"/></svg>') repeat;
-  background-size: 50px 50px;
+  width: 420px;
+  height: 420px;
+  top: -185px;
+  right: -120px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 44% 56% 58% 42%;
+  box-shadow:
+    0 0 0 44px rgba(255, 255, 255, 0.025),
+    0 0 0 92px rgba(255, 255, 255, 0.018);
+  transform: rotate(18deg);
 }
 
 .banner-content {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: 1400px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 0 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.65fr);
+  align-items: center;
+  gap: clamp(48px, 7vw, 112px);
+}
+
+.hero-copy {
+  max-width: 760px;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.eyebrow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 5px rgba(215, 161, 79, 0.14);
 }
 
 .banner-content h1 {
-  font-size: 48px;
-  margin-bottom: 16px;
-  font-weight: bold;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  max-width: 720px;
+  margin: 0 0 22px;
+  font-size: clamp(42px, 4.2vw, 68px);
+  font-weight: 750;
+  line-height: 1.16;
+  letter-spacing: -0.045em;
 }
 
-.banner-content p {
-  font-size: 22px;
-  margin-bottom: 40px;
-  opacity: 0.95;
+.banner-content h1 em {
+  color: #edc985;
+  font-style: normal;
+}
+
+.hero-copy > p {
+  max-width: 660px;
+  margin: 0 0 32px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 17px;
+  line-height: 1.85;
 }
 
 .banner-actions {
-  margin-bottom: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 30px;
 }
 
 .banner-actions .el-button {
-  margin: 0 10px;
+  height: 48px;
+  margin: 0;
+  padding: 0 22px;
+  border-radius: 12px;
+}
+
+.banner-actions :deep(.el-button--primary) {
+  color: var(--color-sidebar-deep);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 12px 24px rgba(7, 26, 20, 0.24);
+}
+
+.banner-actions :deep(.el-button--primary:hover) {
+  background: #e3b464;
+  border-color: #e3b464;
+}
+
+.browse-button {
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.browse-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.hero-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.hero-topics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.hero-topics span::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-primary-light-5);
+}
+
+.hero-insight {
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px 24px 24px 8px;
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow: 0 24px 60px rgba(7, 26, 20, 0.25);
+  backdrop-filter: blur(14px);
+}
+
+.insight-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.insight-kicker,
+.section-kicker,
+.prompt-kicker {
+  display: block;
+  color: var(--color-secondary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.insight-kicker {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.insight-header h2 {
+  margin: 5px 0 0;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+.live-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8fc5a6;
+  box-shadow: 0 0 0 4px rgba(143, 197, 166, 0.12);
+}
+
+.insight-focus {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  padding: 24px 0;
+}
+
+.insight-focus span {
+  grid-column: 1 / -1;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+}
+
+.insight-focus strong {
+  margin-top: 4px;
+  color: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(56px, 6vw, 78px);
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.insight-focus small {
+  padding-bottom: 8px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
 }
 
 .banner-stats {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .stat-item {
-  text-align: center;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
+  padding: 14px 16px;
+  background: rgba(7, 26, 20, 0.16);
   border-radius: 12px;
-  padding: 20px 30px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .stat-number {
-  font-size: 36px;
-  font-weight: bold;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
+  color: #f1d69d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
 }
 
 .stat-label {
-  font-size: 14px;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 11px;
 }
 
-/* 主要内容 */
+.insight-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 10px;
+}
+
 .main-content {
-  padding: 40px 20px;
+  padding: 42px 44px 56px;
   width: 100%;
-  max-width: 1400px;
+  max-width: calc(var(--content-max-width) + 88px);
   margin: 0 auto;
 }
 
 .search-card {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  border-radius: var(--radius-xl);
 }
 
 .search-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.search-header h3 {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.section-heading,
+.list-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.section-index {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  color: #333;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  color: var(--color-primary);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  border-radius: 14px 14px 14px 5px;
+  background: var(--color-primary-light-9);
+}
+
+.section-index--small {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+  font-size: 15px;
+}
+
+.section-heading h2 {
+  margin: 3px 0 4px;
+  color: var(--color-text-primary);
+  font-size: 22px;
 }
 
 .search-header p {
-  color: #666;
   margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.filter-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--color-surface-soft);
 }
 
 .search-form {
-  padding: 20px;
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 8px;
-  border-left: 4px solid #2e86c1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 22px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+}
+
+.search-form :deep(.el-input__wrapper),
+.search-form :deep(.el-select__wrapper) {
+  min-height: 44px;
+  background: var(--color-surface);
 }
 
 .talents-card {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  border-radius: var(--radius-xl);
 }
 
 .card-header {
@@ -614,90 +874,182 @@ export default {
   align-items: center;
 }
 
+.list-title strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-primary);
+  font-size: 17px;
+}
+
+.refresh-button {
+  color: var(--color-primary);
+}
+
 .login-prompt-card {
-  margin-top: 40px;
+  margin-top: 24px;
   position: relative;
   overflow: hidden;
+  color: #ffffff;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--color-sidebar);
 }
 
 .login-prompt-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  background: linear-gradient(to bottom, #2e86c1, #27ae60);
+  width: 180px;
+  height: 180px;
+  right: -70px;
+  bottom: -105px;
+  border: 28px solid rgba(215, 161, 79, 0.12);
+  border-radius: 50%;
 }
 
 .login-prompt {
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 20px;
+  padding: 26px 28px;
   text-align: left;
 }
 
 .prompt-icon {
-  font-size: 32px;
-  color: #fff;
-  background: linear-gradient(135deg, #2e86c1 0%, #27ae60 100%);
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  padding: 14px;
+  color: var(--color-sidebar-deep);
+  background: var(--color-accent);
+  border-radius: 14px 14px 14px 5px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(46, 134, 193, 0.3);
 }
 
 .prompt-content h3 {
-  margin: 0 0 8px 0;
-  color: #333;
+  margin: 4px 0 6px;
+  color: #ffffff;
+  font-size: 18px;
 }
 
 .prompt-content p {
-  margin: 0 0 16px 0;
-  color: #666;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.56);
   line-height: 1.5;
 }
 
-.prompt-content .el-button {
-  background: linear-gradient(135deg, #2e86c1 0%, #27ae60 100%);
-  border: none;
-  padding: 12px 24px;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(46, 134, 193, 0.2);
-  transition: all 0.3s ease;
+.prompt-kicker {
+  color: rgba(255, 255, 255, 0.38);
 }
 
-.prompt-content .el-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(46, 134, 193, 0.3);
+.prompt-action {
+  margin-left: auto;
+  position: relative;
+  z-index: 1;
 }
 
-/* 响应式设计 */
+.prompt-action :deep(.el-button) {
+  color: var(--color-sidebar-deep);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+@media (max-width: 1100px) {
+  .banner-content {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 40px;
+  }
+}
+
 @media (max-width: 768px) {
+  .guest-view {
+    width: calc(100% + 24px);
+    margin: -12px;
+  }
+
+  .welcome-banner {
+    padding: 46px 20px 34px;
+  }
+
+  .banner-content {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
   .banner-content h1 {
-    font-size: 32px;
+    font-size: clamp(36px, 11vw, 48px);
+    letter-spacing: -0.055em;
   }
   
-  .banner-content p {
-    font-size: 16px;
+  .hero-copy > p {
+    font-size: 15px;
   }
-  
-  .banner-stats {
-    gap: 30px;
+
+  .hero-topics {
+    gap: 8px 14px;
   }
-  
-  .stat-number {
-    font-size: 28px;
+
+  .hero-insight {
+    padding: 22px;
+  }
+
+  .main-content {
+    padding: 24px 16px 40px;
+  }
+
+  .search-card,
+  .talents-card {
+    border-radius: var(--radius-lg);
+  }
+
+  .search-header {
+    align-items: flex-start;
+  }
+
+  .filter-hint {
+    display: none;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .section-heading h2 {
+    font-size: 19px;
+  }
+
+  .section-index {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .search-form {
+    padding: 16px;
+  }
+
+  .search-form :deep(.el-col) {
+    margin-bottom: 10px;
+  }
+
+  .card-header,
+  .list-title {
+    align-items: flex-start;
+  }
+
+  .list-title {
+    flex-wrap: wrap;
+    gap: 10px;
   }
   
   .login-prompt {
     flex-direction: column;
     text-align: center;
+  }
+
+  .prompt-action {
+    margin-left: 0;
   }
 }
 </style>

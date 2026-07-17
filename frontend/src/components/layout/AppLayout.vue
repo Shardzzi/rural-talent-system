@@ -49,7 +49,7 @@ onUnmounted(() => {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: var(--color-bg-page);
+  background: var(--color-bg-page);
 }
 
 .app-main-container {
@@ -62,13 +62,18 @@ onUnmounted(() => {
 .app-main {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-lg);
-  background-color: var(--color-bg-page);
+  padding: 28px;
+  background:
+    radial-gradient(circle at 96% 2%, rgba(215, 161, 79, 0.08), transparent 23rem),
+    linear-gradient(rgba(35, 98, 74, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 98, 74, 0.018) 1px, transparent 1px),
+    var(--color-bg-page);
+  background-size: auto, 32px 32px, 32px 32px, auto;
 }
 
 @media screen and (max-width: 768px) {
   .app-main {
-    padding: var(--spacing-sm);
+    padding: 12px;
   }
 }
 

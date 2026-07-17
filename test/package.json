@@ -13,13 +13,21 @@
     "test:auth": "node test_auth_permissions.js",
     "test:search": "node test_search_pagination.js",
     "test:batch": "node test_batch_operations.js",
-    "test:pagination": "npx ts-node test_pagination.js",
+    "test:pagination": "ts-node --project tsconfig.json test_pagination.js",
     "test:all": "./run-tests.sh all"
   },
   "dependencies": {
     "axios": "^1.6.2"
   },
-  "keywords": ["test", "rural-talent", "automation"],
+  "keywords": [
+    "test",
+    "rural-talent",
+    "automation"
+  ],
   "author": "Rural Talent System Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "form-data": "^4.0.6",
+    "ts-node": "^10.9.2"
+  }
 }

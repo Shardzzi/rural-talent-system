@@ -1,7 +1,7 @@
 # TEST KNOWLEDGE BASE
 
 **Scope:** Custom Node.js API test suite  
-**Tech:** Pure Node.js + axios (only dependency)  
+**Tech:** Pure Node.js + axios; `form-data` and `ts-node` provide import and direct-service test tooling
 **Runtime:** Requires backend on localhost:8085 (configurable via `API_BASE_URL` env var)
 
 ## STRUCTURE
@@ -19,8 +19,8 @@ test/
 ├── test_edge_cases.js            # (746L) SQL injection, XSS, boundaries, concurrency, unicode
 ├── test_auth_permissions.js      # (753L) Token lifecycle, role matrix, refresh, weak password
 ├── test_search_pagination.js     # (545L) Multi-dim search, filters, pagination, CSV export
-├── test_batch_operations.js      # (378L) [UNREGISTERED] Batch delete/update, CSV import flow
-└── test_pagination.js            # (169L) [UNREGISTERED] Direct DB unit test via ts-node
+├── test_batch_operations.js      # (378L) Batch delete/update, CSV import flow
+└── test_pagination.js            # (169L) Direct DB unit test via ts-node
 ```
 
 ## KEY PATTERNS
@@ -40,7 +40,7 @@ test/
 | Test permissions | `test_auth_permissions.js` or `test_dual_user_features.js` |
 | Test input validation | `test_error_handling.js` — 400/4xx error variants |
 | Test search/filters | `test_search_pagination.js` — multi-dim search matrix |
-| Test batch/import | `test_batch_operations.js` [unregistered] |
+| Test batch/import | `test_batch_operations.js` — batch and CSV import matrix |
 | Run all tests | `pnpm test` or `cd test && ./run-tests.sh all` |
 | Run single test | `cd test && node test_all_endpoints.js` |
 
@@ -59,7 +59,7 @@ pnpm --filter rural-talent-system-test test:search  # Single category via pnpm
 - Tests modify the shared `backend/data/persons.db` — no test DB isolation
 - Pre-existing test accounts: `admin`/`admin123`, `testuser`/`test123`
 - Backend must be running before tests begin (default: localhost:8085, override via `API_BASE_URL` env var)
-- 2 test files (`test_batch_operations.js`, `test_pagination.js`) exist but are not registered in runner/scripts
+- Batch and direct pagination tests are registered in both `package.json` scripts and `run-tests.sh`
 - `test_pagination.js` requires `ts-node` to import backend TypeScript directly
 - No frontend tests exist
 - No code coverage tooling

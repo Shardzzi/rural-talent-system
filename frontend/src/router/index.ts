@@ -15,6 +15,9 @@ declare module 'vue-router' {
   }
 }
 
+// 调试面板只在明确开启的开发环境中注册，避免出现在正常业务界面或生产构建中。
+const debugRouteEnabled = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEBUG_PANEL === 'true'
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -148,6 +151,16 @@ const routes: Array<RouteRecordRaw> = [
       title: '登录 - 数字乡村人才信息系统'
     }
   },
+  ...(debugRouteEnabled ? [{
+    path: '/__debug',
+    name: 'DebugPanel',
+    component: () => import('@/components/DebugPanel.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: '开发调试面板'
+    }
+  }] : []),
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

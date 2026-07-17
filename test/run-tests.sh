@@ -82,7 +82,7 @@ case "${1:-all}" in
         ;;
     "pagination")
         echo "📄 运行分页单元测试..."
-        npx ts-node test_pagination.js
+        ts-node --project tsconfig.json test_pagination.js
         ;;
     "all")
         echo "运行完整测试套件..."
@@ -96,7 +96,7 @@ case "${1:-all}" in
         run_test "test_search_pagination.js"
         run_test "test_batch_operations.js"
         echo "📄 运行分页单元测试..."
-        npx ts-node test_pagination.js
+        ts-node --project tsconfig.json test_pagination.js
         ;;
     *)
         echo "❌ 未知测试类型: $1"

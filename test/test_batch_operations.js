@@ -55,9 +55,10 @@ async function adminLogin() {
       username: 'admin',
       password: 'admin123'
     }, { headers: { 'X-Forwarded-For': nextIp() } });
+    const token = res.data?.data?.token || res.data?.token;
 
-    if (res.data.success && res.data.token) {
-      state.adminToken = res.data.token;
+    if (res.data.success && token) {
+      state.adminToken = token;
       markPass('Admin login');
     } else {
       markFail('Admin login', 'No token returned');
@@ -290,10 +291,10 @@ async function testImportUploadAndConfirm() {
       sessionId: state.importSessionId
     }, headers(state.adminToken));
 
-    if (confirmRes.data.success) {
+    if (confirmRes.data.success && confirmRes.data.data.success === 2 && confirmRes.data.data.failed === 0) {
       markPass('Import confirm', `Success: ${confirmRes.data.data.success}, Failed: ${confirmRes.data.data.failed}`);
     } else {
-      markFail('Import confirm', confirmRes.data.message);
+      markFail('Import confirm', confirmRes.data.message || `Unexpected result: success=${confirmRes.data.data?.success}, failed=${confirmRes.data.data?.failed}`);
     }
   } catch (err) {
     markFail('Import confirm', err.response?.data?.message || err.message);

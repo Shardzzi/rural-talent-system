@@ -11,9 +11,9 @@ const MYSQL_CONFIG = {
     database: process.env.MYSQL_DATABASE || 'rural_talent_system',
     charset: 'utf8mb4',
     timezone: '+08:00',
-    acquireTimeout: 60000,
-    timeout: 60000,
-    reconnect: true,
+    connectTimeout: 60000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
     connectionLimit: 10
 };
 
@@ -56,6 +56,65 @@ const executeQuery = async (sql: string, params: any[] = []): Promise<any> => {
         });
         throw error;
     }
+};
+
+const isDuplicateEntryError = (error: any): boolean => {
+    return error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062 || error?.sqlState === '23000';
+};
+
+const createDuplicateEntryError = (message: string = '邮箱或手机号已存在') => {
+    const duplicateError = new Error(message) as Error & { code?: string };
+    duplicateError.code = 'DUPLICATE_ENTRY';
+    return duplicateError;
+};
+
+const normalizeDateTimeInput = (expiresAt: Date | string | number): string => {
+    if (expiresAt instanceof Date) {
+        return expiresAt.toISOString();
+    }
+
+    const asNumber = Number(expiresAt);
+    if (!Number.isNaN(asNumber)) {
+        return new Date(asNumber).toISOString();
+    }
+
+    return new Date(expiresAt).toISOString();
+};
+
+const normalizeSkillData = (skill: any, index: number) => {
+    if (!skill || typeof skill !== 'object') {
+        throw new Error(`技能数据格式无效（索引: ${index}）`);
+    }
+
+    const category = skill.category ?? skill.skill_category;
+    const name = skill.name ?? skill.skill_name;
+    const proficiencyRaw = skill.proficiency ?? skill.proficiency_level;
+    const experienceYearsRaw = skill.experience_years ?? null;
+
+    if (!category || !name || proficiencyRaw === undefined || proficiencyRaw === null) {
+        throw new Error(`技能必填字段缺失（索引: ${index}）`);
+    }
+
+    const proficiency = Number(proficiencyRaw);
+    if (Number.isNaN(proficiency)) {
+        throw new Error(`技能熟练度必须为数字（索引: ${index}）`);
+    }
+
+    const experienceYears = experienceYearsRaw === null || experienceYearsRaw === undefined
+        ? null
+        : Number(experienceYearsRaw);
+
+    if (experienceYears !== null && Number.isNaN(experienceYears)) {
+        throw new Error(`技能经验年限必须为数字（索引: ${index}）`);
+    }
+
+    return {
+        category,
+        name,
+        proficiency,
+        certification: skill.certification || null,
+        experienceYears
+    };
 };
 
 const PAGINATION_SORT_WHITELIST = ['name', 'age', 'education_level', 'created_at'] as const;
@@ -385,6 +444,145 @@ const getPersonById = async (id: number) => {
     }
 };
 
+// 获取人员的完整信息（包括农村特色信息）
+const getPersonWithDetails = async (id: number) => {
+    try {
+        const persons = await executeQuery(
+            'SELECT * FROM persons WHERE id = ?',
+            [id]
+        );
+
+        const person = persons?.[0];
+        if (!person) {
+            return null;
+        }
+
+        const ruralProfiles = await executeQuery(
+            'SELECT * FROM rural_talent_profile WHERE person_id = ?',
+            [id]
+        );
+        const skills = await executeQuery(
+            'SELECT * FROM talent_skills WHERE person_id = ?',
+            [id]
+        );
+        const cooperations = await executeQuery(
+            'SELECT * FROM cooperation_intentions WHERE person_id = ?',
+            [id]
+        );
+
+        const ruralProfile = ruralProfiles?.[0] || null;
+        const cooperation = cooperations?.[0] || null;
+
+        return {
+            ...person,
+            ruralProfile: ruralProfile || null,
+            skills: skills || [],
+            cooperation: cooperation || null
+        };
+    } catch (error: any) {
+        logger.error('Error getting person details', { id, error: error.message });
+        throw error;
+    }
+};
+
+// 创建或更新农村特色信息
+const upsertRuralProfile = async (personId: number, ruralData: any) => {
+    const connection = await pool.getConnection();
+    try {
+        const {
+            farming_years,
+            main_crops,
+            planting_scale,
+            breeding_types,
+            cooperation_willingness,
+            development_direction,
+            available_time
+        } = ruralData;
+
+        await connection.beginTransaction();
+
+        await connection.execute(
+            'DELETE FROM rural_talent_profile WHERE person_id = ?',
+            [personId]
+        );
+        await connection.execute(
+            `INSERT INTO rural_talent_profile
+                (person_id, farming_years, main_crops, planting_scale, breeding_types,
+                 cooperation_willingness, development_direction, available_time)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                personId,
+                farming_years,
+                main_crops,
+                planting_scale,
+                breeding_types,
+                cooperation_willingness,
+                development_direction,
+                available_time
+            ]
+        );
+
+        await connection.commit();
+        logger.info('Rural profile upserted', { personId });
+        return true;
+    } catch (error: any) {
+        await connection.rollback();
+        logger.error('Error upserting rural profile', { personId, error: error.message });
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
+// 添加技能
+const addSkill = async (personId: number, skillData: any) => {
+    try {
+        const {
+            skill_category,
+            skill_name,
+            proficiency_level,
+            certification,
+            experience_years
+        } = skillData;
+
+        const result = await executeQuery(
+            `INSERT INTO talent_skills
+                (person_id, skill_category, skill_name, proficiency_level, certification, experience_years)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [personId, skill_category, skill_name, proficiency_level, certification, experience_years]
+        ) as ResultSetHeader;
+
+        logger.info('Skill added', { personId, skillId: result.insertId });
+        return {
+            id: result.insertId,
+            ...skillData
+        };
+    } catch (error: any) {
+        logger.error('Error adding skill', {
+            personId,
+            skillData,
+            error: error.message
+        });
+        throw error;
+    }
+};
+
+// 删除技能
+const deleteSkill = async (skillId: number) => {
+    try {
+        const result = await executeQuery(
+            'DELETE FROM talent_skills WHERE id = ?',
+            [skillId]
+        ) as ResultSetHeader;
+
+        logger.info('Skill deleted', { skillId });
+        return result.affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error deleting skill', { skillId, error: error.message });
+        throw error;
+    }
+};
+
 // 创建人员信息
 const createPerson = async (personData: any) => {
     const { name, age, email, phone, gender, address, education_level, political_status, employment_status } = personData;
@@ -638,11 +836,187 @@ const getUserById = async (id: number) => {
     }
 };
 
+// 更新用户密码
+const updateUserPassword = async (userId: number, hashedPassword: string): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [hashedPassword, userId]
+        ) as ResultSetHeader;
+        logger.info('User password updated', { userId });
+        return result.affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error updating user password', {
+            error: error.message,
+            userId
+        });
+        throw error;
+    }
+};
+
+// 创建新用户
+const createUser = async (userData: any) => {
+    const { username, password, email, role = 'user', person_id = null } = userData;
+    try {
+        const sql = 'INSERT INTO users (username, password, email, role, person_id, is_active) VALUES (?, ?, ?, ?, ?, 1)';
+        const result = await executeQuery(sql, [username, password, email, role, person_id]);
+
+        const insertId = (result as ResultSetHeader).insertId;
+        logger.info('User created successfully', {
+            userId: insertId,
+            username,
+            email,
+            role
+        });
+
+        return {
+            id: insertId,
+            username,
+            email,
+            role,
+            person_id
+        };
+    } catch (error: any) {
+        if (isDuplicateEntryError(error)) {
+            throw createDuplicateEntryError('用户名或邮箱已被占用');
+        }
+
+        logger.error('Error creating user', {
+            error: error.message,
+            username,
+            email
+        });
+        throw error;
+    }
+};
+
+// 通过技能ID获取所属人员ID
+const getPersonIdBySkillId = async (skillId: number): Promise<number | null> => {
+    try {
+        const rows = await executeQuery('SELECT person_id FROM talent_skills WHERE id = ?', [skillId]);
+        return rows?.[0]?.person_id ?? null;
+    } catch (error: any) {
+        logger.error('Error getting person id by skill id', {
+            error: error.message,
+            skillId
+        });
+        throw error;
+    }
+};
+
+// 获取用户关联的人员信息
+const getUserPersonInfo = async (userId: number) => {
+    try {
+        const rows = await executeQuery(
+            `SELECT
+                u.id,
+                u.username,
+                u.password,
+                u.email,
+                u.role,
+                u.person_id,
+                u.is_active,
+                u.created_at,
+                u.updated_at,
+                p.id AS person_profile_id,
+                p.name,
+                p.age,
+                p.gender,
+                p.phone,
+                p.address,
+                p.email AS person_email,
+                p.education_level,
+                p.political_status
+            FROM users u
+            LEFT JOIN persons p ON u.person_id = p.id
+            WHERE u.id = ? AND u.is_active = TRUE`,
+            [userId]
+        );
+
+        return rows?.[0] || null;
+    } catch (error: any) {
+        logger.error('Error getting user person info', {
+            error: error.message,
+            userId
+        });
+        throw error;
+    }
+};
+
+// 根据person_id查询用户
+const getUserByPersonId = async (personId: number) => {
+    try {
+        const rows = await executeQuery('SELECT * FROM users WHERE person_id = ? AND is_active = TRUE', [personId]);
+        return rows?.[0] || null;
+    } catch (error: any) {
+        logger.error('Error getting user by person ID', {
+            error: error.message,
+            personId
+        });
+        throw error;
+    }
+};
+
+// 关联用户和个人信息
+const linkUserToPerson = async (userId: number, personId: number): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'UPDATE users SET person_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [personId, userId]
+        ) as ResultSetHeader;
+        logger.info('User linked to person', { userId, personId });
+        return result.affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error linking user to person', {
+            error: error.message,
+            userId,
+            personId
+        });
+        throw error;
+    }
+};
+
+// 更新用户关联的个人信息ID
+const updateUserPersonId = async (userId: number, personId: number): Promise<boolean> => {
+    try {
+        const result = await executeQuery(
+            'UPDATE users SET person_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [personId, userId]
+        ) as ResultSetHeader;
+        logger.info('User person_id updated', { userId, personId });
+        return result.affectedRows > 0;
+    } catch (error: any) {
+        logger.error('Error updating user person_id', {
+            error: error.message,
+            userId,
+            personId
+        });
+        throw error;
+    }
+};
+
+const deleteUserSessionsByUser = async (userId: number): Promise<boolean> => {
+    try {
+        const result = await executeQuery('DELETE FROM user_sessions WHERE user_id = ?', [userId]) as ResultSetHeader;
+        logger.info('User sessions deleted by user id', {
+            userId,
+            deletedSessions: result.affectedRows
+        });
+        return result.affectedRows >= 0;
+    } catch (error: any) {
+        logger.error('Error deleting user sessions by user', {
+            error: error.message,
+            userId
+        });
+        throw error;
+    }
+};
+
 // 创建用户会话
 const createUserSession = async (userId: number, token: string, expiresAt: Date) => {
     try {
         const sql = 'INSERT INTO user_sessions (user_id, token, expires_at) VALUES (?, ?, ?)';
-        const result = await executeQuery(sql, [userId, token, expiresAt]);
+        const result = await executeQuery(sql, [userId, token, normalizeDateTimeInput(expiresAt)]);
 
         logger.info('User session created successfully', {
             sessionId: (result as ResultSetHeader).insertId,
@@ -1352,6 +1726,227 @@ const importPersons = async (personDataArray: Record<string, unknown>[]): Promis
     return result;
 };
 
+// 创建综合人员信息（事务处理）
+const createComprehensivePerson = async (data: {
+    person: any;
+    ruralProfile: any;
+    cooperation: any;
+    skills: any[];
+    userId?: number;
+}): Promise<any> => {
+    const connection = await pool.getConnection();
+    let personId: number | null = null;
+
+    try {
+        const normalizedSkills = Array.isArray(data.skills)
+            ? data.skills.map((skill, index) => normalizeSkillData(skill, index))
+            : [];
+
+        await connection.beginTransaction();
+
+        const [personResult] = await connection.execute(
+            `INSERT INTO persons
+                (name, age, gender, email, phone, address, education_level, political_status, employment_status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                data.person.name,
+                data.person.age,
+                data.person.gender,
+                data.person.email,
+                data.person.phone,
+                data.person.address,
+                data.person.education_level,
+                data.person.political_status,
+                data.person.employment_status
+            ]
+        );
+        personId = (personResult as ResultSetHeader).insertId;
+
+        await connection.execute(
+            `INSERT INTO rural_talent_profile
+                (person_id, farming_years, planting_scale, main_crops, breeding_types,
+                 cooperation_willingness, development_direction, available_time)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                personId,
+                data.ruralProfile?.farming_years,
+                data.ruralProfile?.planting_scale,
+                data.ruralProfile?.main_crops,
+                data.ruralProfile?.breeding_types,
+                data.ruralProfile?.cooperation_willingness,
+                data.ruralProfile?.development_direction,
+                data.ruralProfile?.available_time
+            ]
+        );
+
+        await connection.execute(
+            `INSERT INTO cooperation_intentions
+                (person_id, cooperation_type, preferred_scale, investment_capacity,
+                 time_availability, contact_preference)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                personId,
+                data.cooperation?.cooperation_type,
+                data.cooperation?.preferred_scale,
+                data.cooperation?.investment_capacity,
+                data.cooperation?.time_availability,
+                data.cooperation?.contact_preference
+            ]
+        );
+
+        for (const skill of normalizedSkills) {
+            await connection.execute(
+                `INSERT INTO talent_skills
+                    (person_id, skill_category, skill_name, proficiency_level, certification, experience_years)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [personId, skill.category, skill.name, skill.proficiency, skill.certification, skill.experienceYears]
+            );
+        }
+
+        if (data.userId) {
+            try {
+                await connection.execute(
+                    'UPDATE users SET person_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    [personId, data.userId]
+                );
+            } catch (linkError: any) {
+                logger.warn('Failed to link user to person after commit', {
+                    error: linkError.message,
+                    userId: data.userId,
+                    personId
+                });
+            }
+        }
+
+        await connection.commit();
+
+        logger.info('Comprehensive person created', { personId });
+        if (personId === null) {
+            throw new Error('创建综合人员信息失败：人员主记录未生成');
+        }
+
+        const person = await getPersonWithDetails(personId);
+        return person || { id: personId, name: data.person.name };
+    } catch (error: any) {
+        await connection.rollback();
+
+        if (isDuplicateEntryError(error)) {
+            throw createDuplicateEntryError();
+        }
+
+        logger.error('Error creating comprehensive person', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
+// 更新综合人员信息（事务处理）
+const updateComprehensivePerson = async (personId: number, data: {
+    person: any;
+    ruralProfile: any;
+    cooperation: any;
+    skills: any[];
+}): Promise<any> => {
+    const connection = await pool.getConnection();
+
+    try {
+        const normalizedSkills = Array.isArray(data.skills)
+            ? data.skills.map((skill, index) => normalizeSkillData(skill, index))
+            : [];
+
+        await connection.beginTransaction();
+
+        await connection.execute(
+            `UPDATE persons SET
+                name = ?, age = ?, gender = ?, email = ?, phone = ?, address = ?,
+                education_level = ?, political_status = ?, employment_status = ?,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [
+                data.person.name,
+                data.person.age,
+                data.person.gender,
+                data.person.email,
+                data.person.phone,
+                data.person.address,
+                data.person.education_level,
+                data.person.political_status,
+                data.person.employment_status,
+                personId
+            ]
+        );
+
+        await connection.execute('DELETE FROM rural_talent_profile WHERE person_id = ?', [personId]);
+        await connection.execute(
+            `INSERT INTO rural_talent_profile
+                (person_id, farming_years, planting_scale, main_crops, breeding_types,
+                 cooperation_willingness, development_direction, available_time)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                personId,
+                data.ruralProfile?.farming_years,
+                data.ruralProfile?.planting_scale,
+                data.ruralProfile?.main_crops,
+                data.ruralProfile?.breeding_types,
+                data.ruralProfile?.cooperation_willingness,
+                data.ruralProfile?.development_direction,
+                data.ruralProfile?.available_time
+            ]
+        );
+
+        await connection.execute('DELETE FROM cooperation_intentions WHERE person_id = ?', [personId]);
+        await connection.execute(
+            `INSERT INTO cooperation_intentions
+                (person_id, cooperation_type, preferred_scale, investment_capacity,
+                 time_availability, contact_preference)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                personId,
+                data.cooperation?.cooperation_type,
+                data.cooperation?.preferred_scale,
+                data.cooperation?.investment_capacity,
+                data.cooperation?.time_availability,
+                data.cooperation?.contact_preference
+            ]
+        );
+
+        await connection.execute('DELETE FROM talent_skills WHERE person_id = ?', [personId]);
+        for (const skill of normalizedSkills) {
+            await connection.execute(
+                `INSERT INTO talent_skills
+                    (person_id, skill_category, skill_name, proficiency_level, certification, experience_years)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [personId, skill.category, skill.name, skill.proficiency, skill.certification, skill.experienceYears]
+            );
+        }
+
+        await connection.commit();
+
+        logger.info('Comprehensive person updated', { personId });
+        const person = await getPersonWithDetails(personId);
+        return person || { id: personId, name: data.person.name };
+    } catch (error: any) {
+        await connection.rollback();
+
+        if (isDuplicateEntryError(error)) {
+            throw createDuplicateEntryError();
+        }
+
+        logger.error('Error updating comprehensive person', {
+            personId,
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
 const getExistingPersonIds = async (ids: number[]): Promise<number[]> => {
     try {
         const placeholders = ids.map(() => '?').join(',');
@@ -1619,17 +2214,29 @@ export default {
     getAllPersonsPaginated,
     getAllPersonsWithDetails,
     getPersonById,
+    getPersonWithDetails,
     createPerson,
     updatePerson,
     deletePerson,
+    upsertRuralProfile,
+    addSkill,
+    deleteSkill,
+    getPersonIdBySkillId,
 
     // 用户认证相关
+    createUser,
     getUserByUsername,
     getUserByEmail,
     getUserById,
+    updateUserPassword,
+    updateUserPersonId,
+    getUserPersonInfo,
+    getUserByPersonId,
+    linkUserToPerson,
     createUserSession,
     validateUserSession,
     deleteUserSession,
+    deleteUserSessionsByUser,
 
     // 统计相关
     getTotalPersonsCount,
@@ -1644,6 +2251,10 @@ export default {
     getGenderDistribution,
     getTopSkills,
     getRecentRegistrations,
+
+    // 综合信息处理方法
+    createComprehensivePerson,
+    updateComprehensivePerson,
 
     // 搜索相关
     searchTalents,

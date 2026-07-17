@@ -10,17 +10,25 @@
       >
         <el-icon :size="24"><Menu /></el-icon>
       </el-button>
+
+      <div v-if="isMobile" class="mobile-brand">
+        <span class="mobile-brand-mark"></span>
+        <span>乡村人才</span>
+      </div>
       
-      <div class="breadcrumb" v-if="!isMobile">
-        <el-breadcrumb separator="/">
-          <el-breadcrumb-item 
-            v-for="(item, index) in breadcrumbs" 
-            :key="index"
-            :to="item.path ? { path: item.path } : undefined"
-          >
-            {{ item.title }}
-          </el-breadcrumb-item>
-        </el-breadcrumb>
+      <div class="page-context" v-if="!isMobile">
+        <span class="context-label">工作空间</span>
+        <div class="breadcrumb">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item
+              v-for="(item, index) in breadcrumbs"
+              :key="index"
+              :to="item.path ? { path: item.path } : undefined"
+            >
+              {{ item.title }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
       </div>
     </div>
     
@@ -79,8 +87,8 @@
         </template>
       </el-dropdown>
       <template v-else>
-        <el-button type="primary" @click="$router.push('/login')">
-          登录
+        <el-button type="primary" class="login-button" @click="$router.push('/login')">
+          登录平台
         </el-button>
       </template>
     </div>
@@ -210,21 +218,23 @@ const handleStartTour = () => {
 }
 
 .header-bar {
-  height: 60px;
-  background-color: #ffffff;
+  height: 76px;
+  background-color: rgba(255, 254, 251, 0.94);
   border-bottom: 1px solid var(--color-border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 var(--spacing-lg);
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.04);
+  box-shadow: 0 8px 24px rgba(24, 40, 32, 0.035);
+  backdrop-filter: blur(18px);
   z-index: 9;
   position: relative;
 }
 
 @media screen and (max-width: 768px) {
   .header-bar {
-    padding: 0 var(--spacing-sm);
+    height: 60px;
+    padding: 0 12px;
   }
 }
 
@@ -234,43 +244,82 @@ const handleStartTour = () => {
 }
 
 .mobile-menu-btn {
-  margin-right: 12px;
-  color: var(--color-text-regular);
+  width: 38px;
+  height: 38px;
+  margin-right: 8px;
+  color: var(--color-primary-dark-2);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light-9);
 }
 
-.breadcrumb {
-  margin-left: 8px;
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary-dark-2);
+  font-weight: 700;
+}
+
+.mobile-brand-mark {
+  width: 8px;
+  height: 20px;
+  border-radius: 99px;
+  background: var(--color-accent);
+}
+
+.page-context {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.context-label {
+  color: var(--color-text-placeholder);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .header-right {
-  gap: var(--spacing-md);
+  gap: 10px;
 }
 
 .action-btn {
-  color: var(--color-text-regular);
+  width: 38px;
+  height: 38px;
+  margin: 0 !important;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
 }
 
 .action-btn:hover {
   color: var(--color-primary);
+  background: var(--color-primary-light-9);
 }
 
 .user-profile {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--radius-md);
-  transition: background-color var(--transition-fast);
+  min-height: 44px;
+  padding: 4px 9px 4px 5px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  transition: all var(--transition-fast);
 }
 
 .user-profile:hover {
-  background-color: var(--color-bg-page);
+  background-color: var(--color-surface-soft);
+  border-color: var(--color-border-light);
 }
 
 .user-avatar {
-  background-color: var(--color-primary-light-3);
+  background-color: var(--color-primary);
   color: white;
   font-weight: bold;
+  box-shadow: 0 0 0 4px var(--color-primary-light-9);
 }
 
 .user-info {
@@ -297,6 +346,27 @@ const handleStartTour = () => {
   font-size: 12px;
   color: var(--color-text-secondary);
   margin-left: 4px;
+}
+
+.login-button {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+}
+
+@media screen and (max-width: 560px) {
+  .header-right {
+    gap: 5px;
+  }
+
+  .action-btn {
+    display: none;
+  }
+
+  .login-button {
+    height: 36px;
+    padding: 0 14px;
+  }
 }
 
 </style>

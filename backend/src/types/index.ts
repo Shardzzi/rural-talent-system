@@ -24,6 +24,7 @@ export interface Person {
   address?: string;
   id_number?: string;
   education_level?: string;
+  employment_status?: string;
   major?: string;
   work_experience?: string;
   skills?: string;
@@ -157,6 +158,8 @@ export interface PersonCreateRequest {
   address?: string;
   id_number?: string;
   education_level?: string;
+  political_status?: string;
+  employment_status?: string;
   major?: string;
   work_experience?: string;
   skills?: string;

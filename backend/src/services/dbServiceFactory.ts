@@ -16,6 +16,7 @@ interface DatabaseService {
     upsertRuralProfile(personId: number, ruralData: any): Promise<any>;
     addSkill(personId: number, skillData: any): Promise<any>;
     deleteSkill(skillId: number): Promise<boolean>;
+    getPersonIdBySkillId(skillId: number): Promise<number | null>;
     searchTalents(searchCriteria: any): Promise<any[]>;
     searchTalentsPaginated(searchCriteria: any): Promise<any>;
     createUser(userData: any): Promise<any>;
@@ -30,6 +31,7 @@ interface DatabaseService {
     createUserSession(userId: number, token: string, expiresAt: Date): Promise<number>;
     validateUserSession(token: string): Promise<any>;
     deleteUserSession(token: string): Promise<boolean>;
+    deleteUserSessionsByUser(userId: number): Promise<boolean>;
     getTotalPersonsCount(): Promise<number>;
     getAverageAge(): Promise<number>;
     getTotalSkillsCount(): Promise<number>;
